@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M12 help · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M7/M8: title, search line, two panes (sections | content), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-rows: auto auto 1fr auto; }
+  .title { padding: 20px 28px 10px; color: var(--text-muted); white-space: nowrap; }
+  .title b { color: var(--text); }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul, dl { list-style: none; margin: 0; padding: 0; }
+  p, dd { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .you { color: var(--user); } .goop { color: var(--primary); } .new { color: var(--accent); } .focus { color: var(--secondary); }
+  .off { color: var(--border); }
+  /* Key hints: key bold --accent, action muted; the primary action key is green. */
+  .k { color: var(--accent); font-weight: 600; }
+  .k.primary { color: var(--success); }
+  /* Search line: composer look without focus (--border edge); / focuses it and the edge turns lavender. */
+  .search { display: flex; justify-content: space-between; gap: 24px; margin: 0 28px 16px; padding: 6px 14px; background: var(--background-panel); border-left: 2px solid var(--border); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .search .hint { font-size: 13px; }
+  .panes { display: grid; grid-template-columns: 380px 1fr; min-height: 0; padding: 0 28px 12px; }
+  /* Left pane: help sections, one short sub line each. */
+  .list { display: flex; flex-direction: column; gap: 10px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .list-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .section { padding: 4px 8px; white-space: nowrap; }
+  .section .name { font-size: 14px; font-weight: 600; }
+  .section .sub { color: var(--text-muted); font-size: 13px; }
+  /* Selection: inset 2px orange edge on --background-element. */
+  .section.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  /* Right pane: the selected section. */
+  .content { display: flex; flex-direction: column; gap: 14px; padding-left: 24px; min-height: 0; }
+  .content-name { font-weight: 600; white-space: nowrap; }
+  .content-name span { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  .facts { color: var(--text-muted); font-size: 13px; white-space: nowrap; margin-top: -10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+  .facts b { color: var(--text); font-weight: 600; }
+  /* Key table: two columns, key | action, grouped. */
+  .group { display: flex; flex-direction: column; gap: 4px; }
+  .keys { display: grid; grid-template-columns: 14ch 1fr; column-gap: 16px; row-gap: 2px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+  .keys dt { color: var(--accent); font-weight: 600; }
+  .keys dt.primary { color: var(--success); }
+  .keys dd { color: var(--text-muted); }
+  .keys dd b { color: var(--text); font-weight: 600; }
+  /* Symbols seen on the screen you came from: a pointer to the full legend. */
+  .seen { margin-top: auto; display: flex; justify-content: space-between; gap: 16px; padding: 8px 14px; background: var(--background-panel); border-left: 1px solid var(--border); font-size: 14px; white-space: nowrap; }
+  .seen .act { color: var(--text-muted); font-size: 13px; }
+  .palette { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  /* One status line, three zones: focus label | hints for the focused pane | background state. */
+  footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  footer .k { color: var(--text); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-help::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: the other two sections, as they render in the right pane. */
+  .strip { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 32px; border-top: 1px solid var(--border); }
+  .strip > div { display: flex; flex-direction: column; gap: 10px; }
+  .legend-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .legend { display: grid; grid-template-columns: 6ch 1fr; column-gap: 12px; row-gap: 2px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+  .legend dt { font-weight: 700; }
+  .legend dd { color: var(--text-muted); }
+  .colors { display: grid; grid-template-columns: 10ch 1fr; column-gap: 12px; row-gap: 2px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+  .colors dt { font-weight: 700; }
+  .colors dd { color: var(--text-muted); }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="title">Help › <b>Keys here</b> · from: Offer detail · esc back to Offer detail</header>
+
+  <search class="search"><span><span class="k">/</span> search help</span><span class="hint">filters keys, commands and symbols as you type</span></search>
+
+  <div class="panes">
+    <nav class="list" aria-labelledby="list-head">
+      <div class="list-head"><h2 id="list-head">Help</h2><span class="count">6 sections</span></div>
+      <ul>
+        <li class="section sel" aria-current="true">
+          <p class="name">Keys here</p>
+          <p class="sub">Offer detail · 15 keys</p>
+        </li>
+        <li class="section">
+          <p class="name">Global keys</p>
+          <p class="sub">work on every screen · 10 keys</p>
+        </li>
+        <li class="section">
+          <p class="name">Commands</p>
+          <p class="sub">full list in the palette · ctrl+p</p>
+        </li>
+        <li class="section">
+          <p class="name">Symbols &amp; colors</p>
+          <p class="sub">9 symbols · 6 colors</p>
+        </li>
+        <li class="section">
+          <p class="name">Privacy</p>
+          <p class="sub">local models · encrypted storage</p>
+        </li>
+        <li class="section">
+          <p class="name">About</p>
+          <p class="sub">goop v0.1.0 · GPL-3.0</p>
+        </li>
+      </ul>
+    </nav>
+
+    <section class="content" aria-labelledby="content-name">
+      <p class="content-name" id="content-name">Keys here <span>· from: Offer detail</span></p>
+      <p class="facts">Backend Developer (Python) · Acme Labs · keys of this screen only · global keys work too</p>
+
+      <section class="group" aria-labelledby="g-move">
+        <h3 id="g-move">Move</h3>
+        <dl class="keys">
+          <dt>↑↓</dt><dd>scroll the offer</dd>
+          <dt>pgup pgdn</dt><dd>scroll one page</dd>
+          <dt>[ ]</dt><dd>previous / next offer in the list</dd>
+          <dt>esc</dt><dd>back to the session</dd>
+        </dl>
+      </section>
+
+      <section class="group" aria-labelledby="g-act">
+        <h3 id="g-act">Act</h3>
+        <dl class="keys">
+          <dt class="primary">↵</dt><dd><b>apply</b> · opens the application page, then asks if you applied</dd>
+          <dt>y n</dt><dd>answer that question · yes / not yet</dd>
+          <dt>s</dt><dd>save or unsave</dd>
+          <dt>d</dt><dd>dismiss · asks for a reason the Learner uses</dd>
+          <dt>1-5</dt><dd>dismiss reason · salary · stack · location · seniority · other</dd>
+          <dt>u</dt><dd>undo the last action</dd>
+        </dl>
+      </section>
+
+      <section class="group" aria-labelledby="g-views">
+        <h3 id="g-views">Views</h3>
+        <dl class="keys">
+          <dt>f</dt><dd>full text of the offer, as published</dd>
+          <dt>?</dt><dd>this help</dd>
+          <dt>ctrl+p</dt><dd>command palette · every command</dd>
+          <dt>a</dt><dd>ask goop about this offer</dd>
+          <dt>o</dt><dd>open the offer in a browser</dd>
+        </dl>
+      </section>
+
+      <p class="seen"><span>Seen here: <span class="ok">✓</span> applied · <span class="new">~</span> maybe · <span class="idle">✕</span> skip · <span class="err">⚠</span> suspicious text</span><span class="act"><span class="k">↵</span> on Symbols &amp; colors for all</span></p>
+      <p class="palette">Looking for a command? Help lists keys; every command lives in the palette · <span class="k">ctrl+p</span></p>
+    </section>
+  </div>
+
+  <footer><span class="mode m-help">help</span><span><span class="k">↑↓</span> sections · <span class="k">/</span> search · <span class="k">ctrl+p</span> commands · <span class="k">esc</span> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span>v0.1.0</span></span></footer>
+</main>
+<section class="strip" aria-label="Other help sections">
+  <div>
+    <h3>Symbols &amp; colors</h3>
+    <div class="legend-wrap">
+      <dl class="legend">
+        <dt class="err">⚠</dt><dd>error</dd>
+        <dt class="ok">●</dt><dd>ready / ok</dd>
+        <dt class="busy">◐</dt><dd>running / loading</dd>
+        <dt class="idle">○</dt><dd>queued / on demand</dd>
+        <dt class="ok">✓</dt><dd>done / confirmed</dd>
+      </dl>
+      <dl class="legend">
+        <dt class="new">~</dt><dd>maybe / unsure</dd>
+        <dt class="idle">✕</dt><dd>missing / skip</dd>
+        <dt class="you">✎</dt><dd>edited by you</dd>
+        <dt><span class="ok">▮</span><span class="busy">▮</span><span class="err">▮</span><span class="off">▮</span></dt><dd>heartbeat · ok / slow / failed / not run</dd>
+      </dl>
+    </div>
+    <dl class="colors">
+      <dt class="goop">orange</dt><dd>goop and the selected row</dd>
+      <dt class="you">lavender</dt><dd>you · your turns, your edits, where you type</dd>
+      <dt class="ok">green</dt><dd>apply · ok · done</dd>
+      <dt class="busy">yellow</dt><dd>new · maybe · busy</dd>
+      <dt class="err">pink</dt><dd>error · low score</dd>
+      <dt class="focus">blue</dt><dd>focus mode · the dot in the status line</dd>
+    </dl>
+  </div>
+  <div>
+    <h3>Global keys</h3>
+    <dl class="keys">
+      <dt>?</dt><dd>help for the screen you are on</dd>
+      <dt>ctrl+p</dt><dd>command palette · every command</dd>
+      <dt>/</dt><dd>commands while you type in the chat</dd>
+      <dt>tab</dt><dd>move focus · chat / offers</dd>
+      <dt>esc</dt><dd>back · stop goop while it answers</dd>
+      <dt>ctrl+r</dt><dd>reasoning level · low / medium / high</dd>
+      <dt>ctrl+t</dt><dd>fold or open goop's thought</dd>
+      <dt>ctrl+o</dt><dd>tool call details</dd>
+      <dt>ctrl+x b</dt><dd>hide or show the sidebar</dd>
+      <dt>ctrl+c</dt><dd>quit goop</dd>
+    </dl>
+  </div>
+</section>
+<p class="notes"><strong>Full screen:</strong> ? opens help like M7/M8 (title breadcrumb, one status line, no key-hint line under the header) and remembers where you came from: the first section, Keys here, shows only the keys of that screen (here: from Offer detail), grouped Move · Act · Views as a two-column table, key bold yellow and action muted, with the primary action ↵ in green, matching M2's offer detail. A search line at the top (/ search help) filters keys, commands and symbols in every section at once. The symbols and color legend that used to sit on each screen now lives here, in Symbols &amp; colors (shown below the screen next to Global keys); the right pane only points at the few symbols seen on the screen you came from. Help does not repeat the command list: Commands is a pointer to the command palette (ctrl+p), which is the one full, searchable list, so help never drifts from it. Trades a quick overlay you can read over the screen for a full screen with sections: more room and one home for the legend, but you lose sight of the screen you asked about and need esc to return to it.</p>
+</body>
+</html>
