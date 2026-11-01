@@ -3,7 +3,9 @@ import { GUEST_HOST, GUEST_USER, SSH_PORT } from "./vm-config";
 
 export const REACHABLE_CHECK = "echo ok";
 export const READY_MARKER_CHECK = "Test-Path C:\\OEM\\ready.txt";
-export const GUEST_COMMAND = "powershell -NoProfile -Command -";
+// sshd already runs this line in PowerShell (the default shell); that outer shell would turn any
+// failing inner exit code into 1, so it hands the inner one back with `exit $LASTEXITCODE`.
+export const GUEST_COMMAND = "powershell -NoProfile -Command -; exit $LASTEXITCODE";
 export const MAKE_UPLOAD_DIRECTORY =
   "New-Item -ItemType Directory -Force -Path C:\\goop | Out-Null";
 

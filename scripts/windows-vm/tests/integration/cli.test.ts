@@ -51,7 +51,7 @@ exit 0
   ssh: `#!/bin/sh
 ${LOG_ARGS}
 case "$*" in
-  *"-Command -") cat >> "$FAKE_LOG.stdin"; printf 'guest output\\n'; exit "\${FAKE_SSH_EXIT:-0}" ;;
+  *"-Command -; exit "*) cat >> "$FAKE_LOG.stdin"; printf 'guest output\\n'; exit "\${FAKE_SSH_EXIT:-0}" ;;
   *"Test-Path"*) printf 'True\\n' ;;
   *"echo ok") printf 'ok\\n' ;;
 esac
@@ -326,7 +326,14 @@ describe("scripts/windows-vm/cli.ts run", () => {
     expect(readFileSync(`${log}.stdin`, "utf8")).toBe("Write-Output hi; exit 3\r\n");
     expect(calls().filter((call) => call[0] === "ssh")).toEqual([
       ["ssh", ...sshOptions(), "-p", "2222", "goop@127.0.0.1", "echo ok"],
-      ["ssh", ...sshOptions(), "-p", "2222", "goop@127.0.0.1", "powershell -NoProfile -Command -"],
+      [
+        "ssh",
+        ...sshOptions(),
+        "-p",
+        "2222",
+        "goop@127.0.0.1",
+        "powershell -NoProfile -Command -; exit $LASTEXITCODE",
+      ],
     ]);
     expect(readdirSync(join(root, ".temp", "windows", "runs"))).toEqual([]);
     expectBaseUnchanged(base);
@@ -377,7 +384,14 @@ describe("scripts/windows-vm/cli.ts run", () => {
         "New-Item -ItemType Directory -Force -Path C:\\goop | Out-Null",
       ],
       ["scp", ...sshOptions(), "-P", "2222", "-r", join(root, "src"), "goop@127.0.0.1:C:/goop/"],
-      ["ssh", ...sshOptions(), "-p", "2222", "goop@127.0.0.1", "powershell -NoProfile -Command -"],
+      [
+        "ssh",
+        ...sshOptions(),
+        "-p",
+        "2222",
+        "goop@127.0.0.1",
+        "powershell -NoProfile -Command -; exit $LASTEXITCODE",
+      ],
       ["scp", ...sshOptions(), "-P", "2222", "-r", "goop@127.0.0.1:C:/goop/out.xml", `${results}/`],
     ]);
     expect(existsSync(results)).toBe(true);

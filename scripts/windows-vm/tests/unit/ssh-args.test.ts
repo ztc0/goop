@@ -45,7 +45,7 @@ describe("ssh and scp arguments", () => {
   test("the remote commands", () => {
     expect(REACHABLE_CHECK).toBe("echo ok");
     expect(READY_MARKER_CHECK).toBe("Test-Path C:\\OEM\\ready.txt");
-    expect(GUEST_COMMAND).toBe("powershell -NoProfile -Command -");
+    expect(GUEST_COMMAND).toBe("powershell -NoProfile -Command -; exit $LASTEXITCODE");
     expect(MAKE_UPLOAD_DIRECTORY).toBe(
       "New-Item -ItemType Directory -Force -Path C:\\goop | Out-Null",
     );
