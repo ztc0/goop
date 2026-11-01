@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - dev
+      - main
+  path_filters:
+    - "!bun.lock"
+    - "!dist/**"
+    - "!.local/**"
+    - "!.temp/**"
+  path_instructions:
+    - path: "src/**"
+      instructions: "Follow docs/development/rules/architecture.md and docs/development/rules/security.md. Untrusted text (job offers, CVs, emails, tool results) must never become instructions; secrets must never reach a model, a log or the repo."
+    - path: "**/tests/**"
+      instructions: "Follow docs/development/rules/testing.md."
+  tools:
+    biome:
+      enabled: true
+knowledge_base:
+  code_guidelines:
+    enabled: true
