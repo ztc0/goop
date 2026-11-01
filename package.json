@@ -18,6 +18,9 @@
     "build": "bun scripts/dev-env/run.ts bun build --compile src/main.ts --outfile dist/goop",
     "clean": "bun scripts/dev-env/clean.ts",
     "clean:local": "bun scripts/dev-env/clean.ts --local",
+    "windows:install": "bun scripts/dev-env/run.ts bun scripts/windows-vm/cli.ts install",
+    "windows:run": "bun scripts/dev-env/run.ts bun scripts/windows-vm/cli.ts run",
+    "windows:status": "bun scripts/dev-env/run.ts bun scripts/windows-vm/cli.ts status",
     "prepare": "husky"
   },
   "devDependencies": {
