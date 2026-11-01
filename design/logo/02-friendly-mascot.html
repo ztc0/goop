@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop logo · 02 Friendly mascot</title>
+<style>
+  :root {
+    --bg: #14110f; --panel: #1d1916; --line: #342c26; --text: #f4ede6; --muted: #b3a79c;
+    --eye: #fffaf3; --pupil: #1a1412;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+  main { width: 1440px; min-height: 900px; padding: 48px 64px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; }
+  header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 0; color: var(--muted); font-size: 15px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 28px; }
+  h2 { margin: 0 0 20px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .hero { display: flex; align-items: center; gap: 40px; }
+  .hero svg { animation: flicker 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes flicker { 0%,100% { transform: scale(1, 1); } 50% { transform: scale(1.02, .97); } }
+  @media (prefers-reduced-motion: reduce) { .hero svg { animation: none; } }
+  .wordmark { font-size: 124px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; }
+  .tagline { margin: 12px 0 0; color: var(--muted); font-size: 18px; }
+  .stack { display: grid; gap: 24px; }
+  .sizes { display: flex; align-items: end; gap: 28px; }
+  .sizes figure { margin: 0; display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+  .grounds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ground { border-radius: 16px; padding: 24px; display: flex; align-items: center; gap: 14px; font-size: 34px; font-weight: 900; letter-spacing: -0.04em; }
+  .ground.light { background: #fbf6f0; color: #1d1714; }
+  .ground.dark { background: #000; color: var(--text); border: 1px solid var(--line); }
+  .ground.mono svg { filter: grayscale(1) contrast(1.15); }
+  pre { margin: 0; background: #000; border-radius: 16px; padding: 20px; font-family: var(--mono); font-size: 14px; line-height: 1.35; color: var(--text); }
+  .o { color: #ff7a2e; } .y { color: #ffc24a; } .p { color: #ff5f7a; } .m { color: var(--muted); }
+  .notes { grid-column: 1 / -1; color: var(--muted); font-size: 15px; line-height: 1.5; }
+  .notes strong { color: var(--text); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="fire" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff5f7a"/>
+      <stop offset=".55" stop-color="#ff7a2e"/>
+      <stop offset="1" stop-color="#ffc24a"/>
+    </linearGradient>
+  </defs>
+  <symbol id="goop" viewBox="0 0 100 120">
+    <path fill="url(#fire)" d="M52 6 C58 22 72 30 80 44 C90 60 90 78 86 90 C80 108 66 116 50 116 C32 116 16 106 13 86 C10 68 20 54 30 46 C30 56 34 62 40 64 C36 46 42 24 52 6 Z"/>
+    <ellipse cx="38" cy="82" rx="10" ry="12" fill="var(--eye)"/>
+    <ellipse cx="62" cy="82" rx="10" ry="12" fill="var(--eye)"/>
+    <circle cx="41" cy="85" r="5.5" fill="var(--pupil)"/>
+    <circle cx="65" cy="85" r="5.5" fill="var(--pupil)"/>
+    <circle cx="43" cy="82.5" r="1.8" fill="var(--eye)"/>
+    <circle cx="67" cy="82.5" r="1.8" fill="var(--eye)"/>
+  </symbol>
+</svg>
+<main>
+  <header>
+    <h1>02 · Friendly mascot</h1>
+    <p>Round flame, big curious eyes: a companion, not a tool.</p>
+  </header>
+
+  <section aria-labelledby="hero-title">
+    <h2 id="hero-title">Primary lockup</h2>
+    <div class="hero">
+      <svg width="200" height="240" role="img" aria-label="goop logo: a round flame with two big curious eyes"><use href="#goop"/></svg>
+      <div>
+        <div class="wordmark">goop</div>
+        <p class="tagline">Your local job search buddy.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="stack">
+    <section aria-labelledby="sizes-title">
+      <h2 id="sizes-title">Sizes</h2>
+      <div class="sizes">
+        <figure><svg width="107" height="128" role="img" aria-label="goop logo, 128 px"><use href="#goop"/></svg>128</figure>
+        <figure><svg width="53" height="64" role="img" aria-label="goop logo, 64 px"><use href="#goop"/></svg>64</figure>
+        <figure><svg width="27" height="32" role="img" aria-label="goop logo, 32 px"><use href="#goop"/></svg>32</figure>
+        <figure><svg width="13" height="16" role="img" aria-label="goop logo, 16 px"><use href="#goop"/></svg>16</figure>
+      </div>
+    </section>
+    <section aria-labelledby="grounds-title">
+      <h2 id="grounds-title">Backgrounds</h2>
+      <div class="grounds">
+        <div class="ground light"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+        <div class="ground dark"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+        <div class="ground dark mono"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+        <div class="ground light mono"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+      </div>
+    </section>
+  </div>
+
+  <section aria-labelledby="tui-title" style="grid-column: 1 / -1">
+    <h2 id="tui-title">In the terminal (TUI splash, text only)</h2>
+<pre role="img" aria-label="goop logo drawn with text characters in a terminal">
+<span class="y">        (</span>
+<span class="y">       ) )</span>   <span class="o">(</span>
+<span class="o">     (     ) )</span>            <strong>goop</strong>  <span class="m">v0.1.0</span>
+<span class="o">    (  </span><span class="y">(•)</span> <span class="y">(•)</span><span class="o">  )</span>          <span class="m">Hi! I keep searching while we chat.</span>
+<span class="p">     \    ‿    /</span>
+<span class="p">      `-.____.-´</span>             <span class="m">loading models… qwen ✔  gpt-oss ◌</span>
+</pre>
+  </section>
+
+  <p class="notes"><strong>Tradeoff:</strong> warm and memorable, matches the friendly chat personality and stands out in a portfolio. The gradient and the eye highlights blur below 32 px, and it may read as playful to a recruiter looking for a serious tool.</p>
+</main>
+</body>
+</html>

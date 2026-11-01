@@ -1,0 +1,28 @@
+{
+  "title": "goop logo",
+  "brief": "Logo for goop, a local job search agent TUI for developers: a fire with two eyes. Must work as a large mark, a 16 px favicon, on light and dark backgrounds, in monochrome and as text inside a terminal.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-geometric-flame.html",
+      "title": "Geometric flame",
+      "tradeoff": "Serious engineering look, crisp at 16 px; least friendly, eyes lose personality when small",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-friendly-mascot.html",
+      "title": "Friendly mascot",
+      "tradeoff": "Warm, memorable, matches the chat personality; gradient blurs below 32 px and may read as playful",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-pixel-flame.html",
+      "title": "Pixel flame",
+      "tradeoff": "Identical in SVG, favicon and terminal blocks; can look retro on large surfaces",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

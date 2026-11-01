@@ -101,4 +101,5 @@ Route `inline` is the default; a task moves to a worker only when it qualifies u
 - **L7.** Docs rule: "y una cosa mas en docs para los flujos usa Mermaid eso es una regla".
 - **L8.** Correction during T3: "no use carpetas .gitkeep si no vas a usarlar no la crear solo la vas a crear cuando va a crear los archivos". All `.gitkeep` files and empty folders were removed (09c5aaf); feature `index.ts` files were kept as real entry points.
 - **L9.** README change: "puedes colocrlop en README.md con una lista desplegalbe primero en ingles y despues el español investiga". `README.es.md` was merged into `README.md`: English in `<details open>`, Spanish in a collapsed `<details>`, and the Mermaid diagram outside both because Mermaid can fail inside `<details>` (mermaid-js #1325, #3504).
+- **L10.** T8 logo design started ("dale"): `design/logo/` with three directions, `01-geometric-flame.html`, `02-friendly-mascot.html`, `03-pixel-flame.html`; none chosen yet.
 - **L5.** User PC: Ryzen 9 7940HS, 30 GB RAM, RX 7700S 8 GB (Vulkan RADV) + 780M iGPU listed first, TPM2 present, no secret-service keyring running.
