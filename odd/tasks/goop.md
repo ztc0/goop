@@ -120,4 +120,5 @@ Route `inline` is the default; a task moves to a worker only when it qualifies u
 - **L23.** M2 offer detail: the user chose the full-screen direction (`design/tui-offer-detail/01-full-screen.html`); the split direction was dropped (it stays in git history).
 - **L24.** User decision: all T9 UI design goes in one pull request (PR #8 on `feat/tui-design`) to keep the GitHub PR history short; `feat/tui-screens` was folded back into `feat/tui-design`.
 - **L25.** M10 security alert: the user chose the full-screen direction (`design/tui-security-alert/01-full-screen.html`); the modal was dropped (in git history). A quarantined offer shows no score and is not counted in the day's list until released.
+- **L26.** M3 full text (`design/tui-full-text/`), M4 sessions (`design/tui-sessions/`) and M5 rules (`design/tui-rules/`) designed as single full-screen directions in the M2 style (the user picked full screen twice).
 - **L5.** User PC: Ryzen 9 7940HS, 30 GB RAM, RX 7700S 8 GB (Vulkan RADV) + 780M iGPU listed first, TPM2 present, no secret-service keyring running.

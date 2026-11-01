@@ -1,0 +1,14 @@
+{
+  "title": "Full text (M3)",
+  "brief": "Full text screen of goop, opened with f on the offer detail (M2): the original offer text exactly as fetched, shown as untrusted plain text in a framed reader with a dim │ gutter and line numbers, never in goop's voice; header with breadcrumb, source host, fetch time and word count; left markers on the requirement lines goop matched (green match, yellow partial, pink missing) with a legend; search with / (kubern, 1 of 2); key hints / search, n/N, y copy, o open, a ask goop, esc back, ? all actions; reader scrollbar; status line with the text focus mode.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "Reads like one more level of the same offer, with the marked lines indexed on the right; the index column keeps reader lines near 90 columns instead of the full width",
+      "width": 1440,
+      "height": 1060
+    }
+  ]
+}

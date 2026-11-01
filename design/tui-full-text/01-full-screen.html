@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M3 full text · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M2: one column, no sidebar; rows = full text, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .full { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; white-space: nowrap; }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul, ol { list-style: none; margin: 0; padding: 0; }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .check { color: var(--error); } .idle { color: var(--text-muted); }
+  /* Offer head: same as M2, but the facts are about the fetched text: source host, fetch time, size. */
+  .head { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; row-gap: 2px; padding: 6px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .head .name { font-weight: 600; }
+  .head .facts, .head .inert { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
+  .facts b { color: var(--text); font-weight: 600; }
+  .tag-plain { color: var(--text-muted); font-size: 12px; font-weight: 700; }
+  /* Actions: one line of key hints, as in M2: key in yellow, action muted, no boxes. No primary here:
+     reading is the job, every key is a side action. */
+  .actions { display: flex; gap: 24px; padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .actions b { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .actions .more { margin-left: auto; }
+  /* Body: the reader takes most of the width; a narrow index on the right lists the marked lines. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 360px; column-gap: 40px; padding-top: 12px; min-height: 0; }
+  .reader-col { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  /* Legend: what the left markers mean. The bar is the same 2px marker the reader uses. */
+  .legend { display: flex; gap: 18px; padding: 0 8px; font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+  .legend .bar { display: inline-block; width: 2px; height: 13px; margin-right: 8px; vertical-align: -1px; }
+  .legend .sep { margin-left: auto; }
+  /* Reader: the offer exactly as fetched, plain text only. Same quote style as the security alert:
+     dim line numbers, a │ gutter in --border, no flame, no goop voice, no colors from the source.
+     Column 1 is the requirement marker, 2px in the color of its match state. */
+  .reader { position: relative; flex: 1; min-height: 0; overflow: hidden; padding: 2px 14px 2px 0; }
+  .reader li { display: grid; grid-template-columns: 2px 4ch 1fr; column-gap: 8px; font-size: 14px; }
+  .reader .mk { align-self: stretch; }
+  .mk.ok { background: var(--success); } .mk.busy { background: var(--warning); } .mk.check { background: var(--error); }
+  .bar.ok { background: var(--success); } .bar.busy { background: var(--warning); } .bar.check { background: var(--error); }
+  .reader .ln { text-align: right; color: var(--text-muted); font-size: 13px; opacity: .8; }
+  .reader .txt { border-left: 1px solid var(--border); padding-left: 12px; white-space: pre-wrap; min-height: 21px; }
+  /* Search matches are yours (lavender): the current one filled, the others underlined. */
+  .hit { color: var(--user); background: none; text-decoration: underline; text-underline-offset: 3px; }
+  .you { color: var(--user); font-weight: 700; }
+  .hit.cur { color: var(--background); background: var(--user); text-decoration: none; font-weight: 600; }
+  /* Scrollbar: one cell on the right edge, track + thumb, like the chat history. */
+  .scroll { position: absolute; top: 0; bottom: 0; right: 0; width: 4px; background: var(--background-element); }
+  .scroll span { position: absolute; left: 0; right: 0; background: var(--border-active); opacity: .55; }
+  /* Search line: you are typing, so it is a composer: panel, 2px lavender edge, lavender cursor. */
+  .search { display: grid; grid-template-columns: auto 1fr auto; column-gap: 12px; align-items: center; background: var(--background-panel); border-left: 2px solid var(--user); padding: 6px 16px; font-size: 14px; white-space: nowrap; }
+  .search .slash { color: var(--user); font-weight: 700; }
+  .cursor { display: inline-block; width: 1ch; height: 1.15em; vertical-align: -3px; background: var(--user); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .pos b { color: var(--text); font-weight: 600; }
+  .search .pos, .search .keys { color: var(--text-muted); font-size: 13px; }
+  .keys b { color: var(--text); font-weight: 600; }
+  /* Index of marked lines: requirement rows from M2 with their line numbers. */
+  .index { display: flex; flex-direction: column; gap: 18px; }
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; color: var(--text-muted); }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .req li { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
+  .req .where { color: var(--text-muted); font-size: 13px; }
+  .note { color: var(--text-muted); font-size: 13px; padding: 0 8px; }
+  .note b { color: var(--text); font-weight: 600; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-text::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: feedback after copy, open and ask. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; white-space: nowrap; }
+  .toast b { color: var(--accent); }
+  .toast.miss { box-shadow: inset 2px 0 var(--text-muted); color: var(--text-muted); }
+  .toast.miss .q { color: var(--user); }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop offer full text, full screen">
+  <article class="full" aria-label="Original offer text">
+    <div class="title">Offers › Backend Developer (Python) › <b>Full text</b> · esc back to detail</div>
+    <header class="head">
+      <span class="score apply">92</span><span class="name">Backend Developer (Python)</span><span class="tag-plain">plain text</span>
+      <span class="facts"><b>Acme Labs</b> · from <b>boards.greenhouse.io</b> · fetched today 08:12 · 1,840 words · 96 lines</span>
+      <span class="inert">Shown as plain text. Nothing in it is run or followed.</span>
+    </header>
+    <nav class="actions" aria-label="Full text actions">
+      <span><b>/</b>search</span><span><b>n/N</b>next/prev match</span><span><b>y</b>copy text</span><span><b>o</b>open in browser</span><span><b>a</b>ask goop</span><span><b>esc</b>back to detail</span><span class="more"><b>?</b>all actions</span>
+    </nav>
+    <div class="body">
+      <div class="reader-col">
+        <p class="legend"><span><span class="bar ok"></span>match</span><span><span class="bar busy"></span>partial</span><span><span class="bar check"></span>missing</span><span>· lines with a requirement goop matched against your CV</span><span class="sep">lines 12–39 of 96</span></p>
+        <section class="reader" aria-label="Offer text as fetched, untrusted">
+          <ol>
+            <li><span class="mk"></span><span class="ln">12</span><span class="txt">About the team</span></li>
+            <li><span class="mk"></span><span class="ln">13</span><span class="txt"></span></li>
+            <li><span class="mk"></span><span class="ln">14</span><span class="txt">The Payments team (6 engineers) owns the public payments API that thousands of</span></li>
+            <li><span class="mk"></span><span class="ln">15</span><span class="txt">merchants use to charge cards, issue refunds and reconcile payouts. We ship small</span></li>
+            <li><span class="mk"></span><span class="ln">16</span><span class="txt">changes many times a day and care about boring, well-tested code.</span></li>
+            <li><span class="mk"></span><span class="ln">17</span><span class="txt"></span></li>
+            <li><span class="mk"></span><span class="ln">18</span><span class="txt">What you will do</span></li>
+            <li><span class="mk"></span><span class="ln">19</span><span class="txt"></span></li>
+            <li><span class="mk"></span><span class="ln">20</span><span class="txt">- Maintain and extend the Django services behind the payments API.</span></li>
+            <li><span class="mk"></span><span class="ln">21</span><span class="txt">- Design new REST endpoints together with product and the mobile team.</span></li>
+            <li><span class="mk"></span><span class="ln">22</span><span class="txt">- Review pull requests and pair with engineers in Berlin and Lisbon.</span></li>
+            <li><span class="mk"></span><span class="ln">23</span><span class="txt">- Join the on-call rotation one week per month (paid, with a day off after).</span></li>
+            <li><span class="mk"></span><span class="ln">24</span><span class="txt"></span></li>
+            <li><span class="mk"></span><span class="ln">25</span><span class="txt">What we are looking for</span></li>
+            <li><span class="mk"></span><span class="ln">26</span><span class="txt"></span></li>
+            <li><span class="mk ok"></span><span class="ln">27</span><span class="txt">- 2+ years building backend services in Python.</span></li>
+            <li><span class="mk ok"></span><span class="ln">28</span><span class="txt">- Solid experience with Django or a similar web framework.</span></li>
+            <li><span class="mk ok"></span><span class="ln">29</span><span class="txt">- You have designed and maintained REST APIs used by other teams.</span></li>
+            <li><span class="mk ok"></span><span class="ln">30</span><span class="txt">- Good knowledge of PostgreSQL: indexes, migrations, reading query plans.</span></li>
+            <li><span class="mk busy"></span><span class="ln">31</span><span class="txt">- Fluent English, written and spoken; our daily stand-up is in English.</span></li>
+            <li><span class="mk check"></span><span class="ln">32</span><span class="txt">- Nice to have: experience with <mark class="hit cur">Kubern</mark>etes and Terraform.</span></li>
+            <li><span class="mk"></span><span class="ln">33</span><span class="txt"></span></li>
+            <li><span class="mk"></span><span class="ln">34</span><span class="txt">How we work</span></li>
+            <li><span class="mk"></span><span class="ln">35</span><span class="txt"></span></li>
+            <li><span class="mk"></span><span class="ln">36</span><span class="txt">Fully remote within EU time zones (CET ± 2 hours). Our services run on</span></li>
+            <li><span class="mk"></span><span class="ln">37</span><span class="txt"><mark class="hit">Kubern</mark>etes (EKS) and we deploy with GitHub Actions; you do not need to know</span></li>
+            <li><span class="mk"></span><span class="ln">38</span><span class="txt">every tool on day one. We plan in Linear and write a short design doc before</span></li>
+            <li><span class="mk"></span><span class="ln">39</span><span class="txt">big changes.</span></li>
+          </ol>
+          <div class="scroll" aria-hidden="true"><span style="top: 12%; height: 29%"></span></div>
+        </section>
+        <search class="search" aria-label="Search in the text">
+          <span><span class="slash">/</span> kubern<span class="cursor"></span></span>
+          <span class="pos"><b>1 of 2</b> · lines 32, 37</span>
+          <span class="keys"><b>n/N</b> next/prev · <b>enter</b> keep · <b>esc</b> clear</span>
+        </search>
+      </div>
+      <aside class="index" aria-label="Marked lines">
+        <section class="sec" aria-label="Requirements in this text">
+          <div class="sec-head"><h2>Marked lines</h2><span class="count">6 from the detail</span></div>
+          <ul class="req">
+            <li><span class="ok">✓</span><span>Python</span><span class="where">line 27</span></li>
+            <li><span class="ok">✓</span><span>Django</span><span class="where">lines 20, 28</span></li>
+            <li><span class="ok">✓</span><span>REST APIs</span><span class="where">lines 21, 29</span></li>
+            <li><span class="ok">✓</span><span>PostgreSQL</span><span class="where">line 30</span></li>
+            <li><span class="busy">~</span><span>Fluent English</span><span class="where">line 31</span></li>
+            <li><span class="check">✕</span><span>Kubernetes</span><span class="where">line 32</span></li>
+          </ul>
+          <p class="note">only the line that states the requirement is marked; other mentions stay plain</p>
+        </section>
+        <section class="sec" aria-label="Search results">
+          <div class="sec-head"><h2>Search</h2><span class="count">2 matches</span></div>
+          <ul class="req">
+            <li><span class="you">›</span><span>Nice to have: … <b>Kubern</b>etes</span><span class="where">line 32</span></li>
+            <li><span class="idle">·</span><span>run on … <b>Kubern</b>etes (EKS)</span><span class="where">line 37</span></li>
+          </ul>
+          <p class="note">case-insensitive · plain text, no patterns</p>
+        </section>
+        <section class="sec" aria-label="About this text">
+          <div class="sec-head"><h2>About this text</h2></div>
+          <p class="note">Written by the employer, not by goop. Links show as text and are never opened; <b>o</b> opens only the offer page, in your browser.</p>
+        </section>
+      </aside>
+    </div>
+  </article>
+  <footer><span class="mode m-text">text</span><span><b>↑↓</b> scroll · <b>pgup/pgdn</b> page · <b>g/G</b> top/bottom · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="Feedback states">
+  <div><h3>After copy (y)</h3><div class="toast"><span>✓ Copied 1,840 words as plain text</span><span><b>esc</b> close · 3s</span></div></div>
+  <div><h3>After open (o)</h3><div class="toast"><span>✓ Opened boards.greenhouse.io in your browser</span><span><b>esc</b> close · 3s</span></div></div>
+  <div><h3>Search with no match</h3><div class="toast miss"><span>No match for <span class="q">kubernets</span> · 96 lines</span><span><b>esc</b> clear</span></div></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> f on the offer detail (M2) opens the original text exactly as fetched, with the same title, header and key-hint line, so it reads as one more level of the same offer. The text is untrusted data: plain text only, behind the dim │ gutter with line numbers used for quotes on the security alert, with no flame and no goop voice, and nothing from the source can add colors, links or formatting. A 2px marker left of the line number flags the lines that state a requirement goop matched (green match, yellow partial, pink missing, as in M2) and the index on the right lists them with line numbers. Search is yours, so the / line is a lavender composer and the matches are lavender (current filled, others underlined). a ask goop returns to the chat with this offer attached. Costs a full screen and a fixed right column for the index, so the reader lines stay around 90 columns instead of using the whole width. Below the screen: the toasts after copy and open, and a search with no match.</p>
+</body>
+</html>

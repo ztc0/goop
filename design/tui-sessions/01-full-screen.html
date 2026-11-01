@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M4 sessions · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen: one column, no sidebar; rows = sessions, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .sessions { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .ok { color: var(--success); } .idle { color: var(--text-muted); }
+  /* Filter: the composer without the info line. Blurred while the list has focus; / focuses it. */
+  .filter { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; display: flex; justify-content: space-between; }
+  .filter.blur { border-left-color: var(--border); }
+  .prompt { color: var(--user); font-weight: 700; margin-right: 1ch; }
+  .filter.blur .prompt { color: var(--text-muted); }
+  .placeholder { color: var(--text-muted); }
+  .filter .hint { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .filter .hint b { color: var(--text); font-weight: 600; }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  /* Actions: one line of key hints, same style as M2: key in yellow, action muted, primary told apart only by green. */
+  .actions { display: flex; gap: 24px; padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .actions b { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .actions .primary { color: var(--success); font-weight: 600; }
+  .actions .primary b { color: var(--success); }
+  .actions .more { margin-left: auto; }
+  /* Body: list on the left, preview of the selected session on the right. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 560px; min-height: 0; }
+  .list { display: flex; flex-direction: column; gap: 14px; padding: 16px 28px 0 0; }
+  .group { display: flex; flex-direction: column; gap: 4px; }
+  .group-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 8px; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  /* Session row: marker, title (+ current tag), then time, messages and offers in fixed columns. */
+  .row { display: grid; grid-template-columns: 2ch 1fr 7ch 9ch 9ch; column-gap: 10px; padding: 4px 8px; font-size: 14px; }
+  .row .mark { color: var(--text-muted); }
+  .row .meta, .row .num { color: var(--text-muted); font-size: 13px; text-align: right; }
+  .row .num b { color: var(--text); font-weight: 600; }
+  .row.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .row.sel .mark { color: var(--primary); }
+  .row.sel .name { font-weight: 600; }
+  .tag-current { color: var(--success); font-size: 12px; font-weight: 700; margin-left: 10px; }
+  .list-foot { color: var(--text-muted); font-size: 13px; padding: 4px 8px; }
+  /* Preview: read only; your first message as a user turn, goop's last reply as a goop turn, both truncated. */
+  .preview { border-left: 1px solid var(--border); padding: 16px 0 0 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .preview .sub { color: var(--text-muted); font-size: 13px; }
+  .preview .sub b { color: var(--text); font-weight: 600; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
+  .user p { margin: 0; }
+  .meta-line { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  .gap { color: var(--text-muted); font-size: 13px; padding-left: 2ch; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .turn p { margin: 0; }
+  /* Offers the session mentions: offer rows, read only here. */
+  .offers li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
+  .offers .co { color: var(--text-muted); font-size: 13px; }
+  /* Feedback states below the screen: inline rename, delete ask (pink edge), toast without undo. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .feedback .filter { padding: 6px 12px; }
+  .rename { background: var(--background-element); box-shadow: inset 2px 0 var(--user); padding: 6px 12px; display: grid; gap: 4px; }
+  .rename .opts, .ask .opts { color: var(--text-muted); white-space: nowrap; font-size: 13px; }
+  .rename .opts b, .ask .opts b { color: var(--accent); }
+  .ask { background: var(--background-element); border-left: 2px solid var(--error); padding: 8px 12px; display: grid; gap: 4px; }
+  .ask .q { color: var(--text); font-weight: 600; }
+  .ask .opts .danger { color: var(--error); }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; white-space: nowrap; }
+  .toast .t { color: var(--text-muted); }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-sessions::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop sessions, full screen">
+  <article class="sessions" aria-label="Sessions">
+    <div class="title">Sessions › <b>Backend remoto, 2 años</b> · 2 of 7 · esc back to session</div>
+    <search class="filter blur">
+      <span><span class="prompt">›</span><span class="placeholder">filter sessions</span></span>
+      <span class="hint"><b>/</b> filter</span>
+    </search>
+    <nav class="actions" aria-label="Session actions">
+      <span class="primary"><b>↵</b>open</span><span><b>n</b>new session</span><span><b>r</b>rename</span><span><b>d</b>delete</span><span><b>/</b>filter</span><span><b>esc</b>back</span><span class="more"><b>?</b>all actions</span>
+    </nav>
+    <div class="body">
+      <section class="list" aria-label="Session list">
+        <div class="group">
+          <div class="group-head"><h2>Today</h2><span class="count">2</span></div>
+          <ul>
+            <li class="row" aria-current="true"><span class="mark">▸</span><span class="name">Revisar CV para Django<span class="tag-current">● current</span></span><span class="meta">11:20</span><span class="num"><b>9</b> msgs</span><span class="num">no offers</span></li>
+            <li class="row sel"><span class="mark">▸</span><span class="name">Backend remoto, 2 años</span><span class="meta">09:05</span><span class="num"><b>24</b> msgs</span><span class="num"><b>3</b> offers</span></li>
+          </ul>
+        </div>
+        <div class="group">
+          <div class="group-head"><h2>Yesterday</h2><span class="count">2</span></div>
+          <ul>
+            <li class="row"><span class="mark">▸</span><span class="name">Ofertas Python en Madrid</span><span class="meta">19:30</span><span class="num"><b>31</b> msgs</span><span class="num"><b>5</b> offers</span></li>
+            <li class="row"><span class="mark">▸</span><span class="name">Por qué bajó el score de Acme</span><span class="meta">12:04</span><span class="num"><b>6</b> msgs</span><span class="num"><b>1</b> offer</span></li>
+          </ul>
+        </div>
+        <div class="group">
+          <div class="group-head"><h2>Last week</h2><span class="count">3</span></div>
+          <ul>
+            <li class="row"><span class="mark">▸</span><span class="name">Primera búsqueda: backend junior</span><span class="meta">Oct 27</span><span class="num"><b>42</b> msgs</span><span class="num"><b>8</b> offers</span></li>
+            <li class="row"><span class="mark">▸</span><span class="name">Configurar fuentes de ofertas</span><span class="meta">Oct 26</span><span class="num"><b>14</b> msgs</span><span class="num">no offers</span></li>
+            <li class="row"><span class="mark">▸</span><span class="name">Salario esperado en Europa</span><span class="meta">Oct 26</span><span class="num"><b>11</b> msgs</span><span class="num"><b>2</b> offers</span></li>
+          </ul>
+        </div>
+        <div class="list-foot">7 sessions · local · encrypted</div>
+      </section>
+      <section class="preview" aria-label="Preview of the selected session">
+        <div>
+          <h2>Preview</h2>
+          <div class="sub">started <b>today 08:51</b> · last reply 09:05 · <b>24</b> messages · gpt-oss-20b</div>
+        </div>
+        <div>
+          <div class="user"><p>Busco backend remoto con Python, tengo 2 años de experiencia. ¿Qué hay esta semana que encaje con mi CV?</p></div>
+          <div class="meta-line">you · 08:51 · first message</div>
+        </div>
+        <div class="gap">… 22 messages</div>
+        <div class="turn">
+          <p>De las 3 ofertas, Acme Labs es la que mejor encaja: pide Django y REST, y solo te falta Kubernetes, que es opcional. Te sugiero aplicar hoy, antes de que…</p>
+          <div class="meta-line">goop · 09:05 · last reply</div>
+        </div>
+        <div>
+          <h2>Offers mentioned</h2>
+          <ul class="offers">
+            <li><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="co">Acme Labs</span></li>
+            <li><span class="score maybe">74</span><span>Python Engineer, Payments</span><span class="co">Fintual</span></li>
+            <li><span class="score check">41</span><span>Senior Backend (Go)</span><span class="co">Orbit</span></li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </article>
+  <footer><span class="mode m-sessions">sessions</span><span><b>↑↓</b> move · <b>↵</b> open · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="Session feedback states">
+  <div><h3>Filtering (/)</h3><search class="filter"><span><span class="prompt">›</span>remoto<span class="cursor"></span></span><span class="hint"><b>2</b> of 7 · <b>esc</b> clear</span></search></div>
+  <div><h3>Rename (r)</h3><div class="rename"><span><span class="prompt">›</span>Backend remoto, Python<span class="cursor"></span></span><span class="opts"><b>↵</b> save · <b>esc</b> cancel</span></div></div>
+  <div><h3>On delete (d)</h3><div class="ask"><span class="q">Delete 'Backend remoto, 2 años'? It is encrypted and cannot be recovered.</span><span class="opts"><b class="danger">y</b> delete · <b>n</b> keep</span></div></div>
+  <div><h3>After delete</h3><div class="toast"><span>✓ Deleted 'Backend remoto, 2 años'</span><span class="t">4s</span></div></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> ctrl+x l or /resume opens the session list like opencode's: a filter at the top in the composer style, sessions grouped by day with time, messages and how many offers they mention, the current one tagged ● current. The list has the focus, so the filter shows blurred and single keys act on the selected row; / moves the focus into the filter (lavender edge, live count), esc clears it. The preview on the right shows your first message and goop's last reply, truncated, plus the offers the session mentions, so you recognize a conversation without opening it. Rename edits the title in place; delete always asks with a pink edge and, because the session is encrypted and removed for good, the toast after it has no undo. Tradeoff: the preview takes 560px from the list, so long titles cut earlier; below ~120 columns the preview moves under the selected row.</p>
+</body>
+</html>
