@@ -1,0 +1,27 @@
+# Repo-local development environment (persistent) and disposable files
+.local/
+.temp/
+
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local tooling and editors
+.atl/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Secrets and personal data never belong in the repo
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Model and quantization artifacts
+*.gguf
+*.safetensors
+*.imatrix
