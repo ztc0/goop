@@ -84,6 +84,16 @@
   .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
   .sub { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
   .new { color: var(--accent); font-size: 12px; font-weight: 700; }
+  /* Top status strip: context, search and the agents and jobs working right now (only active ones). */
+  .top-status { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); }
+  .ts-line { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); }
+  .ts-line b { color: var(--text); font-weight: 600; }
+  .mini { width: 70px; height: 6px; background: var(--background-element); }
+  .mini span { display: block; height: 100%; background: var(--success); }
+  .agents { display: grid; gap: 2px; font-size: 13px; }
+  .agents div { display: grid; grid-template-columns: 1.5ch 9ch 1fr auto; gap: 8px; }
+  .agents .who { color: var(--text); }
+  .agents .what, .agents .where { color: var(--text-muted); }
   /* Sidebar sections (opencode / Crush): a header with a fold marker and a count, then rows. */
   .sec { display: flex; flex-direction: column; gap: 6px; }
   .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
@@ -154,6 +164,15 @@
     </div>
   </section>
   <aside aria-label="Sidebar with offers and status">
+    <div class="top-status">
+      <div class="ts-line"><span>ctx <b>2.1K</b>/6K</span><span class="mini"><span style="width:35%"></span></span><span class="busy">◐ search 25%</span><span class="ok">● 5 sources</span></div>
+      <div class="agents">
+        <div><span class="busy">◐</span><span class="who">Analytic</span><span class="what">scoring 34 / 100</span><span class="where">qwen · GPU</span></div>
+        <div><span class="busy">◐</span><span class="who">Explorer</span><span class="what">fetching ashby 312 / 1,240</span><span class="where">network</span></div>
+        <div><span class="busy">◐</span><span class="who">Reranker</span><span class="what">ranking 100 offers</span><span class="where">CPU</span></div>
+        <div><span class="idle">○</span><span class="who">Security</span><span class="what">queued · 12 offers</span><span class="where">after rerank</span></div>
+      </div>
+    </div>
     <div class="sec">
       <div class="sec-head"><h2>Offers</h2><span class="count">8 · <span class="new">3 new</span></span></div>
       <ul>
@@ -161,26 +180,19 @@
         <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
         <li><span class="score maybe">71</span><span>Python Developer</span><span></span><span class="sub">Kraft · Remote · ~ maybe</span></li>
         <li><span class="score check">58</span><span>Backend Engineer</span><span></span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+        <li><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">NEW</span><span class="sub">Lumen · Hybrid Madrid · ~ maybe</span></li>
+        <li><span class="score maybe">61</span><span>Node.js Developer</span><span></span><span class="sub">Tessera · Remote EU · ~ maybe</span></li>
       </ul>
-      <div class="more">+ 4 more · enter to open the list</div>
+      <div class="more">+ 2 more · enter to open the list</div>
     </div>
     <div class="sec folded">
       <div class="sec-head"><h2>Rules</h2><span class="count act">1 to review · /rules</span></div>
     </div>
-    <div class="sec">
-      <div class="sec-head"><h2>Search</h2><span class="count busy">running</span></div>
-      <div class="rows">
-        <span class="dot busy">◐</span><span class="label">companies</span><span></span><span class="val">312 / 1,240</span>
-        <span class="meter"><span style="width:25%"></span></span>
-        <span class="dot ok">●</span><span class="label">sources</span><span class="where">5 ok</span><span class="val">0 failed</span>
-        <span class="dot idle">○</span><span class="label">next</span><span class="where">daily</span><span class="val">tomorrow 09:00</span>
-      </div>
+    <div class="sec folded">
+      <div class="sec-head"><h2>Search</h2><span class="count">5 sources ok · next 09:00</span></div>
     </div>
     <div class="sec folded">
       <div class="sec-head"><h2>Profile</h2><span class="count">Backend · mid · 3 yrs</span></div>
-    </div>
-    <div class="sec folded">
-      <div class="sec-head"><h2>Context</h2><span class="count">2.1K / 6K</span></div>
     </div>
     <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
   </aside>
@@ -199,6 +211,6 @@
   <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ qwen not responding · /models</span></span><span>chat still on gpt-oss</span></div></div></div>
 </section>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns (lavender, the same color as the composer where you type them) as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then the folded chat context); models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns (lavender, the same color as the composer where you type them) as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded search); a top strip shows chat context, search progress and only the agents and jobs working right now; models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
