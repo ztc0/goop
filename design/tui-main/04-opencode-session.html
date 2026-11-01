@@ -68,6 +68,7 @@
   .below b { color: var(--primary); font-weight: 600; }
   .chip { padding: 0 6px; }
   .chip.warn { color: var(--background); background: var(--warning); }
+  .chip.err { color: var(--background); background: var(--error); }
   .chip.busy { color: var(--warning); }
   .popup { position: absolute; bottom: calc(100% + 4px); left: 0; width: 460px; background: var(--background-element); border-left: 2px solid var(--primary); padding: 6px 0; font-size: 14px; }
   .popup div { display: grid; grid-template-columns: 14ch 1fr; padding: 2px 14px; }
@@ -167,9 +168,6 @@
       <div class="sec-head"><h2>Profile</h2><span class="count">Backend · mid · 3 yrs</span></div>
     </div>
     <div class="sec folded">
-      <div class="sec-head"><h2>Models</h2><span class="count">2 / 4 loaded</span></div>
-    </div>
-    <div class="sec folded">
       <div class="sec-head"><h2>Context</h2><span class="count">2.1K / 6K</span></div>
     </div>
     <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
@@ -182,7 +180,8 @@
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">mi token es [SECRET_1] ¿lo uso?</span></div><div class="below"><span><span class="chip warn">⚠ 1 secret removed</span></span><span>never sent to a model</span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
   <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ qwen not responding · /models</span></span><span>chat still on gpt-oss</span></div></div></div>
 </section>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded models and chat context) with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then the folded chat context); models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
