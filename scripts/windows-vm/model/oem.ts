@@ -50,7 +50,9 @@ export function oemFiles(publicKey: string): OemFiles {
     `Set-Content -Path $keyFile -Value ${quote(key)} -Encoding ascii`,
     "icacls $keyFile /inheritance:r /grant Administrators:F /grant SYSTEM:F | Out-Null",
     "if ($LASTEXITCODE -ne 0) { throw 'icacls failed' }",
-    "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force",
+    // A policy set at a more specific scope makes this throw even though LocalMachine was set;
+    // with $ErrorActionPreference = 'Stop' that would end the setup before the ready marker.
+    "try { Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force } catch [System.Security.SecurityException] { }",
     "Set-Content -Path 'C:\\OEM\\ready.txt' -Value 'ready' -Encoding ascii",
   ]);
   return { installBat, setupPs1 };

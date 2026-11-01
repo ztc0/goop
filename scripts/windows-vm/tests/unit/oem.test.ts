@@ -37,7 +37,8 @@ describe("oemFiles", () => {
       "$keyFile = 'C:\\ProgramData\\ssh\\administrators_authorized_keys'",
       `Set-Content -Path $keyFile -Value '${KEY}' -Encoding ascii`,
       "icacls $keyFile /inheritance:r /grant Administrators:F /grant SYSTEM:F",
-      "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force",
+      // A stricter policy at another scope makes this throw; that must not stop the setup.
+      "try { Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force } catch [System.Security.SecurityException] { }",
       "Set-Content -Path 'C:\\OEM\\ready.txt' -Value 'ready' -Encoding ascii",
     ];
     let previous = -1;
