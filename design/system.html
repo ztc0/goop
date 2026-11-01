@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · design system</title>
+<style>
+  /* Derived from the approved artboards (design/tui-main/04, 05, 06) and src/shared/model/logo.ts.
+     Component CSS is copied from them; board-only rules reuse their tokens and spacing. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+
+  /* Board layout (this file only). */
+  .board { width: 1440px; background: var(--background); color: var(--text); font: 15px/1.5 var(--mono); }
+  .intro { padding: 20px 28px; }
+  .intro h1 { margin: 0; font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: .02em; }
+  .intro p { margin: 0; color: var(--text-muted); font-size: 13px; }
+  .block { padding: 20px 28px; display: grid; gap: 14px; border-top: 1px solid var(--border-subtle); }
+  .block > p { margin: 0; color: var(--text-muted); font-size: 13px; }
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .sw { background: var(--background-panel); border-left: 1px solid var(--border); padding: 6px 8px; font-size: 13px; }
+  .sw i { display: block; height: 28px; margin-bottom: 6px; border: 1px solid var(--border); }
+  .sw b { color: var(--text); font-weight: 600; }
+  .sw span { display: block; color: var(--text-muted); }
+  .types { display: grid; gap: 6px; }
+  .types div { display: grid; grid-template-columns: 14ch 1fr; column-gap: 14px; align-items: baseline; }
+  .types .k { color: var(--text-muted); font-size: 13px; }
+  .glyphs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px 14px; font-size: 13px; }
+  .glyphs div { display: grid; grid-template-columns: 4ch 1fr; padding: 6px 8px; background: var(--background-panel); }
+  .glyphs .g { font-size: 15px; font-weight: 700; }
+  .glyphs span:last-child { color: var(--text-muted); }
+  .flame { display: inline-block; width: 11px; height: 15px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .thumb { display: inline-block; width: 4px; height: 15px; background: var(--border-active); opacity: .55; }
+
+  /* Session screen (04). `main` is renamed `.screen`; `ul`, `li` and `.new` are scoped to `aside`. */
+  .screen { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr 420px; grid-template-rows: 1fr auto; }
+  .session { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; }
+  .title b { color: var(--text); }
+  .msgs { position: relative; padding-right: 14px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
+  .user p { margin: 0; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  /* goop marker: the Nerd Font flame glyph (nf-fa-fire, U+F06D); "●" without a Nerd Font. */
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .turn p { margin: 0; }
+  .meta { color: var(--text-muted); font-size: 13px; }
+  .think-head, .tool-head { font-size: 13px; color: var(--text-muted); }
+  .think-head b { color: var(--text); font-weight: 600; }
+  .think { background: var(--background-panel); border-left: 1px solid var(--border); padding: 4px 12px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+  .think .hidden { font-style: normal; color: var(--text-muted); opacity: .8; }
+  .tool-card { border-left: 1px solid var(--border); padding: 2px 12px; font-size: 13px; }
+  .tool-head .name { color: var(--text); }
+  .tool-card .args { color: var(--text-muted); }
+  .tool-card .res { color: var(--text-muted); }
+  .tool-card .res b { color: var(--success); font-weight: 600; }
+  .tool-head kbd { color: var(--text-muted); font-family: inherit; float: right; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  .speed { display: flex; gap: 14px; font-size: 13px; color: var(--text-muted); }
+  .speed b { color: var(--text); font-weight: 600; }
+  .speed .live { color: var(--warning); }
+  .caret { display: inline-block; width: 8px; height: 16px; background: var(--text); vertical-align: -2px; }
+  .composer-wrap { position: relative; }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; }
+  .composer.blur { border-left-color: var(--border); }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--user); font-weight: 700; }
+  .composer.blur .prompt { color: var(--text-muted); }
+  .typed { color: var(--text); }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .placeholder { color: var(--text-muted); }
+  .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  /* Reasoning level: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (qwen); ctrl+r cycles it. */
+  .reason { color: var(--accent); }
+  .reason.off { color: var(--text-muted); }
+  .below b { color: var(--primary); font-weight: 600; }
+  .chip { padding: 0 6px; }
+  .chip.warn { color: var(--background); background: var(--warning); }
+  .chip.err { color: var(--background); background: var(--error); }
+  .chip.busy { color: var(--warning); }
+  .popup { position: absolute; bottom: calc(100% + 4px); left: 0; width: 460px; background: var(--background-element); border-left: 2px solid var(--user); padding: 6px 0; font-size: 14px; }
+  .popup div { display: grid; grid-template-columns: 14ch 1fr; padding: 2px 14px; }
+  .popup .on { background: var(--background-panel); }
+  .popup .on span:first-child { color: var(--user); }
+  .popup span:last-child { color: var(--text-muted); }
+  aside { position: relative; background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  aside ul { list-style: none; margin: 0; padding: 0; }
+  aside li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 6px 8px; }
+  aside li.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .sub { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
+  aside .new { color: var(--accent); font-size: 12px; font-weight: 700; }
+  .top-status { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); }
+  .ts-line { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); }
+  .ts-line b { color: var(--text); font-weight: 600; }
+  .mini { width: 70px; height: 6px; background: var(--background-element); }
+  .mini span { display: block; height: 100%; background: var(--success); }
+  .agents-sec { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
+  .tree { display: grid; gap: 2px; font-size: 13px; }
+  .tree div { display: grid; grid-template-columns: 2ch 1.5ch 9ch 1fr auto; gap: 6px; }
+  .tree .run { grid-template-columns: 1.5ch 1fr auto; }
+  .tree .run .who { color: var(--text); font-weight: 600; }
+  .tree .branch { color: var(--border); }
+  .tree .who { color: var(--text); }
+  .tree .what { color: var(--text-muted); }
+  .tree .time { color: var(--text-muted); text-align: right; }
+  .tree .done { color: var(--success); }
+  .tree .sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .offers-sec { flex: 0 1 auto; min-height: 0; overflow: hidden; }
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; color: var(--text-muted); }
+  .sec.folded .sec-head h2::before { content: "▸ "; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .more { color: var(--text-muted); font-size: 13px; padding-left: 8px; }
+  .act { color: var(--accent); }
+  /* Scrollbars: chat history shows a track and a thumb; the sidebar only a thumb while it overflows. */
+  .scroll { position: absolute; top: 0; bottom: 0; right: 0; width: 4px; background: var(--background-element); }
+  .scroll span { position: absolute; left: 0; right: 0; background: var(--border-active); opacity: .55; }
+  aside .scroll { right: 3px; background: none; }
+  aside .scroll span { background: var(--text-muted); opacity: .4; }
+  .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
+  /* Status line in three zones: focus label | hints for the focused pane | background state + help. */
+  footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
+  footer b, .fbar b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.chat::before { color: var(--user); }
+  .mode.offers::before { color: var(--secondary); }
+  .mode.busy::before { color: var(--warning); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .alert { color: var(--background); background: var(--error); padding: 0 8px; font-weight: 600; }
+  .fbars { width: 1440px; background: var(--background); padding: 8px 0 18px; display: grid; gap: 8px; font-family: var(--mono); }
+  .fbar { border: 0; background: var(--background-panel); }
+  .states { width: 1440px; padding: 18px 24px; background: var(--background); display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font: 15px/1.5 var(--mono); color: var(--text); }
+
+  /* Home (05), scoped to `.home`. */
+  .home { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 20px 28px; }
+  #logo { display: grid; grid-template-columns: repeat(24, 10px); grid-auto-rows: 10px; }
+  .home .name { font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: .02em; }
+  .home .tagline { color: var(--text-muted); margin-top: -14px; }
+  .home .composer { width: 720px; background: var(--background-panel); border-left: 2px solid var(--user); padding: 14px 18px; }
+  .home .composer .prompt { color: var(--user); margin-right: 8px; }
+  .home .composer .cursor { display: inline-block; width: 9px; height: 1.1em; background: var(--user); vertical-align: -3px; margin-right: 6px; }
+  .home .composer .hint { color: var(--text-muted); }
+  .home .composer .model { color: var(--text-muted); font-size: 13px; margin-top: 6px; display: flex; justify-content: space-between; }
+  .home .composer .model b { color: var(--primary); }
+  .recent { width: 720px; display: grid; gap: 2px; font-size: 14px; }
+  .recent div { display: grid; grid-template-columns: 2ch 1fr auto; padding: 3px 10px; color: var(--text-muted); }
+  .recent div b { color: var(--text); font-weight: 600; }
+  .recent .new { color: var(--accent); }
+  .recent .sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .recent .sel span:first-child { color: var(--primary); }
+  .recent kbd { font: inherit; color: var(--text-muted); }
+  .tip { width: 720px; color: var(--text-muted); font-size: 14px; }
+  .tip .dot { color: var(--accent); }
+  .tip b { color: var(--text); font-weight: 600; }
+  .first { width: 1440px; display: grid; grid-template-columns: 1fr 1fr; gap: 0; background: var(--background); color: var(--text); font: 15px/1.5 var(--mono); border-top: 1px solid var(--border); }
+  .first > div { padding: 22px 28px; }
+  .first > div + div { border-left: 1px solid var(--border-subtle); }
+  .first h3 { margin: 0 0 10px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+  .first ol { margin: 0; padding-left: 3ch; display: grid; gap: 4px; }
+  .first li::marker { color: var(--primary); }
+  .first .done { color: var(--text-muted); text-decoration: line-through; }
+  .first .now { color: var(--text); }
+  .first .now::after { content: "  ← now"; color: var(--primary); }
+  .first .later { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<main class="board" aria-label="goop TUI design system">
+  <header class="intro">
+    <h1>goop · TUI design system</h1>
+    <p>Derived from the approved artboards design/tui-main/04, 05, 06 and src/shared/model/logo.ts. The terminal chooses the font: one monospace cell grid.</p>
+  </header>
+
+  <section class="block" aria-label="Color tokens">
+    <h2>Color tokens</h2>
+    <div class="swatches">
+      <div class="sw"><i style="background: var(--background)"></i><b>--background</b><span>#14110f · screen; text in filled chips</span></div>
+      <div class="sw"><i style="background: var(--background-panel)"></i><b>--background-panel</b><span>#1b1714 · sidebar, composer, thought</span></div>
+      <div class="sw"><i style="background: var(--background-element)"></i><b>--background-element</b><span>#251e19 · user turn, popup, selection</span></div>
+      <div class="sw"><i style="background: var(--text)"></i><b>--text</b><span>#f4ede6 · body text, names, keys</span></div>
+      <div class="sw"><i style="background: var(--text-muted)"></i><b>--text-muted</b><span>#a89c91 · meta, hints, idle, queued</span></div>
+      <div class="sw"><i style="background: var(--primary)"></i><b>--primary</b><span>#ff7a2e · goop, brand, selection edge</span></div>
+      <div class="sw"><i style="background: var(--accent)"></i><b>--accent</b><span>#ffc24a · reasoning level, NEW, to review</span></div>
+      <div class="sw"><i style="background: var(--secondary)"></i><b>--secondary</b><span>#7cc4ff · offers focus dot</span></div>
+      <div class="sw"><i style="background: var(--user)"></i><b>--user</b><span>#b9a6ff · you: turns, composer, cursor</span></div>
+      <div class="sw"><i style="background: var(--success)"></i><b>--success</b><span>#8fd694 · apply, ok, done</span></div>
+      <div class="sw"><i style="background: var(--warning)"></i><b>--warning</b><span>#ffc24a · maybe, busy, live, warn chip</span></div>
+      <div class="sw"><i style="background: var(--error)"></i><b>--error</b><span>#ff5f7a · errors, alerts, low score</span></div>
+      <div class="sw"><i style="background: var(--info)"></i><b>--info</b><span>#7cc4ff · defined, unused yet</span></div>
+      <div class="sw"><i style="background: var(--border)"></i><b>--border</b><span>#3a302a · edges, tree branches, │</span></div>
+      <div class="sw"><i style="background: var(--border-active)"></i><b>--border-active</b><span>#ff7a2e · chat scrollbar thumb</span></div>
+      <div class="sw"><i style="background: var(--border-subtle)"></i><b>--border-subtle</b><span>#2a231f · separators, status line edge</span></div>
+    </div>
+    <h2>Logo palette · src/shared/model/logo.ts</h2>
+    <div class="swatches">
+      <div class="sw"><i style="background: #ff5f7a"></i><b>pink</b><span>#ff5f7a · = --error</span></div>
+      <div class="sw"><i style="background: #ff7a2e"></i><b>orange</b><span>#ff7a2e · = --primary</span></div>
+      <div class="sw"><i style="background: #ffc24a"></i><b>yellow</b><span>#ffc24a · = --accent</span></div>
+      <div class="sw"><i style="background: #fffaf3"></i><b>eye</b><span>#fffaf3 · logo only</span></div>
+      <div class="sw"><i style="background: #1a1412"></i><b>pupil</b><span>#1a1412 · logo only</span></div>
+    </div>
+  </section>
+
+  <section class="block" aria-label="Typography">
+    <h2>Type roles · one terminal size</h2>
+    <div class="types">
+      <div><span class="k">normal · 15px</span><span>Encontré 8 que encajan; están a la derecha.</span></div>
+      <div><span class="k">normal · 14px</span><span style="font-size: 14px">/rules  review rules goop learned</span></div>
+      <div><span class="k">dim · 13px</span><span class="meta">you · 10:42 · 8 of 8 · enter to open the list</span></div>
+      <div><span class="k">small · 12px</span><span><span style="color: var(--accent); font-size: 12px; font-weight: 700">NEW</span> <span class="meta" style="font-size: 12px">local · encrypted</span></span></div>
+      <div><span class="k">brand · 28px</span><span style="font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: .02em">goop</span></div>
+      <div><span class="k">bold keys</span><span class="meta"><b style="color: var(--text); font-weight: 600">enter</b> send · <b style="color: var(--text); font-weight: 600">/</b> commands</span></div>
+      <div><span class="k">section</span><h2>Offers</h2></div>
+      <div><span class="k">thinking</span><span class="think">The user wants remote backend roles open to 2 years…</span></div>
+    </div>
+  </section>
+
+  <section class="block" aria-label="Glyphs">
+    <h2>Glyphs</h2>
+    <div class="glyphs">
+      <div><span class="g prompt">›</span><span>prompt, you</span></div>
+      <div><span class="g ok">●</span><span>ok, focus dot</span></div>
+      <div><span class="g busy">◐</span><span>running, busy</span></div>
+      <div><span class="g idle">○</span><span>queued, idle</span></div>
+      <div><span class="g ok">✓</span><span>done</span></div>
+      <div><span class="g apply">✔</span><span>verdict apply</span></div>
+      <div><span class="g maybe">~</span><span>verdict maybe</span></div>
+      <div><span class="g check">✕</span><span>verdict skip</span></div>
+      <div><span class="g busy">⚠</span><span>warning, alert</span></div>
+      <div><span class="g idle">▾ ▸</span><span>open, folded</span></div>
+      <div><span class="g" style="color: var(--border)">├ └</span><span>agents tree</span></div>
+      <div><span class="g" style="color: var(--border)">│</span><span>zone separator</span></div>
+      <div><span class="g reason">◇</span><span>reasoning low</span></div>
+      <div><span class="g reason">◈</span><span>reasoning medium</span></div>
+      <div><span class="g reason">◆</span><span>reasoning high</span></div>
+      <div><span class="g"><span class="flame"></span></span><span>U+F06D, fallback ●</span></div>
+      <div><span class="g"><span class="thumb"></span></span><span>scrollbar thumb</span></div>
+      <div><span class="g idle">→</span><span>tool result</span></div>
+    </div>
+  </section>
+
+  <section class="block" aria-label="Session components">
+    <h2>Session · 04</h2>
+    <p>User turn, goop turn (thought, tool card, speed line), composer with popup and info line, sidebar with offers and agents tree, status line.</p>
+  </section>
+  <section class="screen" aria-label="Session screen">
+    <section class="session" aria-label="Session">
+      <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
+      <div class="msgs">
+        <div class="scroll" aria-hidden="true"><span style="top: 58%; height: 42%"></span></div>
+        <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
+        <div class="turn">
+          <div class="think-head">▾ <b>Thought</b> for 2.4s · <span class="reason">◆ high</span> · ctrl+t</div>
+          <div class="think">The user wants remote backend roles open to 2 years… I should search, then filter by seniority and modality.<br><span class="hidden">… 6 lines hidden</span></div>
+          <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">search_offers</span> · 0.3s <kbd>ctrl+o</kbd></div><div class="args">query "backend remote" · max years 2</div><div class="res">→ <b>8 matches</b> · 3 new</div></div>
+          <p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p>
+          <div class="speed"><span>gpt-oss-20b</span><span>prefill <b>412</b> tok/s</span><span>output <b>18.4</b> tok/s</span><span>1,240 → 186 tok</span><span>4.1s</span></div>
+        </div>
+        <div class="user"><p>¿Por qué la de Kraft tiene menos?</p><div class="meta">you · 10:43</div></div>
+        <div class="turn">
+          <div class="think-head">▸ <b>Thought</b> for 0.9s · <span class="reason">◆ high</span></div>
+          <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">explain_score</span> · Kraft · Python Developer · 0.1s <kbd>ctrl+o</kbd></div></div>
+          <p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja<span class="caret"></span></p>
+          <div class="speed"><span class="live">◐ writing</span><span>prefill <b>398</b> tok/s</span><span>output <b class="live">17.9</b> tok/s</span><span>esc stop</span></div>
+        </div>
+      </div>
+      <div class="composer-wrap">
+        <div class="popup">
+          <div class="on"><span>/rules</span><span>review rules goop learned</span></div>
+          <div><span>/resume</span><span>open a previous session</span></div>
+          <div><span>/reload-cv</span><span>load a new CV</span></div>
+        </div>
+        <div class="composer">
+          <div class="line"><span class="prompt">›</span><span class="typed">/r</span><span class="cursor"></span></div>
+          <div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · ready</span><span>ctrl+r reasoning · enter send · esc close</span></div>
+        </div>
+      </div>
+    </section>
+    <aside aria-label="Sidebar with offers and status">
+      <div class="top-status">
+        <div class="ts-line"><span>ctx <b>2.1K</b>/6K</span><span class="mini"><span style="width:35%"></span></span><span class="busy">◐ search 25%</span><span class="ok">● 5 sources</span></div>
+      </div>
+      <div class="sec offers-sec">
+        <div class="sec-head"><h2>Offers</h2><span class="count">8 · <span class="new">3 new</span></span></div>
+        <ul>
+          <li class="sel"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">NEW</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
+          <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
+          <li><span class="score maybe">71</span><span>Python Developer</span><span></span><span class="sub">Kraft · Remote · ~ maybe</span></li>
+          <li><span class="score check">58</span><span>Backend Engineer</span><span></span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+          <li><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">NEW</span><span class="sub">Lumen · Hybrid Madrid · ~ maybe</span></li>
+          <li><span class="score maybe">61</span><span>Node.js Developer</span><span></span><span class="sub">Tessera · Remote EU · ~ maybe</span></li>
+          <li><span class="score maybe">57</span><span>Go Backend Engineer</span><span></span><span class="sub">Fenix · Remote · ~ maybe</span></li>
+          <li><span class="score check">49</span><span>Senior Backend Engineer</span><span></span><span class="sub">Atlas · Remote US · ✕ skip</span></li>
+        </ul>
+        <div class="more">8 of 8 · enter to open the list</div>
+      </div>
+      <div class="sec folded">
+        <div class="sec-head"><h2>Rules</h2><span class="count act">1 to review · /rules</span></div>
+      </div>
+      <div class="sec folded">
+        <div class="sec-head"><h2>Search</h2><span class="count">5 sources ok · next 09:00</span></div>
+      </div>
+      <div class="sec folded">
+        <div class="sec-head"><h2>Profile</h2><span class="count">Backend · mid · 3 yrs</span></div>
+      </div>
+      <div class="sec agents-sec">
+        <div class="sec-head"><h2>Agents</h2><span class="count">enter · /agents</span></div>
+        <div class="tree">
+          <div class="run"><span class="busy">◐</span><span class="who">Daily search · 09:00</span><span class="time">4m 12s</span></div>
+          <div><span class="branch">├</span><span class="done">✓</span><span class="who">Explorer</span><span class="what">1,240 companies</span><span class="time">2m 40s</span></div>
+          <div class="sel"><span class="branch">├</span><span class="busy">◐</span><span class="who">Reranker</span><span class="what">ranking 100</span><span class="time">0m 31s</span></div>
+          <div><span class="branch">├</span><span class="idle">○</span><span class="who">Security</span><span class="what">queued · 12</span><span class="time"></span></div>
+          <div><span class="branch">└</span><span class="idle">○</span><span class="who">Analytic</span><span class="what">waiting</span><span class="time"></span></div>
+        </div>
+      </div>
+      <div class="scroll" aria-hidden="true"><span style="top: 2%; height: 70%"></span></div>
+      <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
+    </aside>
+    <footer><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="busy">◐ searching 25%</span><span><b>?</b> help</span></span></footer>
+  </section>
+
+  <section class="block" aria-label="Status line variants">
+    <h2>Status line · offers, answering, error chip</h2>
+  </section>
+  <section class="fbars" aria-label="Status line in other contexts">
+    <div class="fbar"><span class="mode offers">offers</span><span><b>enter</b> open · <b>s</b> save · <b>d</b> dismiss · <b>tab</b> chat</span><span class="zone-right"><span class="busy">◐ searching 25%</span><span><b>?</b> help</span></span></div>
+    <div class="fbar"><span class="mode busy">answering</span><span><b>esc</b> stop</span><span class="zone-right"><span>gpt-oss · 17.9 tok/s</span><span><b>?</b> help</span></span></div>
+    <div class="fbar"><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ qwen not responding · /models</span><span><b>?</b> help</span></span></div>
+  </section>
+
+  <section class="block" aria-label="Composer states heading">
+    <h2>Composer states · empty, answering, secret removed, CPU busy, blur, model error</h2>
+  </section>
+  <section class="states" aria-label="Other composer states">
+    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◈ medium</span> · CPU · ready</span><span>empty</span></div></div></div>
+    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">goop is answering…</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · answering</span><span>esc stop</span></div></div></div>
+    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">mi token es [SECRET_1] ¿lo uso?</span></div><div class="below"><span><span class="chip warn">⚠ 1 secret removed</span></span><span>never sent to a model</span></div></div></div>
+    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · <span class="reason off">think off</span> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
+    <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
+    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ qwen not responding · /models</span></span><span>chat still on gpt-oss</span></div></div></div>
+  </section>
+
+  <section class="block" aria-label="Home heading">
+    <h2>Home · 05</h2>
+  </section>
+  <section class="home" aria-label="Home">
+    <div id="logo" role="img" aria-label="goop logo: a pixel-art flame with two square eyes"></div>
+    <div class="name">goop</div>
+    <div class="tagline">your local job search agent</div>
+    <div class="composer"><div><span class="prompt">›</span><span class="cursor"></span><span class="hint">¿por qué Kraft tiene menos puntaje?</span></div><div class="model"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · ready</span><span>ctrl+r reasoning · enter send</span></div></div>
+    <nav class="recent" aria-label="Recent activity">
+      <div class="sel"><span>▸</span><span><b class="new">3 new offers</b> today · best 92 at Acme Labs</span><kbd>enter</kbd></div>
+      <div><span>▸</span><span><b>1 rule</b> to review</span><kbd>enter</kbd></div>
+      <div><span>▸</span><span>continue: <b>Backend remoto, 2 años</b> · 10:43</span><kbd>enter</kbd></div>
+    </nav>
+    <div class="tip"><span class="dot">●</span> Tip  type <b>@</b> and an offer's name to ask about it · <b>ctrl+p</b> all commands</div>
+  </section>
+  <section class="fbars" aria-label="Home status line">
+    <div class="fbar"><span class="mode chat">home</span><span><b>enter</b> open · <b>↑↓</b> move · <b>/</b> commands · <b>ctrl+p</b> all</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span>v0.1.0</span><span><b>?</b> help</span></span></div>
+  </section>
+  <section class="first" aria-label="First run version of the home screen">
+    <div><h3>First run · getting started</h3><ol>
+      <li class="done">Download the models</li>
+      <li class="now">Load your CV  <b>/reload-cv</b></li>
+      <li class="later">Tell goop what you look for (role, remote, salary)</li>
+      <li class="later">Run the first search  <b>/search</b></li>
+    </ol></div>
+    <div><h3>Placeholder rotates on each start</h3><ol>
+      <li class="later">mostrame las nuevas</li>
+      <li class="later">¿por qué Kraft tiene menos puntaje?</li>
+      <li class="later">buscá solo remoto en Europa</li>
+    </ol></div>
+  </section>
+</main>
+<script>
+  // The implemented logo grid (src/shared/model/logo.ts), 24x29.
+  const FLAME = ["........................","........................","............Y...........","...........YYY..........","...........YYY..........","...........YYYY.........","..........YYYYYY........","..........OOOOOOO.......","..........OOOOOOOO......","..........OOOOOOOO......",".........OOOOOOOOOO.....",".........OOOOOOOOOOO....","......O..OOOOOOOOOOO....",".....OOO.OOOOOOOOOOOO...","....OOOO.OOOOOOOOOOOO...","....OOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...PPPPPPPPPPPPPPPPPP...","....PPPPPPPPPPPPPPPP....","....PPPPPPPPPPPPPPPP....",".....PPPPPPPPPPPPPP.....",".....PPPPPPPPPPPPP......",".......PPPPPPPPPP.......",".........PPPPPP.........","........................"];
+  const C = { O: "#ff7a2e", Y: "#ffc24a", P: "#ff5f7a", W: "#fffaf3", K: "#1a1412" };
+  const grid = FLAME.map((row) => [...row]);
+  for (const left of [6, 14]) for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) grid[17 + y][left + x] = x >= 2 && y >= 2 ? "K" : "W";
+  const logo = document.getElementById("logo");
+  for (const row of grid) for (const c of row) {
+    const cell = document.createElement("span");
+    if (c !== ".") cell.style.background = C[c];
+    logo.appendChild(cell);
+  }
+</script>
+</body>
+</html>
