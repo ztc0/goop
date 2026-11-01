@@ -101,8 +101,17 @@
   .meter.ctx span { background: var(--success); }
   .act { color: var(--accent); }
   .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
-  footer { grid-column: 1 / -1; display: flex; justify-content: space-between; padding: 6px 28px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; }
-  footer b { color: var(--text); font-weight: 600; }
+  /* Status line in three zones (opencode, Helix, lazygit): focus label | hints for the focused pane | background state + help. */
+  footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
+  footer b, .fbar b { color: var(--text); font-weight: 600; }
+  .mode { padding: 0 12px; font-weight: 700; color: var(--background); }
+  .mode.chat { background: var(--primary); }
+  .mode.offers { background: var(--secondary); }
+  .mode.busy { background: var(--warning); }
+  .zone-right { display: flex; gap: 14px; }
+  .alert { color: var(--background); background: var(--error); padding: 0 8px; font-weight: 600; }
+  .fbars { width: 1440px; background: var(--background); padding: 8px 0 18px; display: grid; gap: 8px; font-family: var(--mono); }
+  .fbar { border: 0; background: var(--background-panel); }
   .states { width: 1440px; padding: 18px 24px; background: var(--background); display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font: 15px/1.5 var(--mono); color: var(--text); }
   .notes { width: 1440px; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
@@ -172,8 +181,13 @@
     </div>
     <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
   </aside>
-  <footer><span><b>tab</b> offers · <b>enter</b> send · <b>ctrl+o</b> expand tool · <b>ctrl+x</b> leader</span><span><span class="busy">◐ searching 25%</span> · <b>ctrl+p</b> commands · <b>ctrl+x b</b> sidebar · <b>?</b> help</span></footer>
+  <footer><span class="mode chat">CHAT</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="busy">◐ searching 25%</span><span><b>?</b> help</span></span></footer>
 </main>
+<section class="fbars" aria-label="Status line in other contexts">
+  <div class="fbar"><span class="mode offers">OFFERS</span><span><b>enter</b> open · <b>s</b> save · <b>d</b> dismiss · <b>tab</b> chat</span><span class="zone-right"><span class="busy">◐ searching 25%</span><span><b>?</b> help</span></span></div>
+  <div class="fbar"><span class="mode busy">ANSWERING</span><span><b>esc</b> stop</span><span class="zone-right"><span>gpt-oss · 17.9 tok/s</span><span><b>?</b> help</span></span></div>
+  <div class="fbar"><span class="mode chat">CHAT</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ qwen not responding · /models</span><span><b>?</b> help</span></span></div>
+</section>
 <section class="states" aria-label="Other composer states">
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><b>gpt-oss-20b</b> · CPU · ready</span><span>empty</span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">goop is answering…</span></div><div class="below"><span><b>gpt-oss-20b</b> · CPU · answering</span><span>esc stop</span></div></div></div>
