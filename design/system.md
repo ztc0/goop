@@ -234,8 +234,8 @@ Before finishing an artboard while this file exists:
 - [ ] Only the `--mono` stack inside the screen; no other font family.
 - [ ] Sizes are only the roles above (15/14 normal, 13 dim, 12 small, 28 wordmark).
 - [ ] Orange means goop or selection; lavender means you; no color reused for another meaning.
-- [ ] Selection is the inset 2px orange edge on `--background-element`; no rounded corners, no
-  shadows.
+- [ ] Selection is the inset 2px orange edge on `--background-element` (the command palette
+  uses a bold `--primary` label instead, see Command palette); no rounded corners, no shadows.
 - [ ] Glyphs come from the table above; the flame has its `●` fallback.
 - [ ] The status line keeps three zones and 28px.
 - [ ] Sections that only exist while something runs (Agents) are absent when idle.
@@ -248,3 +248,18 @@ One line of tab names separated by `·`, each with its count; the active tab is 
 ## Source-line marker
 
 When an item comes from untrusted text shown beside it (the CV, an offer), the lines it came from get a 2px `--accent` left marker in the `│` gutter view. It is not a selection: the orange inset edge stays reserved for the selected row. Source: `M9` (`design/tui-profile/01-full-screen.html`).
+
+## Command palette
+
+The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px `--text-muted` border on all four sides, no radius and no shadow; it is the only bordered box in goop, so the border is palette-only. Inside there is only the search line (lavender cursor, muted placeholder) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches, a Nerd Font glyph in `--background`, two spaces, then the label:
+
+| Tile color     | Commands                         |
+| -------------- | -------------------------------- |
+| `--success`    | Offers                           |
+| `--secondary`  | Search, Sources                  |
+| `--accent`     | Rules, Profile                   |
+| `--primary`    | Agents, Models                   |
+| `--text-muted` | Session, Settings, Privacy, Help |
+| `--error`      | Quit                             |
+
+Tiles are never lavender. Without a Nerd Font each tile shows the label's first letter, bold, in `--background`. The selected row has no fill and no edge: its label turns bold `--primary`, and only that row shows its keybind or slash command, right-aligned and muted. The palette has no hint row; its hints live in the status line (`commands` with a `--secondary` dot, `↵ run · ↑↓ move · esc close`). Source: `design/tui-command-palette/01-dialog.html`.

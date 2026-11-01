@@ -1,14 +1,14 @@
 {
   "title": "Command palette (ctrl+p)",
-  "brief": "Command palette of goop, opened with ctrl+p and modeled on opencode's DialogSelect. A centered ~720px dialog on --background-panel (no border, no radius) sits over the dimmed, inert 04 session; the session keeps its status line, now in the commands focus mode (command palette open · ? help), and the composer edge turns --border. Header, inset 4 cells: bold Commands on the left, muted esc on the right. Below it the search input: placeholder Search, auto-focused, lavender cursor. With nothing typed, the list is grouped under bold --accent category headers indented 3 cells: Suggested, Offers, Search, Session, Agents & models, System. Each row has a title, an optional muted inline description, and its keybind or slash command right-aligned and muted. The selected row is filled --primary with bold --background text; a --primary ● in the gutter marks an item that is on. Main frame: the query 'of' flattens the list to matches, with matched letters bold and the category on the right instead of the keybind. Bottom hint row: bold action, muted key (select ↵ · move ↑↓ · close esc), ctrl+p on the right. Below the screen: the unfiltered grouped list and the No results found state.",
+  "brief": "Command palette of goop, opened with ctrl+p and restyled after a Linux app launcher (walker/anyrun). A centered ~600px box on --background-panel with a 1px --text-muted border on all four sides (the only bordered box in goop; no radius, no shadow) sits over the dimmed, inert 04 session; the composer edge turns --border. Inside: no title, no esc label, no hint row. The search line shows a lavender cursor and the muted placeholder search commands. Below it a flat list of 10 rows about two lines high, no category headers: a 2-cell icon tile filled with the command's meaning color (--success offers, --secondary search and sources, --accent rules and profile, --primary agents and models, --text-muted session, settings, privacy and help, --error quit; never lavender) with a Nerd Font glyph in --background, two spaces, then the label at the 15px normal role. The selected row's label is bold --primary and only that row shows its keybind or slash command, right-aligned and muted. Hints live in the status line: commands (--secondary dot), ↵ run · ↑↓ move · esc close, ○ next search 09:00 │ ? help. Below the screen: (a) the query of flattened to matches with matched letters bold, (b) kubernetes with a muted No results, (c) the letter-tile fallback for terminals without a Nerd Font.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {
       "file": "01-dialog.html",
       "title": "Dialog",
-      "tradeoff": "One keystroke reaches every action and the categories teach the slash commands, but the dialog hides the conversation while open, the unfiltered list scrolls at 900px, and the filled orange selection and bold-action hint row are palette-only exceptions to the system rules",
+      "tradeoff": "Calmer and closer to a launcher, but the icon tiles need a Nerd Font (letter fallback), categories are gone so ordering is suggested and recent first, and keybinds show only on the selected row, so they are less discoverable (? help lists every key)",
       "width": 1440,
-      "height": 1640
+      "height": 1700
     }
   ]
 }
