@@ -30,6 +30,21 @@ describe("parseCliArgs", () => {
     });
   });
 
+  test("run also takes the command without --, since `bun run` drops the first --", () => {
+    expect(parseCliArgs(["run", "Write-Output hi;", "exit 3"])).toEqual({
+      kind: "run",
+      copy: [],
+      fetch: [],
+      command: "Write-Output hi; exit 3",
+    });
+    expect(parseCliArgs(["run", "--copy", "dist", "Get-ChildItem C:\\goop"])).toEqual({
+      kind: "run",
+      copy: ["dist"],
+      fetch: [],
+      command: "Get-ChildItem C:\\goop",
+    });
+  });
+
   test("run collects repeated --copy and --fetch before --", () => {
     expect(
       parseCliArgs([

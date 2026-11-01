@@ -21,7 +21,9 @@ function parseRun(args: string[]): CliCommand {
   const copy: string[] = [];
   const fetch: string[] = [];
   let index = 0;
-  while (index < args.length && args[index] !== "--") {
+  // Options come first; the command starts after `--` or at the first word that is not an
+  // option, because `bun run windows:run -- <command>` drops the `--` before it reaches us.
+  while (index < args.length && args[index] !== "--" && args[index]?.startsWith("--")) {
     const option = args[index] ?? "";
     const value = args[index + 1];
     if (option !== "--copy" && option !== "--fetch") {
@@ -34,7 +36,7 @@ function parseRun(args: string[]): CliCommand {
     (option === "--copy" ? copy : fetch).push(value);
     index += 2;
   }
-  const command = args.slice(index + 1).join(" ");
+  const command = args.slice(args[index] === "--" ? index + 1 : index).join(" ");
   if (command.trim() === "") return usage("run needs a PowerShell command after --.");
   return { kind: "run", copy, fetch, command };
 }
