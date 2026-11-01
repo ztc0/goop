@@ -6,25 +6,40 @@ These settings protect the public repository. They were applied on 2026-11-01, r
 
 ```mermaid
 flowchart LR
-    Branch[Feature branch] --> PR[Pull request]
-    PR --> CI{CI green on<br/>Linux and Windows}
+    Branch[Feature branch] --> PRDev[PR into dev]
+    PRDev --> CI{CI green on<br/>Linux and Windows}
     CI -->|no| Fix[Fix and push again] --> CI
-    CI -->|yes| Review{Resolved review<br/>threads}
-    Review -->|changes requested| Fix
-    Review -->|approved| Merge[Squash into one commit<br/>on main]
+    CI -->|yes| Dev[dev]
+    Dev --> PRMain[PR dev into main]
+    PRMain --> Checks{CI green and<br/>source is dev}
+    Checks -->|yes| Merge[Maintainer squashes<br/>by hand into main]
 ```
 
-## Ruleset for `main`
+## Ruleset "Protect main"
 
-| Setting                               | Value                                                                                                                                                                  |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Require a pull request before merging | On, 0 required approvals (a sole maintainer cannot approve their own pull requests), dismiss stale approvals on new commits; raise to 1 when a second maintainer joins |
-| Require status checks                 | `Lint, typecheck and test (ubuntu-latest)` and `Lint, typecheck and test (windows-latest)`, branch up to date                                                          |
-| Require conversation resolution       | On                                                                                                                                                                     |
-| Require linear history                | On (squash merges only)                                                                                                                                                |
-| Block force pushes                    | On                                                                                                                                                                     |
-| Restrict deletions                    | On                                                                                                                                                                     |
-| Bypass list                           | Empty, including administrators                                                                                                                                        |
+| Setting                               | Value                                                                                                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Require a pull request before merging | On, 0 required approvals (a sole maintainer cannot approve their own pull requests); raise to 1 when a second maintainer joins                       |
+| Allowed merge methods                 | Squash only                                                                                                                                          |
+| Require status checks                 | `Lint, typecheck and test (ubuntu-latest)`, `Lint, typecheck and test (windows-latest)` and `Pull request to main comes from dev`, branch up to date |
+| Require conversation resolution       | On                                                                                                                                                   |
+| Require linear history                | On                                                                                                                                                   |
+| Block force pushes                    | On                                                                                                                                                   |
+| Restrict deletions                    | On                                                                                                                                                   |
+| Bypass list                           | Empty, including administrators                                                                                                                      |
+
+Only the maintainer merges into `main`, by hand. GitHub cannot tell a person from a tool using the same account, so this is a project rule (see `docs/development/rules/commits.md`), backed by the source-branch check and the absence of auto-merge.
+
+## Ruleset "Protect dev"
+
+| Setting                               | Value                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Require a pull request before merging | On, 0 required approvals                                                                   |
+| Allowed merge methods                 | Merge commit, squash and rebase                                                            |
+| Require status checks                 | `Lint, typecheck and test (ubuntu-latest)` and `Lint, typecheck and test (windows-latest)` |
+| Block force pushes                    | On                                                                                         |
+| Restrict deletions                    | On                                                                                         |
+| Bypass list                           | Empty                                                                                      |
 
 ## Security
 
@@ -45,14 +60,14 @@ flowchart LR
 
 ## General
 
-| Setting                            | Value                                                                                             |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Visibility                         | Public                                                                                            |
-| Default branch                     | `main`                                                                                            |
-| Merge buttons                      | Squash only (one commit per pull request, titled with the PR title), rebase and merge commits off |
-| Automatically delete head branches | On                                                                                                |
-| Wiki and projects                  | Off (docs live in `docs/`)                                                                        |
+| Setting                            | Value                                                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Visibility                         | Public                                                                                           |
+| Default branch                     | `dev` (new pull requests target it)                                                              |
+| Merge buttons                      | Merge commit, squash and rebase enabled; each ruleset restricts its branch (`main`: squash only) |
+| Automatically delete head branches | On (feature branches; `dev` is protected from deletion)                                          |
+| Wiki and projects                  | Off (docs live in `docs/`)                                                                       |
 
 ## Keeping them in sync
 
-The settings were applied with the GitHub CLI (`gh repo edit`, and `gh api` for the "Protect main" ruleset and the security features). Re-check this file whenever the CI job names change, because the required status checks refer to them by name.
+The settings were applied with the GitHub CLI (`gh repo edit`, and `gh api` for the "Protect main" and "Protect dev" rulesets and the security features). Re-check this file whenever the CI job names change, because the required status checks refer to them by name.
