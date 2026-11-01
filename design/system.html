@@ -159,6 +159,42 @@
   .banner { display: flex; justify-content: space-between; gap: 24px; padding: 6px 14px; background: var(--background-panel); border-left: 2px solid var(--error); font-size: 14px; white-space: nowrap; }
   .banner .err { color: var(--error); }
   .banner .hint { color: var(--text-muted); font-size: 13px; }
+  /* Warning banner (W1, W3, W5): goop fixed it or fell back; nothing blocks you. */
+  .banner.warn { border-left-color: var(--warning); }
+  .banner .warn-g { color: var(--warning); }
+  /* Setup patterns (W1-W9): step list, fit badges, block meter, secret shown once, install disclosure. */
+  .setup { width: 1440px; padding: 8px 28px 18px; background: var(--background); display: grid; grid-template-columns: 360px 1fr; gap: 14px 24px; font: 15px/1.5 var(--mono); color: var(--text); align-items: start; }
+  .setup .col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .setup .col b { color: var(--text); font-weight: 600; }
+  .step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .step { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 8px; padding: 4px 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .step .tag { font-size: 13px; color: var(--text-muted); }
+  .step.current { background: var(--background-element); color: var(--text); font-weight: 600; }
+  .step.current .tag { font-weight: 400; }
+  .fit-row { display: flex; gap: 16px; padding: 4px 8px; font-size: 13px; white-space: nowrap; }
+  .fits { color: var(--success); } .slow { color: var(--warning); } .nofit { color: var(--error); }
+  .file { display: grid; grid-template-columns: 2ch 30ch 8ch 1fr auto; column-gap: 16px; padding: 4px 8px; font-size: 14px; white-space: nowrap; }
+  .file .size { color: var(--text-muted); text-align: right; }
+  .file .note { color: var(--text-muted); font-size: 13px; }
+  .meter .on { color: var(--warning); }
+  .meter .off { color: var(--border); }
+  .meter.paused .on { color: var(--text-muted); }
+  .key { margin: 0; background: var(--background-element); padding: 10px 16px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .key .sep { color: var(--text-muted); font-weight: 400; }
+  .key .last { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--text-muted); }
+  .setup .dim { margin: 0; color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .confirm-line { margin: 0; background: var(--background-panel); border-left: 2px solid var(--user); padding: 6px 14px; display: flex; align-items: center; white-space: nowrap; font-size: 14px; }
+  .setup .confirm-line .prompt { margin-right: 1ch; }
+  .confirm-line .label { color: var(--text-muted); margin-right: 1ch; }
+  .confirm-line .ask-word { margin-left: auto; color: var(--text-muted); font-size: 13px; }
+  .confirm-line .bar-cursor { display: inline-block; width: 2px; height: 18px; background: var(--user); vertical-align: -3px; margin-left: 1px; }
+  .installs { background: var(--background-panel); border-left: 1px solid var(--border); padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+  .installs p { margin: 0; white-space: nowrap; }
+  .installs .what { color: var(--text-muted); font-size: 13px; margin-left: 2ch; }
+  .installs .head { display: flex; justify-content: space-between; align-items: baseline; }
+  .installs .cmd { color: var(--text-muted); font-size: 13px; }
+  .installs .safe { color: var(--text-muted); font-size: 13px; padding-top: 6px; border-top: 1px solid var(--border-subtle); }
+  .fbar .blocked { color: var(--text-muted); }
   .mode.full::before { color: var(--secondary); }
   .fbar { white-space: nowrap; }
   .states { width: 1440px; padding: 18px 24px; background: var(--background); display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font: 15px/1.5 var(--mono); color: var(--text); }
@@ -258,7 +294,11 @@
       <div><span class="g apply">✔</span><span>verdict apply</span></div>
       <div><span class="g maybe">~</span><span>verdict maybe</span></div>
       <div><span class="g check">✕</span><span>verdict skip</span></div>
+      <div><span class="g check">✕</span><span>failed check</span></div>
       <div><span class="g busy">⚠</span><span>warning, alert</span></div>
+      <div><span class="g check">⚠</span><span>error banner</span></div>
+      <div><span class="g idle">—</span><span>skipped step</span></div>
+      <div><span class="g">↵</span><span>enter key</span></div>
       <div><span class="g idle">▾ ▸</span><span>open, folded</span></div>
       <div><span class="g" style="color: var(--border)">├ └</span><span>agents tree</span></div>
       <div><span class="g" style="color: var(--border)">│</span><span>zone separator</span></div>
@@ -362,16 +402,54 @@
 
   <section class="block" aria-label="Unified components heading">
     <h2>Toast · ask · problem banner · right zone</h2>
-    <p>Keys are bold --text everywhere. Undo is always ctrl+z. Irreversible actions use the M11 box, never the ask. The right zone reads exactly ○ next search 09:00 │ ? help.</p>
+    <p>Keys are bold --text everywhere. Undo is always ctrl+z. Only reversible actions use the ask; costly and irreversible ones use the M11 box. The right zone reads ○ next search 09:00 │ ? help unless a live busy state replaces the first slot.</p>
   </section>
   <section class="unified" aria-label="Toast, ask, problem banner and status line right zone">
     <div class="toast" role="status"><span><span class="ok">✓</span> 3 offers dismissed</span><span><span class="k">ctrl+z</span> undo · 4s</span></div>
     <div class="ask"><span class="q">Run the search again now? It takes about 4 minutes.</span><span class="opts"><span class="k">y</span> yes · <span class="k">n</span> no</span></div>
     <p class="banner" role="alert"><span><span class="err">⚠</span> Qwen3.5-9B not responding · restarting 2/3 · matching paused, chat still works</span><span class="hint"><b style="color: var(--text); font-weight: 600">r</b> restart</span></p>
+    <p class="banner warn" role="status"><span><span class="warn-g">⚠</span> Vulkan lists the 780M iGPU first · goop will use the RX 7700S (device 1)</span><span class="hint"><b style="color: var(--text); font-weight: 600">↵</b> ok</span></p>
   </section>
   <section class="fbars" aria-label="Status line right zone wording">
     <div class="fbar"><span class="mode full">sources</span><span><b>↑↓</b> move · <b style="color: var(--success)">r</b> run now · <b>[ ]</b> tabs · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></div>
     <div class="fbar"><span class="mode full">help</span><span><b>↑↓</b> sections · <b>/</b> search · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span>v0.1.0</span></span></div>
+  </section>
+
+  <section class="block" aria-label="Setup patterns heading">
+    <h2>Setup · W1-W9 · step list, fit badges, block meter, secret shown once, install disclosure</h2>
+    <p>The step list never takes focus: the current row has a fill and bold text, no orange edge. A blocked primary key is muted and not bold. During setup zone 3 is ? help or the download line.</p>
+  </section>
+  <section class="setup" aria-label="Setup patterns">
+    <div class="col">
+      <ol class="step-list" aria-label="Step list excerpt">
+        <li class="step"><span class="ok">✓</span><span>Models</span><span class="tag"></span></li>
+        <li class="step"><span class="busy">◐</span><span>Download</span><span class="tag">↓ <b>42%</b></span></li>
+        <li class="step"><span class="ok">✓</span><span>Benchmark</span><span class="tag">optional</span></li>
+        <li class="step current" aria-current="step"><span class="busy">◐</span><span>Security</span><span class="tag">required</span></li>
+        <li class="step"><span>—</span><span>Preferences</span><span class="tag">skipped</span></li>
+        <li class="step"><span>○</span><span>Schedule</span><span class="tag">optional</span></li>
+      </ol>
+      <p class="fit-row"><span class="fits">Fits</span><span class="slow">May be slow</span><span class="nofit">Won't fit</span><span><span class="fits">Fits</span> <span class="idle">· on demand</span></span></p>
+    </div>
+    <div class="col">
+      <ul style="list-style: none; margin: 0; padding: 0" aria-label="Block meter">
+        <li class="file"><span class="busy">◐</span><span>Qwen3.5-9B Q4_K_M</span><span class="size">5.7 GB</span><span class="meter" role="img" aria-label="78 percent"><span class="on">████████</span><span class="off">░░</span> <b>78%</b></span><span class="note"><b>11</b> MB/s</span></li>
+        <li class="file"><span class="idle">○</span><span>Qwen3.5-9B Q4_K_M</span><span class="size">5.7 GB</span><span class="meter paused" role="img" aria-label="78 percent, paused"><span class="on">████████</span><span class="off">░░</span> <b>78%</b></span><span class="note">paused</span></li>
+      </ul>
+      <p class="key">KQ7RM<span class="sep">-</span>4TZXV<span class="sep">-</span>9HCWN<span class="sep">-</span>P3LDF<span class="sep">-</span>8JYBG<span class="sep">-</span><span class="last">2MSQE</span></p>
+      <p class="dim">write it down or keep it in a password manager · it is shown only once</p>
+      <p class="confirm-line"><span class="prompt">›</span><span class="label">type the last group to confirm:</span><span class="typed">2MS</span><span class="bar-cursor" aria-hidden="true"></span><span class="ask-word">type <b>2MSQE</b></span></p>
+      <section class="installs" aria-label="Install disclosure">
+        <div class="head"><h2>What it installs on this system</h2><span class="count">nothing changes until you press <b>↵</b></span></div>
+        <p><span>~/.config/systemd/user/goop-search.timer</span><span class="what">starts the search at 09:00 Mon–Fri · Persistent=true</span></p>
+        <p class="cmd">then runs <b>systemctl --user enable --now goop-search.timer</b> · no sudo</p>
+        <p class="safe">nothing runs as root · remove it anytime in /settings or with <b>goop schedule off</b></p>
+      </section>
+    </div>
+  </section>
+  <section class="fbars" aria-label="Setup status lines">
+    <div class="fbar"><span class="mode full">setup</span><span><span class="blocked">↵ next</span> · <b>shift+tab</b> back · <b>c</b> copy key · <b>esc</b> quit setup</span><span class="zone-right"><span>↓ <b>13.4</b> of 31.8 GB · 18 MB/s · 17m</span><span><b>?</b> help</span></span></div>
+    <div class="fbar"><span class="mode full">setup</span><span><b>↑↓</b> move · <b>↵</b> edit · <b style="color: var(--success)">n</b> next step · <b>shift+tab</b> back · <b>s</b> skip · <b>esc</b> quit setup</span><span class="zone-right"><span><b>?</b> help</span></span></div>
   </section>
 
   <section class="block" aria-label="Composer states heading">

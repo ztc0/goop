@@ -24,6 +24,16 @@ tokens or this file must be synced again.
 | `M13`     | `design/tui-privacy/01-full-screen.html`        | Privacy; problems first, M11 box                             |
 | `M14`     | `design/tui-agents/01-full-screen.html`         | Agents tree                                                  |
 | `palette` | `design/tui-command-palette/01-dialog.html`     | ctrl+p command palette                                       |
+| `W0`      | `design/tui-onboarding/03-w0-welcome.html`      | Setup: welcome                                               |
+| `W1`      | `design/tui-onboarding/01-w1-system-check.html` | Setup frame, step list, warning and error banners            |
+| `W2`      | `design/tui-onboarding/02-w2-models.html`       | Setup: models; fit badges, download in zone 3                |
+| `W3`      | `design/tui-onboarding/04-w3-download.html`     | Setup: download; block meter, paused state                   |
+| `W4`      | `design/tui-onboarding/05-w4-benchmark.html`    | Setup: benchmark                                             |
+| `W5`      | `design/tui-onboarding/06-w5-security.html`     | Setup: security; secret shown once, blocked primary key      |
+| `W6`      | `design/tui-onboarding/07-w6-cv-profile.html`   | Setup: CV and profile                                        |
+| `W7`      | `design/tui-onboarding/08-w7-preferences.html`  | Setup: preferences; `n` next step, skipped step              |
+| `W8`      | `design/tui-onboarding/09-w8-schedule.html`     | Setup: schedule; install disclosure block                    |
+| `W9`      | `design/tui-onboarding/10-w9-done.html`         | Setup: done; live state in zone 3                            |
 | `logo.ts` | `src/shared/model/logo.ts`                      | Logo palette and pixel grid                                  |
 
 **Terminal:** one monospace cell grid; the app cannot choose the font, the terminal does. The CSS
@@ -106,57 +116,64 @@ Monospace only. A terminal has one font size, so the artboard sizes are roles, n
 
 ## Glyphs
 
-| Glyph               | Meaning                                                               | Color                                              | Source     |
-| ------------------- | --------------------------------------------------------------------- | -------------------------------------------------- | ---------- |
-| `›`                 | Prompt and user turn marker                                           | `--user`                                           | `04`, `05` |
-| `●`                 | Ok / sources up; focus label dot; tip dot; flame fallback             | per meaning                                        | `04`, `05` |
-| `◐`                 | Running, busy, writing                                                | `--warning`                                        | `04`       |
-| `○`                 | Queued, waiting, idle, next search                                    | `--text-muted`                                     | `04`, `06` |
-| `✓`                 | Tool call or agent done                                               | `--success`                                        | `04`       |
-| `✔`                 | Offer verdict "apply"                                                 | inherits row sub text                              | `04`       |
-| `~`                 | Offer verdict "maybe"                                                 | inherits row sub text                              | `04`       |
-| `✕`                 | Offer verdict "skip"                                                  | inherits row sub text                              | `04`       |
-| `⚠`                 | Suspicious text, secret removed, model not responding                 | per chip                                           | `04`       |
-| `▾` / `▸`           | Open / folded section or thought; `▸` also marks recent-activity rows | `--text-muted` (`--primary` selected)              | `04`, `05` |
-| `├` `└`             | Agents tree branches                                                  | `--border`                                         | `04`       |
-| `│`                 | Separator between right-zone items in the status line                 | `--border`                                         | `04`, `05` |
-| `·`                 | Separator inside a line                                               | inherits                                           | all        |
-| `→`                 | Tool result                                                           | `--text-muted`                                     | `04`       |
-| `◇` `◈` `◆`         | Reasoning level low / medium / high; `think off` text when off        | `--accent` (off: `--text-muted`)                   | `04`, `05` |
-| `↓`                 | Download or update in progress                                        | `--text-muted` (percent in `--text`)               | `M8`       |
-| `—`                 | Not applicable (e.g. no reasoning level, no speed)                    | `--text-muted`                                     | `M8`       |
-| `▮`                 | Heartbeat cell: one past run (ok / slow / failed / not run)           | `--success` / `--warning` / `--error` / `--border` | `M7`       |
-| `✎`                 | Profile: corrected by you (your correction wins over the CV)          | `--user`                                           | `M9`       |
-| `✓` `~` (profile)   | Profile: read from the CV and confirmed / goop is not sure            | `--success` / `--accent`                           | `M9`       |
-| U+F06D (nf-fa-fire) | goop turn marker; falls back to `●` without a Nerd Font               | `--primary`                                        | `04`       |
-| Scrollbar thumb     | One cell on the right edge                                            | see Scrollbars                                     | `04`       |
+| Glyph               | Meaning                                                               | Color                                              | Source           |
+| ------------------- | --------------------------------------------------------------------- | -------------------------------------------------- | ---------------- |
+| `›`                 | Prompt and user turn marker                                           | `--user`                                           | `04`, `05`       |
+| `●`                 | Ok / sources up; focus label dot; tip dot; flame fallback             | per meaning                                        | `04`, `05`       |
+| `◐`                 | Running, busy, writing; current setup step                            | `--warning`                                        | `04`, `W1`       |
+| `○`                 | Queued, waiting, idle, next search; setup step to do; paused download | `--text-muted`                                     | `04`, `06`, `W3` |
+| `✓`                 | Tool call or agent done; setup step, check or file done               | `--success`                                        | `04`, `W1`       |
+| `✔`                 | Offer verdict "apply"                                                 | inherits row sub text                              | `04`             |
+| `~`                 | Offer verdict "maybe"                                                 | inherits row sub text                              | `04`             |
+| `✕`                 | Offer verdict "skip"                                                  | inherits row sub text                              | `04`             |
+| `✕`                 | Failed check or file (setup)                                          | `--error`                                          | `W1`, `W3`       |
+| `⚠`                 | Suspicious text, secret removed, model not responding                 | per chip                                           | `04`             |
+| `⚠`                 | Problem banner: warning / error                                       | `--warning` / `--error`                            | `W1`, `M8`       |
+| `↵`                 | Enter key in key hints (setup, palette, confirmations)                | bold `--text`, like every key                      | `W1`, `palette`  |
+| `▾` / `▸`           | Open / folded section or thought; `▸` also marks recent-activity rows | `--text-muted` (`--primary` selected)              | `04`, `05`       |
+| `├` `└`             | Agents tree branches                                                  | `--border`                                         | `04`             |
+| `│`                 | Separator between right-zone items in the status line                 | `--border`                                         | `04`, `05`       |
+| `·`                 | Separator inside a line                                               | inherits                                           | all              |
+| `→`                 | Tool result                                                           | `--text-muted`                                     | `04`             |
+| `◇` `◈` `◆`         | Reasoning level low / medium / high; `think off` text when off        | `--accent` (off: `--text-muted`)                   | `04`, `05`       |
+| `↓`                 | Download or update in progress                                        | `--text-muted` (percent in `--text`)               | `M8`             |
+| `—`                 | Not applicable (e.g. no reasoning level, no speed)                    | `--text-muted`                                     | `M8`             |
+| `—`                 | Skipped setup step, with a muted `skipped` tag                        | `--text-muted`                                     | `W7`, `W9`       |
+| `█` `░`             | Block meter: done / remaining cells                                   | `--warning` (paused `--text-muted`) / `--border`   | `W3`             |
+| `▮`                 | Heartbeat cell: one past run (ok / slow / failed / not run)           | `--success` / `--warning` / `--error` / `--border` | `M7`             |
+| `✎`                 | Profile: corrected by you (your correction wins over the CV)          | `--user`                                           | `M9`             |
+| `✓` `~` (profile)   | Profile: read from the CV and confirmed / goop is not sure            | `--success` / `--accent`                           | `M9`             |
+| U+F06D (nf-fa-fire) | goop turn marker; falls back to `●` without a Nerd Font               | `--primary`                                        | `04`             |
+| Scrollbar thumb     | One cell on the right edge                                            | see Scrollbars                                     | `04`             |
 
 ## Layout and spacing
 
 Values at a 1440 × 900 artboard.
 
-| Element            | Rule                                                                                        | Source      |
-| ------------------ | ------------------------------------------------------------------------------------------- | ----------- |
-| Session grid       | `grid-template-columns: 1fr 420px`, rows `1fr auto` (status line)                           | `04`, `06`  |
-| Session column     | Padding `20px 28px 12px`; title margin-bottom 18px                                          | `04`        |
-| Chat history       | Gap 16px between turns; padding-right 14px (scrollbar room)                                 | `04`        |
-| goop turn          | Grid `2ch 1fr` (marker column), row gap 6px                                                 | `04`        |
-| Sidebar            | Padding `20px 20px 12px`, gap 14px between sections; 1px `--border` left edge               | `04`        |
-| Sidebar section    | Gap 6px; offer row padding `6px 8px`, grid `3ch 1fr auto`, column gap 10px                  | `04`        |
-| Top status strip   | Gap 8px, padding-bottom 12px; line gap 12px; mini meter 70 × 6px                            | `04`        |
-| Agents tree        | Grid `2ch 1.5ch 9ch 1fr auto`, gap 6px, row gap 2px; padding-top 10px                       | `04`        |
-| Status line        | Height 28px (`line-height: 28px`); grid `auto 1fr auto`, gap 14px; 28px side insets         | `04`, `05`  |
-| Composer (session) | Padding `10px 16px`; info line margin-top 6px                                               | `04`        |
-| Toast              | Padding `6px 12px`, gap 12px; one line (`white-space: nowrap`)                              | `M3`, `M11` |
-| Problem banner     | Margin `0 28px 14px`, padding `6px 14px`, gap 24px; 14px text, 13px muted hint              | `M8`        |
-| Popup              | Width 460px, 4px above the composer, padding `6px 0`, rows `2px 14px`, grid `14ch 1fr`      | `04`        |
-| Home column        | Centered, gap 22px; composer, recent and tip 720px wide                                     | `05`        |
-| Home composer      | Padding `14px 18px`                                                                         | `05`        |
-| Recent activity    | Rows `3px 10px`, grid `2ch 1fr auto`, gap 2px                                               | `05`        |
-| First-run panel    | Two columns, padding `22px 28px`                                                            | `05`        |
-| Edges              | User turn 3px; composer and popup 2px; thought, tool card, sidebar 1px; selection inset 2px | `04`        |
+| Element            | Rule                                                                                                  | Source      |
+| ------------------ | ----------------------------------------------------------------------------------------------------- | ----------- |
+| Session grid       | `grid-template-columns: 1fr 420px`, rows `1fr auto` (status line)                                     | `04`, `06`  |
+| Session column     | Padding `20px 28px 12px`; title margin-bottom 18px                                                    | `04`        |
+| Chat history       | Gap 16px between turns; padding-right 14px (scrollbar room)                                           | `04`        |
+| goop turn          | Grid `2ch 1fr` (marker column), row gap 6px                                                           | `04`        |
+| Sidebar            | Padding `20px 20px 12px`, gap 14px between sections; 1px `--border` left edge                         | `04`        |
+| Sidebar section    | Gap 6px; offer row padding `6px 8px`, grid `3ch 1fr auto`, column gap 10px                            | `04`        |
+| Top status strip   | Gap 8px, padding-bottom 12px; line gap 12px; mini meter 70 × 6px                                      | `04`        |
+| Agents tree        | Grid `2ch 1.5ch 9ch 1fr auto`, gap 6px, row gap 2px; padding-top 10px                                 | `04`        |
+| Status line        | Height 28px (`line-height: 28px`); grid `auto 1fr auto`, gap 14px; 28px side insets                   | `04`, `05`  |
+| Composer (session) | Padding `10px 16px`; info line margin-top 6px                                                         | `04`        |
+| Toast              | Padding `6px 12px`, gap 12px; one line (`white-space: nowrap`)                                        | `M3`, `M11` |
+| Problem banner     | Margin `0 28px 14px`, padding `6px 14px`, gap 24px; 14px text, 13px muted hint                        | `M8`        |
+| Setup frame        | Panes `360px 1fr`, padding `0 28px 12px`                                                              | `W1`        |
+| Setup panes        | Step list padding-right 20px, 1px `--border` right edge; body padding-left 24px, gap 14px             | `W1`        |
+| Popup              | Width 460px, 4px above the composer, padding `6px 0`, rows `2px 14px`, grid `14ch 1fr`                | `04`        |
+| Home column        | Centered, gap 22px; composer, recent and tip 720px wide                                               | `05`        |
+| Home composer      | Padding `14px 18px`                                                                                   | `05`        |
+| Recent activity    | Rows `3px 10px`, grid `2ch 1fr auto`, gap 2px                                                         | `05`        |
+| First-run panel    | Two columns, padding `22px 28px`                                                                      | `05`        |
+| Edges              | User turn 3px; composer and popup 2px; thought, tool card, sidebar 1px; selection and toast inset 2px | `04`, `M3`  |
 
-No rounded corners and no shadows: the only `box-shadow` is the inset selection edge.
+No rounded corners and no shadows except inset edges (selection, toast).
 
 ## Component rules
 
@@ -222,10 +239,13 @@ edge, one line (`white-space: nowrap`), three zones:
 2. Keys of the focused pane only: bold `--text` key, muted action, `·` between; the primary
    action key may be `--success`. This is the only key line on any screen: no key-hint row under
    a header or title and no `ctrl+p all actions` hint (`M7`, `M8`, `M14`).
-3. Exactly `○ next search 09:00 │ ? help` (`│` in `--border`), never `○ next 09:00`; while a
-   search runs its live state takes the first slot (`◐ searching 25%`, `04`). Help shows the
-   version instead: `○ next search 09:00 │ v0.1.0` (`M12`); home shows it in addition:
-   `○ next search 09:00 │ v0.1.0 │ ? help` (`05`).
+3. Background state, then help (`│` in `--border`). By default `○ next search 09:00 │ ? help`,
+   never `○ next 09:00`. A live busy state replaces `○ next search 09:00` in the first slot:
+   `◐ searching 25%` (`04`), `◐ 1 running` (`M14`), `◐ first search starting` (`W9`). Help shows
+   the version instead of `? help`: `○ next search 09:00 │ v0.1.0` (`M12`); home shows it in
+   addition: `○ next search 09:00 │ v0.1.0 │ ? help` (`05`). During setup no search is scheduled
+   yet, so zone 3 is only `? help`, or the download while it runs:
+   `↓ 13.4 of 31.8 GB · 18 MB/s · 17m │ ? help` (paused: `↓ paused · 13.4 of 31.8 GB`) (`W1`–`W9`).
    Error: `.alert` chip (`--error` background, `--background` text, bold, padding `0 8px`),
    `⚠ Qwen3.5-9B not responding · /models`.
 
@@ -261,16 +281,69 @@ justify-content: space-between; white-space: nowrap`. Left `✓ text` (`✓` in 
 the action cannot be undone (copy, open, export, a confirmed delete) the right side shows only
 the timer (`4s`).
 
-**Ask** (`M2`, `M6`, `M11`). One inline line for reversible or costly actions only:
+**Ask** (`M2`, `M6`, `M11`). One inline line for reversible actions only:
 `--background-panel` fill, 2px `--accent` left edge (never `--primary`), question bold `--text`,
 options `y yes · n no`, or verbs that name the outcome (`y cancel · n keep`), or numbered choices,
 with bold `--text` keys. Irreversible actions (delete,
 cannot be undone) never use it: they open the M11 bordered box.
 
-**Problem banner** (`M8`, `M13`, `M7`). Problems first: a failing item shows one banner above the
-panes, right under the title: `--background-panel`, 2px `--error` left edge, `⚠` in `--error`,
-then what failed · what still works; the action key on the right, muted with a bold `--text` key
-(`r restart`). One line (`white-space: nowrap`).
+**Confirmation levels** (`M11`). Reversible → the inline Ask (or no ask and an undo toast);
+costly → the small bordered box with the items that change and `y`/`n` (M11 level 2, `--accent`
+tile, `n keep` default); irreversible → the M11 box with what goes, what stays and a
+type-to-confirm line (`--error` tile).
+
+**Problem banner** (`M8`, `M13`, `M7`, `W1`, `W3`, `W8`). Problems first: a failing item shows one
+banner above the panes, right under the title: `--background-panel`, 2px left edge, `⚠`, then
+what failed · what still works; the action key on the right, muted with a bold `--text` key
+(`r restart`). One line (`white-space: nowrap`). Two variants:
+- Warning: 2px `--warning` edge and a yellow `⚠`, when goop already fixed it or chose a safe
+  fallback and nothing blocks you (`Vulkan lists the 780M iGPU first · goop will use the RX 7700S
+  (device 1)` with `↵ ok`, `W1`; slow connection, `W3`; no TPM2 → passphrase, `W5`).
+- Error: 2px `--error` edge and a pink `⚠`, when something failed: a blocking failure (RAM too
+  small, `↵ next` blocked, `W1`) or a stopped part (disk full `W2`, hash mismatch `W3`, model not
+  responding `M8`, database changed outside goop `M13`, no systemd user session `W8`).
+
+**Two actions on one key** (`W1`, `W5`, `W7`, `W8`). ↵ is the step's primary key (`↵ next`,
+`↵ install timer`) in `--success`. On form steps ↵ edits the selected row (`↵ edit`), so "next
+step" moves to `n` (`n next step`, `--success`) (`W7`). A blocked primary key stays in place,
+muted and not bold (`↵ next` plain `--text-muted`): until a failing check is resolved (`W1`) or
+until the typed group matches (`W5`); then it turns green.
+
+**Setup step list** (`W0`–`W9`). The left pane of every setup step (360px, pane head `Steps` with
+a count `1 of 10 done`, or `8 of 10 done · 1 skipped`; foot `you can leave and come back; nothing
+is lost`). One row per step, grid `2ch 1fr auto`, column gap 8px, padding `4px 8px`, 14px muted:
+- Glyphs: `✓` done (`--success`), `◐` current or running (`--warning`), `○` to do (muted), `—`
+  skipped (muted, with a `skipped` tag).
+- Tags on the right, 13px muted: `required` / `optional`, plus the live `↓ 42%` (percent bold
+  `--text`) on Download while it runs in the background; paused it is `○` with `paused 42%`.
+- The current row has only the `--background-element` fill and bold `--text` (tag stays regular),
+  no orange edge: the list is progress, not a menu, and never takes focus (↵ next and shift+tab
+  back move between steps). The orange inset edge goes to the focused row in the right pane.
+
+**Fit badges** (`W2`). Text in the state color, no fill, 13px, on the right of a model row:
+`Fits` `--success` · `May be slow` `--warning` · `Won't fit` `--error`; `· on demand` muted after
+the badge.
+
+**Block meter** (`W3`). Per-file download progress drawn with block cells: ten cells, done `█` in
+`--warning` while running, rest `░` in `--border`, then the bold percent (`████████░░ 78%`). The
+compact `↓` with a percent stays for small places (step tags, zone 3, `M8` lists). Paused: the row
+glyph turns `○`, the note says `paused`, the done cells turn `--text-muted`, and the step tag reads
+`paused 42%`.
+
+**Secret shown once** (`W5`). A `--background-element` block (padding `10px 16px`) with the secret
+in bold (700) `--text`, separators muted and regular, and the part you will type underlined
+(`text-underline-offset: 4px`, decoration `--text-muted`). Under it a dim line on why it matters
+(`it is shown only once`), then the type-to-confirm line in the composer look (`› type the last group
+to confirm:` with the expected `type 2MSQE` muted on the right; `✓ recovery key confirmed` when it
+matches, `doesn't match · check the last group` in `--error` when not). The status line offers
+`c copy key`.
+
+**Install disclosure** (`W8`). Before a reversible change to your system, a plain block names every
+file and command: `--background-panel`, 1px `--border` left edge, padding `10px 14px`, gap 6px,
+14px. Head `What it installs on this system` with `nothing changes until you press ↵` on the right;
+one line per file and command; the other OS as one muted line; last a 13px muted line over a
+`--border-subtle` rule: `nothing runs as root · remove it anytime in /settings or with goop schedule
+off`. It is not an ask (↵ in the status line is the answer) and not the M11 box (it is reversible).
 
 **Form rows** (`M6`). Three columns: label, value, muted note. The value being edited is lavender,
 because you type it (composer look: `--background-panel`, 2px `--user` edge, lavender cursor).
@@ -298,15 +371,21 @@ Before finishing an artboard while this file exists:
 - [ ] Sizes are only the roles above (15/14 normal, 13 dim, 12 small, 28 wordmark).
 - [ ] Orange means goop or selection; lavender means you; no color reused for another meaning.
 - [ ] Selection is the inset 2px orange edge on `--background-element` (the command palette
-  uses a bold `--primary` label instead, see Command palette); no rounded corners, no shadows.
+  uses a bold `--primary` label instead, see Command palette); no rounded corners, no shadows
+  except inset edges (selection, toast).
 - [ ] Glyphs come from the table above; the flame has its `●` fallback. Emoji tiles use only the
   Icon modes mapping (Command palette), with a neutral `--background-element` tile.
 - [ ] The status line keeps three zones and 28px.
 - [ ] No key-hint line under a header, title or breadcrumb; keys live only in status line zone 2.
 - [ ] Keys are bold `--text` everywhere, content included (never `--accent`); only the primary
   action key may be `--success`.
-- [ ] The right zone reads exactly `○ next search 09:00 │ ? help` (Help: `│ v0.1.0` instead of
-  `? help`; home adds `v0.1.0`), never `○ next 09:00`.
+- [ ] The right zone reads `○ next search 09:00 │ ? help` (Help: `│ v0.1.0` instead of
+  `? help`; home adds `v0.1.0`), never `○ next 09:00`; a live busy state (`◐ …`) may take the
+  first slot; during setup it is `? help` or the download line `↓ … · speed · ETA │ ? help`.
+- [ ] A problem banner is warning (`--warning` edge, yellow `⚠`) only when goop fixed it or fell
+  back and nothing blocks you; any failure uses the `--error` edge and a pink `⚠`.
+- [ ] Setup step list: `✓` `◐` `○` `—` glyphs, `required` / `optional` / `skipped` tags, and the
+  current row has a fill and bold text but no orange edge; a blocked primary key is muted, not bold.
 - [ ] Lavender only for your typing and your content; no lavender selection edge, no lavender
   search match.
 - [ ] Model names follow the naming table; never lowercase `qwen`.
@@ -347,7 +426,7 @@ The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px
 
 Tiles are never lavender.
 
-**Icon modes.** The `icons` setting (Settings, `M6`, Appearance category) picks how every tile is drawn; the tile keeps its place and its 2-cell size in all three, so rows always align:
+**Icon modes.** Emoji width depends on the terminal font: goop only uses `Emoji_Presentation=Yes` code points to minimise breakage, but it cannot guarantee 2 cells everywhere. The `icons` setting (Settings, `M6`, Appearance category) picks how every tile is drawn; the tile keeps its place and its 2-cell size in all three, so rows always align:
 
 | Mode              | Tile                                                                                | For                        |
 | ----------------- | ----------------------------------------------------------------------------------- | -------------------------- |
