@@ -58,17 +58,15 @@
   .source { border-left: 1px solid var(--border); padding: 2px 12px; font-size: 13px; color: var(--text-muted); }
   .source b, .count b, .warnline b { color: var(--text); font-weight: 600; }
   /* Actions: one line of keys, like the status line hints but for this offer. */
-  /* Action bar: real buttons pinned under the header (lazygit / opencode dialogs).
-     Each button is a filled cell block with its key; the primary action (Apply) is green and takes enter. */
-  .actions { display: flex; align-items: center; gap: 10px; padding: 12px 8px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; }
-  .btn { background: var(--background-element); color: var(--text); padding: 2px 12px; }
-  .btn kbd { font: inherit; font-weight: 700; color: var(--accent); margin-right: 8px; }
-  .btn.primary { background: var(--success); color: var(--background); font-weight: 700; }
-  .btn.primary kbd { color: var(--background); }
-  .btn.done { background: var(--background-panel); color: var(--success); box-shadow: inset 2px 0 var(--success); }
-  .btn.done kbd { color: var(--success); }
-  .actions .minor { margin-left: auto; color: var(--text-muted); font-size: 13px; }
-  .actions .minor b { color: var(--text); font-weight: 600; }
+  /* Actions: one line of key hints under the header (k9s / gh-dash), same style as the status line:
+     key in yellow, action in muted text, no boxes; the primary action is told apart only by color.
+     State (saved, applied) is a tag in the header, never a button. ? opens the full actions menu (lazygit). */
+  .actions { display: flex; gap: 24px; padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .actions b { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .actions .primary { color: var(--success); font-weight: 600; }
+  .actions .primary b { color: var(--success); }
+  .actions .more { margin-left: auto; }
+  .tag-saved { color: var(--accent); font-size: 12px; font-weight: 700; margin-left: 10px; }
   /* Feedback after an action: a short toast with undo, and the dismiss reason picker (feeds the Learner). */
   .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
   .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
@@ -76,7 +74,7 @@
   .toast b { color: var(--accent); }
   .ask { background: var(--background-element); border-left: 2px solid var(--primary); padding: 8px 12px; display: grid; gap: 4px; }
   .ask .q { color: var(--text); font-weight: 600; }
-  .ask .opts { color: var(--text-muted); }
+  .ask .opts { color: var(--text-muted); white-space: nowrap; }
   .ask .opts b { color: var(--accent); }
   /* Status line in three zones: focus label | hints | background state + help. */
   footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
@@ -95,13 +93,12 @@
   <article class="detail" aria-label="Offer detail">
     <div class="title">Offers › <b>Backend Developer (Python)</b> · 1 of 8 · esc back to session 3</div>
     <header class="head">
-      <span class="score apply">92</span><span class="name">Backend Developer (Python)</span><span class="new">NEW</span>
+      <span class="score apply">92</span><span class="name">Backend Developer (Python)</span><span><span class="new">NEW</span><span class="tag-saved">★ saved</span></span>
       <span class="facts"><b>Acme Labs</b> · Remote (EU hours) · €42–48K / year · Greenhouse · posted Oct 30, 2 days ago</span>
       <span class="verdict apply">✔ apply · matches 5 of 6 requirements</span>
     </header>
     <nav class="actions" aria-label="Offer actions">
-      <span class="btn primary"><kbd>↵</kbd>Apply</span><span class="btn done"><kbd>✓</kbd>Saved</span><span class="btn"><kbd>a</kbd>Ask goop</span><span class="btn"><kbd>d</kbd>Dismiss</span>
-      <span class="minor"><b>o</b> browser · <b>f</b> full text</span>
+      <span class="primary"><b>↵</b>apply</span><span><b>s</b>unsave</span><span><b>a</b>ask goop</span><span><b>d</b>dismiss</span><span><b>o</b>browser</span><span><b>f</b>full text</span><span class="more"><b>?</b>all actions</span>
     </nav>
     <div class="body">
       <div class="col">
@@ -139,13 +136,13 @@
       </div>
     </div>
   </article>
-  <footer><span class="mode m-detail">detail</span><span><b>↑↓</b> scroll · <b>[ ]</b> prev/next offer · <b>tab</b> next button · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-detail">detail</span><span><b>↑↓</b> scroll · <b>[ ]</b> prev/next offer · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="Action feedback states">
   <div><h3>After save</h3><div class="toast"><span>✓ Saved to your list</span><span><b>u</b> undo · 4s</span></div></div>
   <div><h3>After apply (enter)</h3><div class="ask"><span class="q">Opened the application page. Did you apply?</span><span class="opts"><b>y</b> yes, mark applied · <b>n</b> not yet · <b>esc</b> later</span></div></div>
   <div><h3>On dismiss</h3><div class="ask"><span class="q">Why not this one? (goop learns from it)</span><span class="opts"><b>1</b> salary · <b>2</b> stack · <b>3</b> location · <b>4</b> seniority · <b>5</b> other · <b>esc</b> skip</span></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. The action bar is pinned under the header as real buttons: Apply is the primary action (green, enter) and opens the application page, then asks whether you applied; Save turns into ✓ Saved; Dismiss asks for a reason the Learner uses; every action shows a short toast with undo. tab moves between buttons, and the status line keeps only navigation keys. Below the screen: the feedback states.</p>
+<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. The actions are one line of key hints under the header, in the status line style (k9s, gh-dash): apply is the primary action, told apart only by its green color, and opens the application page, then asks whether you applied; state lives in the header as a tag (★ saved, ✓ applied) and the hint flips (s save → s unsave); ? opens every action in a menu (lazygit); Dismiss asks for a reason the Learner uses; every action shows a short toast with undo. the status line keeps only navigation keys. Below the screen: the feedback states.</p>
 </body>
 </html>
