@@ -68,8 +68,9 @@
   .was { color: var(--text-muted); }
   .pane-foot { margin-top: auto; color: var(--text-muted); font-size: 13px; padding-top: 8px; border-top: 1px solid var(--border-subtle); white-space: nowrap; }
   /* Save bar: form actions, only while there are unsaved changes; directly above the status line. */
-  .savebar { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 0 28px; background: var(--background-panel); box-shadow: inset 2px 0 var(--accent); line-height: 28px; font-size: 14px; white-space: nowrap; }
-  .savebar .dot { color: var(--accent); }
+  /* One status line: while there are unsaved changes its hints show the form keys first (save, undo, discard). */
+  footer .unsaved { color: var(--accent); }
+  footer b.save { color: var(--success); }
   /* Status line in three zones: focus label | hints | background state + help. */
   footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
   footer b { color: var(--text); font-weight: 600; }
@@ -108,7 +109,6 @@
         <li class="cat"><span>Privacy &amp; data</span><span class="go">M13 →</span></li>
         <li class="cat"><span>About</span><span></span></li>
       </ul>
-      <p class="keys unfocused"><span><b>↑↓</b>category</span><span><b>↵</b>open</span></p>
     </nav>
 
     <section class="fields" aria-labelledby="fields-head">
@@ -134,15 +134,14 @@
     </section>
   </div>
 
-  <div class="savebar" role="status"><span><span class="dot">●</span> 1 unsaved change · Minimum salary</span><span class="keys"><span class="primary"><b>ctrl+s</b>save</span><span><b>ctrl+z</b>undo</span><span><b>ctrl+d</b>discard</span></span></div>
 
-  <footer><span class="mode m-settings">settings</span><span><b>↑↓</b> move · <b>tab</b> categories · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-settings">settings</span><span><span class="unsaved">● 1 unsaved</span> · <b class="save">ctrl+s</b> save · <b>ctrl+z</b> undo · <b>ctrl+d</b> discard · <b>tab</b> categories · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="States around settings">
   <div><h3>After save (ctrl+s)</h3><div class="toast"><span><span class="ok">✓</span> Saved · applied to the next search</span><span><b>ctrl+z</b> undo</span></div></div>
   <div class="preview"><h3>Schedule category</h3><ul><li class="row"><span class="label">Daily search</span><span class="value">daily at 09:00 · next tomorrow 09:00 · run now: /search</span></li></ul></div>
   <div><h3>Leaving with unsaved changes (esc)</h3><div class="ask"><span class="q">Save 1 change?</span><span class="opts"><b>y</b> save · <b>n</b> discard · <b>esc</b> stay</span></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> /settings opens like M2, M5 and M10 (title breadcrumb, status line) with two panes: a short category list on the left and the fields of the current category on the right as terminal form rows (label left, value right, one row each; radios inline with the chosen value bold and ●). Privacy &amp; data opens its own screen (M13). Focus is on the fields: the focused row takes the selection style (fill + orange edge) and carries its own action at the right, muted (↵ edit; while editing, its value becomes a lavender composer with the old value and the hint reads ↵ done · esc cancel). The category keys are muted and the current category keeps only the fill. A dim note under a field says what goop does with it. Form actions live in a save bar above the status line that exists only while there are unsaved changes, like nano or a form footer: ● 1 unsaved change and the changed field on the left, ctrl+s save (green), ctrl+z undo, ctrl+d discard on the right; the changed label also gets a ●. Nothing is applied until ctrl+s, and the form keys use ctrl so they also work while typing in a field; esc back with unsaved changes opens the ask below instead of dropping them silently. The status line is navigation only (↑↓ move · tab categories · esc back). The pane foot says settings are stored encrypted and never sent anywhere. Costs a full screen that hides the chat, and fields with long values (keywords) are edited one line at a time. Below the screen: the save toast with undo, the Schedule category preview and the leave ask.</p>
+<p class="notes"><strong>Full screen:</strong> /settings opens like M2, M5 and M10 (title breadcrumb, status line) with two panes: a short category list on the left and the fields of the current category on the right as terminal form rows (label left, value right, one row each; radios inline with the chosen value bold and ●). Privacy &amp; data opens its own screen (M13). Focus is on the fields: the focused row takes the selection style (fill + orange edge) and carries its own action at the right, muted (↵ edit; while editing, its value becomes a lavender composer with the old value and the hint reads ↵ done · esc cancel). The category keys are muted and the current category keeps only the fill. A dim note under a field says what goop does with it. Form actions live in the single status line, first, only while there are unsaved changes (no second bar): ● 1 unsaved change and the changed field on the left, ctrl+s save (green), ctrl+z undo, ctrl+d discard on the right; the changed label also gets a ●. Nothing is applied until ctrl+s, and the form keys use ctrl so they also work while typing in a field; esc back with unsaved changes opens the ask below instead of dropping them silently. The status line is navigation only (↑↓ move · tab categories · esc back). The pane foot says settings are stored encrypted and never sent anywhere. Costs a full screen that hides the chat, and fields with long values (keywords) are edited one line at a time. Below the screen: the save toast with undo, the Schedule category preview and the leave ask.</p>
 </body>
 </html>
