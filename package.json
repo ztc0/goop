@@ -5,6 +5,10 @@
   "description": "Local job search agent for developers: finds offers, matches them against your CV and chats with you, all with local models.",
   "license": "GPL-3.0-only",
   "type": "module",
+  "packageManager": "bun@1.4.2",
+  "engines": {
+    "bun": ">=1.3.14"
+  },
   "scripts": {
     "dev": "bun scripts/run.ts bun --watch src/main.ts",
     "test": "bun scripts/run.ts bun test",
