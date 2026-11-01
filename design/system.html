@@ -84,7 +84,7 @@
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
   .placeholder { color: var(--text-muted); }
   .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; }
-  /* Reasoning level: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (qwen); ctrl+r cycles it. */
+  /* Reasoning level: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (Qwen3.5); ctrl+r cycles it. */
   .reason { color: var(--accent); }
   .reason.off { color: var(--text-muted); }
   .below b { color: var(--primary); font-weight: 600; }
@@ -149,6 +149,18 @@
   .alert { color: var(--background); background: var(--error); padding: 0 8px; font-weight: 600; }
   .fbars { width: 1440px; background: var(--background); padding: 8px 0 18px; display: grid; gap: 8px; font-family: var(--mono); }
   .fbar { border: 0; background: var(--background-panel); }
+  /* Unified components (R1-R12): toast (M3, M11), ask (M2, M6), problem banner (M8), right zone wording. */
+  .unified { width: 1440px; padding: 8px 28px 18px; background: var(--background); display: grid; gap: 10px; font: 15px/1.5 var(--mono); color: var(--text); }
+  .unified .k { color: var(--text); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; font-size: 14px; }
+  .ask { display: flex; justify-content: space-between; gap: 16px; padding: 6px 12px; background: var(--background-panel); border-left: 2px solid var(--accent); font-size: 14px; white-space: nowrap; }
+  .ask .q { color: var(--text); font-weight: 600; }
+  .ask .opts { color: var(--text-muted); }
+  .banner { display: flex; justify-content: space-between; gap: 24px; padding: 6px 14px; background: var(--background-panel); border-left: 2px solid var(--error); font-size: 14px; white-space: nowrap; }
+  .banner .err { color: var(--error); }
+  .banner .hint { color: var(--text-muted); font-size: 13px; }
+  .mode.full::before { color: var(--secondary); }
+  .fbar { white-space: nowrap; }
   .states { width: 1440px; padding: 18px 24px; background: var(--background); display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font: 15px/1.5 var(--mono); color: var(--text); }
 
   /* Home (05), scoped to `.home`. */
@@ -188,7 +200,7 @@
 <main class="board" aria-label="goop TUI design system">
   <header class="intro">
     <h1>goop · TUI design system</h1>
-    <p>Derived from the approved artboards design/tui-main/04, 05, 06 and src/shared/model/logo.ts. The terminal chooses the font: one monospace cell grid.</p>
+    <p>Derived from the approved artboards design/tui-main/04, 05, 06, the full screens M2-M14, the command palette and src/shared/model/logo.ts. The terminal chooses the font: one monospace cell grid.</p>
   </header>
 
   <section class="block" aria-label="Color tokens">
@@ -201,7 +213,7 @@
       <div class="sw"><i style="background: var(--text-muted)"></i><b>--text-muted</b><span>#a89c91 · meta, hints, idle, queued</span></div>
       <div class="sw"><i style="background: var(--primary)"></i><b>--primary</b><span>#ff7a2e · goop, brand, selection edge</span></div>
       <div class="sw"><i style="background: var(--accent)"></i><b>--accent</b><span>#ffc24a · reasoning level, NEW, to review</span></div>
-      <div class="sw"><i style="background: var(--secondary)"></i><b>--secondary</b><span>#7cc4ff · offers focus dot</span></div>
+      <div class="sw"><i style="background: var(--secondary)"></i><b>--secondary</b><span>#7cc4ff · offers and full-screen focus dot; search, sources tiles</span></div>
       <div class="sw"><i style="background: var(--user)"></i><b>--user</b><span>#b9a6ff · you: turns, composer, cursor</span></div>
       <div class="sw"><i style="background: var(--success)"></i><b>--success</b><span>#8fd694 · apply, ok, done</span></div>
       <div class="sw"><i style="background: var(--warning)"></i><b>--warning</b><span>#ffc24a · maybe, busy, live, warn chip</span></div>
@@ -345,7 +357,21 @@
   <section class="fbars" aria-label="Status line in other contexts">
     <div class="fbar"><span class="mode offers">offers</span><span><b>enter</b> open · <b>s</b> save · <b>d</b> dismiss · <b>tab</b> chat</span><span class="zone-right"><span class="busy">◐ searching 25%</span><span><b>?</b> help</span></span></div>
     <div class="fbar"><span class="mode busy">answering</span><span><b>esc</b> stop</span><span class="zone-right"><span>gpt-oss · 17.9 tok/s</span><span><b>?</b> help</span></span></div>
-    <div class="fbar"><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ qwen not responding · /models</span><span><b>?</b> help</span></span></div>
+    <div class="fbar"><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ Qwen3.5-9B not responding · /models</span><span><b>?</b> help</span></span></div>
+  </section>
+
+  <section class="block" aria-label="Unified components heading">
+    <h2>Toast · ask · problem banner · right zone</h2>
+    <p>Keys are bold --text everywhere. Undo is always ctrl+z. Irreversible actions use the M11 box, never the ask. The right zone reads exactly ○ next search 09:00 │ ? help.</p>
+  </section>
+  <section class="unified" aria-label="Toast, ask, problem banner and status line right zone">
+    <div class="toast" role="status"><span><span class="ok">✓</span> 3 offers dismissed</span><span><span class="k">ctrl+z</span> undo · 4s</span></div>
+    <div class="ask"><span class="q">Run the search again now? It takes about 4 minutes.</span><span class="opts"><span class="k">y</span> yes · <span class="k">n</span> no</span></div>
+    <p class="banner" role="alert"><span><span class="err">⚠</span> Qwen3.5-9B not responding · restarting 2/3 · matching paused, chat still works</span><span class="hint"><b style="color: var(--text); font-weight: 600">r</b> restart</span></p>
+  </section>
+  <section class="fbars" aria-label="Status line right zone wording">
+    <div class="fbar"><span class="mode full">sources</span><span><b>↑↓</b> move · <b style="color: var(--success)">r</b> run now · <b>[ ]</b> tabs · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></div>
+    <div class="fbar"><span class="mode full">help</span><span><b>↑↓</b> sections · <b>/</b> search · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span>v0.1.0</span></span></div>
   </section>
 
   <section class="block" aria-label="Composer states heading">
@@ -355,9 +381,9 @@
     <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◈ medium</span> · CPU · ready</span><span>empty</span></div></div></div>
     <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">goop is answering…</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · answering</span><span>esc stop</span></div></div></div>
     <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">mi token es [SECRET_1] ¿lo uso?</span></div><div class="below"><span><span class="chip warn">⚠ 1 secret removed</span></span><span>never sent to a model</span></div></div></div>
-    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · <span class="reason off">think off</span> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
+    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>Qwen3.5</b> · <span class="reason off">think off</span> · GPU · <span class="chip busy">CPU busy, using Qwen3.5</span></span><span>enter send</span></div></div></div>
     <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
-    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ qwen not responding · /models</span></span><span>chat still on gpt-oss</span></div></div></div>
+    <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ Qwen3.5 not responding · /models</span></span><span>chat still on gpt-oss-20b</span></div></div></div>
   </section>
 
   <section class="block" aria-label="Home heading">

@@ -5,12 +5,26 @@ component library), so this system is **derived from the approved artboards** be
 here is copied from them; nothing is invented. When code gets a theme module, it must match these
 tokens or this file must be synced again.
 
-| Key       | Source path                                | What it shows                                                |
-| --------- | ------------------------------------------ | ------------------------------------------------------------ |
-| `04`      | `design/tui-main/04-opencode-session.html` | Session: chat, offers sidebar, composer states, status lines |
-| `05`      | `design/tui-main/05-home.html`             | Home screen and first-run steps                              |
-| `06`      | `design/tui-main/06-session-idle.html`     | Session with nothing running (no Agents section)             |
-| `logo.ts` | `src/shared/model/logo.ts`                 | Logo palette and pixel grid                                  |
+| Key       | Source path                                     | What it shows                                                |
+| --------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| `04`      | `design/tui-main/04-opencode-session.html`      | Session: chat, offers sidebar, composer states, status lines |
+| `05`      | `design/tui-main/05-home.html`                  | Home screen and first-run steps                              |
+| `06`      | `design/tui-main/06-session-idle.html`          | Session with nothing running (no Agents section)             |
+| `M2`      | `design/tui-offer-detail/01-full-screen.html`   | Offer detail, full screen; inline ask                        |
+| `M3`      | `design/tui-full-text/01-full-screen.html`      | Full offer text; search matches, toast                       |
+| `M4`      | `design/tui-sessions/01-full-screen.html`       | Sessions list; rename row                                    |
+| `M5`      | `design/tui-rules/01-full-screen.html`          | Rules with the decision card                                 |
+| `M6`      | `design/tui-settings/01-full-screen.html`       | Settings; form rows                                          |
+| `M7`      | `design/tui-sources/01-full-screen.html`        | Sources; full-screen layout, tabs, heartbeat                 |
+| `M8`      | `design/tui-models/01-full-screen.html`         | Models; problem banner, memory map                           |
+| `M9`      | `design/tui-profile/01-full-screen.html`        | Profile; source-line marker                                  |
+| `M10`     | `design/tui-security-alert/01-full-screen.html` | Security alert                                               |
+| `M11`     | `design/tui-confirm/01-dialog.html`             | Confirmations; bordered box, toast                           |
+| `M12`     | `design/tui-help/01-full-screen.html`           | Help; version in the status line                             |
+| `M13`     | `design/tui-privacy/01-full-screen.html`        | Privacy; problems first, M11 box                             |
+| `M14`     | `design/tui-agents/01-full-screen.html`         | Agents tree                                                  |
+| `palette` | `design/tui-command-palette/01-dialog.html`     | ctrl+p command palette                                       |
+| `logo.ts` | `src/shared/model/logo.ts`                      | Logo palette and pixel grid                                  |
 
 **Terminal:** one monospace cell grid; the app cannot choose the font, the terminal does. The CSS
 font stack in the artboards (`--mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo,
@@ -33,7 +47,7 @@ Components use only these semantic tokens (opencode roles). Sources: `04` and `0
 | `--text-muted`         | `#a89c91` | Meta, hints, counts, thinking text, idle/queued state, sidebar scrollbar thumb          |
 | `--primary`            | `#ff7a2e` | goop: flame marker, model name, wordmark, selection edge, first-run markers             |
 | `--accent`             | `#ffc24a` | Reasoning level, `NEW` badge, items to act on (`1 to review`), tip dot                  |
-| `--secondary`          | `#7cc4ff` | Offers focus dot in the status line                                                     |
+| `--secondary`          | `#7cc4ff` | Focus dot of the offers pane and every full screen; tiles for search and sources        |
 | `--user`               | `#b9a6ff` | You: user turn edge and `›`, composer edge, prompt, cursor, popup edge, chat focus dot  |
 | `--success`            | `#8fd694` | Apply score, `✓` done, tool result count, context meter, sources ok                     |
 | `--warning`            | `#ffc24a` | Maybe score, `◐` busy, live speed, warn chip, busy focus dot                            |
@@ -62,11 +76,11 @@ Artboard frame only, never in the app: page `#000`, notes panel `#0c0a09` with t
 | Color    | Token(s)                       | Means                                                              | Source           |
 | -------- | ------------------------------ | ------------------------------------------------------------------ | ---------------- |
 | Orange   | `--primary`, `--border-active` | goop and the brand; selection (inset left edge); model name        | `04`, `05`       |
-| Lavender | `--user`                       | You: your turns, composer edge, prompt `›`, cursor, chat focus dot | `04`, `05`       |
+| Lavender | `--user`                       | You: your turns, composer edge, prompt `›`, cursor, chat focus dot | `04`, `05`, `M4` |
 | Green    | `--success`                    | Apply, ok, done                                                    | `04`, `06`       |
 | Yellow   | `--warning`, `--accent`        | Maybe, new, busy/running, reasoning level, things to review        | `04`, `05`       |
 | Pink     | `--error`                      | Errors and alerts; low scores (check, skip)                        | `04`             |
-| Blue     | `--secondary`                  | Offers focus (status line dot)                                     | `04`             |
+| Blue     | `--secondary`                  | Offers and full-screen focus (status line dot); search, sources    | `04`, `M7`       |
 | Gray     | `--text-muted`                 | Muted text, queued, idle, waiting, think off                       | `04`, `05`, `06` |
 
 ## Typography
@@ -81,13 +95,14 @@ Monospace only. A terminal has one font size, so the artboard sizes are roles, n
 | small  | 12px          | 1.5         | Cell size, bold or muted    | `NEW` badge, sidebar foot                                        | `04`       |
 | brand  | 28px, 800     | 1.5         | Cell size, bold `--primary` | `goop` wordmark on home                                          | `05`       |
 
-| Style           | Rule                                                                     | Source     |
-| --------------- | ------------------------------------------------------------------------ | ---------- |
-| Bold (600)      | Keys in hints (`enter`, `?`), names, numbers in the speed line           | `04`, `05` |
-| Bold (700)      | Prompt `›`, scores, `NEW`                                                | `04`       |
-| Section headers | Uppercase, `letter-spacing: .08em`, 13px, 600, `--text-muted`            | `04`, `05` |
-| Italic          | Thinking text only (`.think`); its "… N lines hidden" line is not italic | `04`       |
-| Strikethrough   | Completed first-run steps                                                | `05`       |
+| Style           | Rule                                                                                                  | Source           |
+| --------------- | ----------------------------------------------------------------------------------------------------- | ---------------- |
+| Bold (600)      | Keys (`enter`, `?`), names, numbers in the speed line                                                 | `04`, `05`       |
+| Key color       | Bold `--text` everywhere, inside content too (toasts, asks, tab hints, inline keys); never `--accent` | `04`, `M7`, `M8` |
+| Bold (700)      | Prompt `›`, scores, `NEW`                                                                             | `04`             |
+| Section headers | Uppercase, `letter-spacing: .08em`, 13px, 600, `--text-muted`                                         | `04`, `05`       |
+| Italic          | Thinking text only (`.think`); its "… N lines hidden" line is not italic                              | `04`             |
+| Strikethrough   | Completed first-run steps                                                                             | `05`             |
 
 ## Glyphs
 
@@ -120,24 +135,26 @@ Monospace only. A terminal has one font size, so the artboard sizes are roles, n
 
 Values at a 1440 × 900 artboard.
 
-| Element            | Rule                                                                                        | Source     |
-| ------------------ | ------------------------------------------------------------------------------------------- | ---------- |
-| Session grid       | `grid-template-columns: 1fr 420px`, rows `1fr auto` (status line)                           | `04`, `06` |
-| Session column     | Padding `20px 28px 12px`; title margin-bottom 18px                                          | `04`       |
-| Chat history       | Gap 16px between turns; padding-right 14px (scrollbar room)                                 | `04`       |
-| goop turn          | Grid `2ch 1fr` (marker column), row gap 6px                                                 | `04`       |
-| Sidebar            | Padding `20px 20px 12px`, gap 14px between sections; 1px `--border` left edge               | `04`       |
-| Sidebar section    | Gap 6px; offer row padding `6px 8px`, grid `3ch 1fr auto`, column gap 10px                  | `04`       |
-| Top status strip   | Gap 8px, padding-bottom 12px; line gap 12px; mini meter 70 × 6px                            | `04`       |
-| Agents tree        | Grid `2ch 1.5ch 9ch 1fr auto`, gap 6px, row gap 2px; padding-top 10px                       | `04`       |
-| Status line        | Height 28px (`line-height: 28px`); grid `auto 1fr auto`, gap 14px; 28px side insets         | `04`, `05` |
-| Composer (session) | Padding `10px 16px`; info line margin-top 6px                                               | `04`       |
-| Popup              | Width 460px, 4px above the composer, padding `6px 0`, rows `2px 14px`, grid `14ch 1fr`      | `04`       |
-| Home column        | Centered, gap 22px; composer, recent and tip 720px wide                                     | `05`       |
-| Home composer      | Padding `14px 18px`                                                                         | `05`       |
-| Recent activity    | Rows `3px 10px`, grid `2ch 1fr auto`, gap 2px                                               | `05`       |
-| First-run panel    | Two columns, padding `22px 28px`                                                            | `05`       |
-| Edges              | User turn 3px; composer and popup 2px; thought, tool card, sidebar 1px; selection inset 2px | `04`       |
+| Element            | Rule                                                                                        | Source      |
+| ------------------ | ------------------------------------------------------------------------------------------- | ----------- |
+| Session grid       | `grid-template-columns: 1fr 420px`, rows `1fr auto` (status line)                           | `04`, `06`  |
+| Session column     | Padding `20px 28px 12px`; title margin-bottom 18px                                          | `04`        |
+| Chat history       | Gap 16px between turns; padding-right 14px (scrollbar room)                                 | `04`        |
+| goop turn          | Grid `2ch 1fr` (marker column), row gap 6px                                                 | `04`        |
+| Sidebar            | Padding `20px 20px 12px`, gap 14px between sections; 1px `--border` left edge               | `04`        |
+| Sidebar section    | Gap 6px; offer row padding `6px 8px`, grid `3ch 1fr auto`, column gap 10px                  | `04`        |
+| Top status strip   | Gap 8px, padding-bottom 12px; line gap 12px; mini meter 70 × 6px                            | `04`        |
+| Agents tree        | Grid `2ch 1.5ch 9ch 1fr auto`, gap 6px, row gap 2px; padding-top 10px                       | `04`        |
+| Status line        | Height 28px (`line-height: 28px`); grid `auto 1fr auto`, gap 14px; 28px side insets         | `04`, `05`  |
+| Composer (session) | Padding `10px 16px`; info line margin-top 6px                                               | `04`        |
+| Toast              | Padding `6px 12px`, gap 12px; one line (`white-space: nowrap`)                              | `M3`, `M11` |
+| Problem banner     | Margin `0 28px 14px`, padding `6px 14px`, gap 24px; 14px text, 13px muted hint              | `M8`        |
+| Popup              | Width 460px, 4px above the composer, padding `6px 0`, rows `2px 14px`, grid `14ch 1fr`      | `04`        |
+| Home column        | Centered, gap 22px; composer, recent and tip 720px wide                                     | `05`        |
+| Home composer      | Padding `14px 18px`                                                                         | `05`        |
+| Recent activity    | Rows `3px 10px`, grid `2ch 1fr auto`, gap 2px                                               | `05`        |
+| First-run panel    | Two columns, padding `22px 28px`                                                            | `05`        |
+| Edges              | User turn 3px; composer and popup 2px; thought, tool card, sidebar 1px; selection inset 2px | `04`        |
 
 No rounded corners and no shadows: the only `box-shadow` is the inset selection edge.
 
@@ -165,16 +182,16 @@ No rounded corners and no shadows: the only `box-shadow` is the inset selection 
   (`think off` muted).
 - Right: hints for the state, including `ctrl+r reasoning` (cycles the level).
 
-| State               | Input line                                 | Info line                                                               |
-| ------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
-| Empty               | cursor + muted placeholder                 | `gpt-oss-20b · ◈ medium · CPU · ready`                                  |
-| Typing              | typed text + cursor                        | `… · ready` · `ctrl+r reasoning · enter send · esc close`               |
-| Popup / suggestions | `/r` typed; popup above                    | as typing                                                               |
-| Answering           | muted `goop is answering…`                 | `… · answering` · `esc stop`                                            |
-| Secret removed      | text with `[SECRET_1]`                     | `.chip.warn` `⚠ 1 secret removed` · `never sent to a model`             |
-| CPU busy            | typed text                                 | `qwen · think off · GPU ·` `.chip.busy` `CPU busy, using qwen`          |
-| Blur                | muted `›`, `tab to write`; `--border` edge | `focus is on the offers`                                                |
-| Model error         | placeholder                                | `.chip.err` `⚠ qwen not responding · /models` · `chat still on gpt-oss` |
+| State               | Input line                                 | Info line                                                                      |
+| ------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| Empty               | cursor + muted placeholder                 | `gpt-oss-20b · ◈ medium · CPU · ready`                                         |
+| Typing              | typed text + cursor                        | `… · ready` · `ctrl+r reasoning · enter send · esc close`                      |
+| Popup / suggestions | `/r` typed; popup above                    | as typing                                                                      |
+| Answering           | muted `goop is answering…`                 | `… · answering` · `esc stop`                                                   |
+| Secret removed      | text with `[SECRET_1]`                     | `.chip.warn` `⚠ 1 secret removed` · `never sent to a model`                    |
+| CPU busy            | typed text                                 | `Qwen3.5 · think off · GPU ·` `.chip.busy` `CPU busy, using Qwen3.5`           |
+| Blur                | muted `›`, `tab to write`; `--border` edge | `focus is on the offers`                                                       |
+| Model error         | placeholder                                | `.chip.err` `⚠ Qwen3.5 not responding · /models` · `chat still on gpt-oss-20b` |
 
 Popup (`04`): `--background-element`, 2px `--user` edge, 460px; rows `command  description`; the
 highlighted row has `--background-panel` and a lavender command.
@@ -198,13 +215,19 @@ internals:
 `--success` apply (`✔ apply`), `--warning` maybe (`~ maybe`), `--error` check/skip
 (`⚠ suspicious text`, `✕ skip`).
 
-**Status line** (`04`, `05`, `06`). 28px high, `--border-subtle` top edge, three zones:
-1. Focus label: `● word`, bold lowercase; dot `--user` chat/home, `--secondary` offers,
-   `--warning` answering.
-2. Key hints for the focused pane: bold key, dim action, `·` between.
-3. Background state, then `│` (`--border`), then `? help`; home also shows the version.
+**Status line** (`04`, `05`, `06`, `M7`, `M8`, `M11`, `M12`). 28px high, `--border-subtle` top
+edge, one line (`white-space: nowrap`), three zones:
+1. Focus label: `● word`, bold lowercase; dot `--user` chat/home, `--secondary` offers and every
+   full screen, `--warning` answering, `--error` alert/confirm (`M10`, `M11`).
+2. Keys of the focused pane only: bold `--text` key, muted action, `·` between; the primary
+   action key may be `--success`. This is the only key line on any screen: no key-hint row under
+   a header or title and no `ctrl+p all actions` hint (`M7`, `M8`, `M14`).
+3. Exactly `○ next search 09:00 │ ? help` (`│` in `--border`), never `○ next 09:00`; while a
+   search runs its live state takes the first slot (`◐ searching 25%`, `04`). Help shows the
+   version instead: `○ next search 09:00 │ v0.1.0` (`M12`); home shows it in addition:
+   `○ next search 09:00 │ v0.1.0 │ ? help` (`05`).
    Error: `.alert` chip (`--error` background, `--background` text, bold, padding `0 8px`),
-   `⚠ qwen not responding · /models`.
+   `⚠ Qwen3.5-9B not responding · /models`.
 
 **Chips** (`04`). Inline, padding `0 6px`. `warn`: `--warning` background, `--background` text.
 `err`: `--error` background, `--background` text. `busy`: text only in `--warning`.
@@ -217,7 +240,7 @@ internals:
 terminal), `goop` wordmark in `--primary`, tagline `your local job search agent` (muted), composer
 (720px, rotating placeholder), recent activity list (`▸` rows with `enter`; arrows move;
 new items in `--accent`), one rotating tip (`● Tip …` with `--accent` dot). Status line: `home`,
-`enter open · ↑↓ move · / commands · ctrl+p all`, `○ next search 09:00 │ v0.1.0 │ ? help`.
+`enter open · ↑↓ move · / commands · ctrl+p commands`, `○ next search 09:00 │ v0.1.0 │ ? help`.
 First run replaces recent activity with numbered steps (markers `--primary`; done struck
 through and muted; current in `--text` with `← now`; later muted) until a CV and a search exist.
 
@@ -225,6 +248,46 @@ through and muted; current in `--text` with `← now`; later muted) until a CV a
 2px `--primary` left edge (`box-shadow: inset 2px 0 var(--primary)`): offer rows, agents tree,
 recent activity (its `▸` turns `--primary`). Typing focus is lavender (composer edge); without
 focus the composer edge is `--border`.
+
+**Lavender scope** (`04`, `M4`). `--user` is only for you typing or your own content (turns,
+composer, cursor, `✎` corrections, the value you edit). A row being renamed or edited looks like
+the composer (`--background-panel`, 2px `--user` left edge, lavender cursor); a selection is never
+lavender, it stays the orange inset edge.
+
+**Toast** (`M3`, `M11`). One line after a done action: `--background-panel`, inset 2px
+`--success` left edge (`box-shadow: inset 2px 0 var(--success)`), `display: flex;
+justify-content: space-between; white-space: nowrap`. Left `✓ text` (`✓` in `--success`), right
+`ctrl+z undo · 4s` or `ctrl+z undo`, key bold `--text`. Undo is always `ctrl+z`, never `u`; when
+the action cannot be undone (copy, open, export, a confirmed delete) the right side shows only
+the timer (`4s`).
+
+**Ask** (`M2`, `M6`, `M11`). One inline line for reversible or costly actions only:
+`--background-panel` fill, 2px `--accent` left edge (never `--primary`), question bold `--text`,
+options `y yes · n no`, or verbs that name the outcome (`y cancel · n keep`), or numbered choices,
+with bold `--text` keys. Irreversible actions (delete,
+cannot be undone) never use it: they open the M11 bordered box.
+
+**Problem banner** (`M8`, `M13`, `M7`). Problems first: a failing item shows one banner above the
+panes, right under the title: `--background-panel`, 2px `--error` left edge, `⚠` in `--error`,
+then what failed · what still works; the action key on the right, muted with a bold `--text` key
+(`r restart`). One line (`white-space: nowrap`).
+
+**Form rows** (`M6`). Three columns: label, value, muted note. The value being edited is lavender,
+because you type it (composer look: `--background-panel`, 2px `--user` edge, lavender cursor).
+
+**Breadcrumb** (`M7`, `M8`). The title line of a full screen:
+`Area › <b>current</b> · facts · esc back to <place>`; area and facts muted, current bold `--text`.
+No key-hint line below it.
+
+**Pane head** (`M7`, `M13`, `M14`). Uppercase `h2` (13px, `letter-spacing: .08em`, 600,
+`--text-muted`) with a short noun; details go in the muted count on the right.
+
+**`● current` tag** (`M6`, `M8`). The tag that marks the item in use is `--text-muted`, dot
+included; never green or orange.
+
+**Search matches** (`M3`, `M12`). Matches in text are goop results, so they use `--accent`: bold
+`--accent` text; the current match is filled `--accent` with `--background` text. Never lavender,
+which is only your query in the search line.
 
 ## Self-check for future artboards
 
@@ -238,12 +301,31 @@ Before finishing an artboard while this file exists:
   uses a bold `--primary` label instead, see Command palette); no rounded corners, no shadows.
 - [ ] Glyphs come from the table above; the flame has its `●` fallback.
 - [ ] The status line keeps three zones and 28px.
+- [ ] No key-hint line under a header, title or breadcrumb; keys live only in status line zone 2.
+- [ ] Keys are bold `--text` everywhere, content included (never `--accent`); only the primary
+  action key may be `--success`.
+- [ ] The right zone reads exactly `○ next search 09:00 │ ? help` (Help: `│ v0.1.0` instead of
+  `? help`; home adds `v0.1.0`), never `○ next 09:00`.
+- [ ] Lavender only for your typing and your content; no lavender selection edge, no lavender
+  search match.
+- [ ] Model names follow the naming table; never lowercase `qwen`.
 - [ ] Sections that only exist while something runs (Agents) are absent when idle.
 - [ ] Motion respects `prefers-reduced-motion`.
 
 ## Tabs
 
-One line of tab names separated by `·`, each with its count; the active tab is bold `--text` and underlined, the others `--text-muted`; `[` and `]` switch tabs. Source: `M7` (`design/tui-sources/01-full-screen.html`).
+One line of tab names separated by `·`, with a count only on list tabs (`Log 48`, `Companies 248`; none on Details, Info or Protection); the active tab is bold `--text` and underlined, the others `--text-muted`; `[` and `]` switch tabs. Source: `M7` (`design/tui-sources/01-full-screen.html`).
+
+## Model and role naming
+
+Screens name models by these exact strings; never lowercase `qwen`. Sources: `M8`, `M14`.
+
+| Role                  | Model                                                    |
+| --------------------- | -------------------------------------------------------- |
+| Chat and Learner      | gpt-oss-20b                                              |
+| Profiler and Analytic | Qwen3.5-9B (`Qwen3.5` allowed in the composer info line) |
+| Reranker              | Qwen3-Reranker                                           |
+| Security              | gpt-oss-safeguard-20b                                    |
 
 ## Source-line marker
 
