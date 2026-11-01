@@ -3,6 +3,17 @@
 import { chmodSync, existsSync, mkdirSync, renameSync } from "node:fs";
 import { join } from "node:path";
 
+/**
+ * Where embedded libraries are copied: GOOP_SPIKE_CACHE, else GOOP_HOME/cache/native, else
+ * %LOCALAPPDATA%\goop\cache\native on Windows. Undefined when none of them is set.
+ */
+export function nativeCacheRoot(env: Record<string, string | undefined>): string | undefined {
+  if (env.GOOP_SPIKE_CACHE) return env.GOOP_SPIKE_CACHE;
+  if (env.GOOP_HOME) return join(env.GOOP_HOME, "cache", "native");
+  if (env.LOCALAPPDATA) return join(env.LOCALAPPDATA, "goop", "cache", "native");
+  return undefined;
+}
+
 export async function sha256File(path: string): Promise<string> {
   const hasher = new Bun.CryptoHasher("sha256");
   hasher.update(await Bun.file(path).arrayBuffer());

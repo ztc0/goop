@@ -46,6 +46,7 @@ Read only what the task needs:
 | Commit, branch or prepare a review                                 | [`docs/development/rules/commits.md`](docs/development/rules/commits.md)           |
 | Write documentation or an ADR                                      | [`docs/development/rules/docs.md`](docs/development/rules/docs.md)                 |
 | Need paths, caches or environment variables                        | [`docs/development/rules/local-env.md`](docs/development/rules/local-env.md)       |
+| Run or check something on Windows                                  | [`docs/development/windows-vm.md`](docs/development/windows-vm.md)                 |
 
 A folder may have its own `AGENTS.md` with rules that only apply inside it; it wins over this file for that folder.
 
