@@ -9,7 +9,7 @@
   :root {
     --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
     --text: #f4ede6; --text-muted: #a89c91;
-    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
     --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
     --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
     --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
@@ -25,8 +25,8 @@
      you   = filled block with a colored left edge and a › marker;
      goop  = plain text opened by a ● bullet, with its thinking and tool calls nested under it;
      every finished reply ends with a speed line: prompt processing and generation in tokens/s. */
-  .user { background: var(--background-element); border-left: 3px solid var(--secondary); padding: 8px 14px; }
-  .user p::before { content: "› "; color: var(--secondary); font-weight: 700; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
   .user p { margin: 0; }
   .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
   /* goop marker: the Nerd Font flame glyph (nf-fa-fire, U+F06D) in the brand color.
@@ -54,13 +54,13 @@
   .caret { display: inline-block; width: 8px; height: 16px; background: var(--text); vertical-align: -2px; }
   /* Composer: no box, panel background + a left edge in the focus color; grows from 1 to ~6 lines. */
   .composer-wrap { position: relative; }
-  .composer { background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 10px 16px; }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; }
   .composer.blur { border-left-color: var(--border); }
   .line { display: flex; gap: 8px; }
-  .prompt { color: var(--primary); font-weight: 700; }
+  .prompt { color: var(--user); font-weight: 700; }
   .composer.blur .prompt { color: var(--text-muted); }
   .typed { color: var(--text); }
-  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--secondary); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
   .placeholder { color: var(--text-muted); }
@@ -70,10 +70,10 @@
   .chip.warn { color: var(--background); background: var(--warning); }
   .chip.err { color: var(--background); background: var(--error); }
   .chip.busy { color: var(--warning); }
-  .popup { position: absolute; bottom: calc(100% + 4px); left: 0; width: 460px; background: var(--background-element); border-left: 2px solid var(--primary); padding: 6px 0; font-size: 14px; }
+  .popup { position: absolute; bottom: calc(100% + 4px); left: 0; width: 460px; background: var(--background-element); border-left: 2px solid var(--user); padding: 6px 0; font-size: 14px; }
   .popup div { display: grid; grid-template-columns: 14ch 1fr; padding: 2px 14px; }
   .popup .on { background: var(--background-panel); }
-  .popup .on span:first-child { color: var(--primary); }
+  .popup .on span:first-child { color: var(--user); }
   .popup span:last-child { color: var(--text-muted); }
   aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
   h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
@@ -107,7 +107,7 @@
   /* Focus label: a quiet colored dot and a lowercase word, no filled block. */
   .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
   .mode::before { content: "● "; }
-  .mode.chat::before { color: var(--primary); }
+  .mode.chat::before { color: var(--user); }
   .mode.offers::before { color: var(--secondary); }
   .mode.busy::before { color: var(--warning); }
   .zone-right { display: flex; gap: 12px; }
@@ -199,6 +199,6 @@
   <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ qwen not responding · /models</span></span><span>chat still on gpt-oss</span></div></div></div>
 </section>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then the folded chat context); models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns (lavender, the same color as the composer where you type them) as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then the folded chat context); models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
