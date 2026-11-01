@@ -1,0 +1,21 @@
+{
+  "title": "Offer detail (M2)",
+  "brief": "Offer detail screen of goop, opened with enter on an offer row: header with score, verdict, NEW, source and date; why it fits (matched requirements, gaps, seniority); goop's summary; a pointer to the untrusted original text (M3); actions s save, d dismiss, o open, a ask goop, f full text, esc back; status line with the detail focus mode.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "Calmest read with requirements and summary side by side; hides the list and the chat, so moving between offers needs [ ] or esc",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-split.html",
+      "title": "Split with the offers sidebar",
+      "tradeoff": "Keeps the session layout and the list: ↑↓ moves through offers and the detail follows; half the width, so long offers scroll",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

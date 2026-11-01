@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M2 offer detail · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen: one column, no sidebar; rows = detail, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .detail { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .new { color: var(--accent); font-size: 12px; font-weight: 700; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  .chip { padding: 0 6px; }
+  .chip.warn { color: var(--background); background: var(--warning); }
+  .chip.err { color: var(--background); background: var(--error); }
+  /* Offer head: the offer row grown to a header. Same 3ch score column, title, NEW; facts below, dim. */
+  .head { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; row-gap: 2px; padding: 6px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .head .name { font-weight: 600; }
+  .head .facts { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
+  .head .facts b { color: var(--text); font-weight: 600; }
+  .head .verdict { grid-column: 2 / 4; font-size: 13px; }
+  /* Body: two columns at full width so lines stay short. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; padding-top: 16px; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 18px; }
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; color: var(--text-muted); }
+  .count { color: var(--text-muted); font-size: 13px; }
+  /* Requirement rows: state glyph, requirement, what the CV says, state word. */
+  .req li { display: grid; grid-template-columns: 2ch 22ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
+  .req .from { color: var(--text-muted); font-size: 13px; }
+  .req .state { font-size: 13px; }
+  /* goop summary: a goop turn (flame marker), so it reads as goop's words, not the employer's. */
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .turn p { margin: 0; }
+  .meta { color: var(--text-muted); font-size: 13px; }
+  /* Original text: never rendered here, only a pointer to M3 (untrusted data). */
+  .source { border-left: 1px solid var(--border); padding: 2px 12px; font-size: 13px; color: var(--text-muted); }
+  .source b, .count b, .warnline b { color: var(--text); font-weight: 600; }
+  /* Actions: one line of keys, like the status line hints but for this offer. */
+  .actions { display: flex; gap: 28px; padding: 10px 8px 0; border-top: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); }
+  .actions b { color: var(--text); font-weight: 600; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.detail::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop offer detail, full screen">
+  <article class="detail" aria-label="Offer detail">
+    <div class="title">Offers › <b>Backend Developer (Python)</b> · 1 of 8 · esc back to session 3</div>
+    <header class="head">
+      <span class="score apply">92</span><span class="name">Backend Developer (Python)</span><span class="new">NEW</span>
+      <span class="facts"><b>Acme Labs</b> · Remote (EU hours) · €42–48K / year · Greenhouse · posted Oct 30, 2 days ago</span>
+      <span class="verdict apply">✔ apply · matches 5 of 6 requirements</span>
+    </header>
+    <div class="body">
+      <div class="col">
+        <section class="sec" aria-label="Why it fits">
+          <div class="sec-head"><h2>Why it fits</h2><span class="count">from your CV · Backend · mid · 3 yrs</span></div>
+          <ul class="req">
+            <li><span class="ok">✓</span><span>Python</span><span class="from">3 yrs · main language</span><span class="state ok">match</span></li>
+            <li><span class="ok">✓</span><span>Django</span><span class="from">2 projects · Ledgerly, Tickit</span><span class="state ok">match</span></li>
+            <li><span class="ok">✓</span><span>REST APIs</span><span class="from">designed public API at Tickit</span><span class="state ok">match</span></li>
+            <li><span class="ok">✓</span><span>PostgreSQL</span><span class="from">3 yrs</span><span class="state ok">match</span></li>
+            <li><span class="busy">~</span><span>Fluent English</span><span class="from">B2 in your profile</span><span class="state busy">partial</span></li>
+            <li><span class="check">✕</span><span>Kubernetes</span><span class="from">not in your CV · nice to have</span><span class="state check">missing</span></li>
+          </ul>
+        </section>
+        <section class="sec" aria-label="Seniority fit">
+          <div class="sec-head"><h2>Seniority</h2><span class="count ok">fits</span></div>
+          <ul class="req">
+            <li><span class="ok">✓</span><span>asks 2+ yrs</span><span class="from">you have 3 yrs as backend</span><span class="state ok">match</span></li>
+          </ul>
+        </section>
+      </div>
+      <div class="col">
+        <section class="sec" aria-label="Summary by goop">
+          <div class="sec-head"><h2>Summary</h2><span class="count">written by goop · gpt-oss-20b</span></div>
+          <div class="turn">
+            <p>Equipo de 6 personas que construye la API de pagos de Acme. Mantenés servicios en Django y diseñás endpoints REST nuevos; hay guardias una semana al mes.</p>
+            <p>Reuniones diarias en inglés con el equipo de Berlín. Contrato indefinido, 100% remoto en horario europeo, 25 días de vacaciones.</p>
+            <div class="meta">summary · 0.8s · from 1,840 words</div>
+          </div>
+        </section>
+        <section class="sec" aria-label="Original offer text">
+          <div class="sec-head"><h2>Original text</h2><span class="count"><b>f</b> full text</span></div>
+          <div class="source">1,840 words from <b>boards.greenhouse.io/acmelabs</b> · fetched 08:12<br>shown as plain text in the full view; nothing in it is run or followed</div>
+        </section>
+      </div>
+    </div>
+    <nav class="actions" aria-label="Offer actions">
+      <span><b>s</b> save</span><span><b>d</b> dismiss</span><span><b>o</b> open in browser</span><span><b>a</b> ask goop about this offer</span><span><b>f</b> full text</span><span><b>esc</b> back</span>
+    </nav>
+  </article>
+  <footer><span class="mode detail">detail</span><span><b>↑↓</b> scroll · <b>[ ]</b> prev/next offer · <b>s</b> save · <b>a</b> ask · <b>f</b> full text · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. It is the calmest read, but the list and the chat disappear: moving to the next offer needs <strong>[ ]</strong> or esc and enter again, and <strong>a</strong> returns to the session with <strong>@Acme Backend Developer</strong> in the composer. The original offer text is never rendered here, only counted and opened in the full-text view (M3).</p>
+</body>
+</html>
