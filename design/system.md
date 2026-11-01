@@ -333,10 +333,12 @@ glyph turns `○`, the note says `paused`, the done cells turn `--text-muted`, a
 **Secret shown once** (`W5`). A `--background-element` block (padding `10px 16px`) with the secret
 in bold (700) `--text`, separators muted and regular, and the part you will type underlined
 (`text-underline-offset: 4px`, decoration `--text-muted`). Under it a dim line on why it matters
-(`it is shown only once`), then the type-to-confirm line in the composer look (`› type the last group
-to confirm:` with the expected `type 2MSQE` muted on the right; `✓ recovery key confirmed` when it
-matches, `doesn't match · check the last group` in `--error` when not). The status line offers
-`c copy key`.
+(`it is shown only once`). The status line offers `↵ I saved it` and `c copy key`. `↵` hides the
+secret (masked groups, muted, regular weight) before the type-to-confirm line in the composer look
+opens (`› type the last group from your copy:` with `group 6 of 6` muted on the right, never the
+expected value; `✓ recovery key confirmed` when it matches, `doesn't match · check the last group`
+in `--error` when not), so the confirm proves a kept copy, not a read screen. `shift+tab show key
+again` replaces `c copy key` while it is hidden.
 
 **Install disclosure** (`W8`). Before a reversible change to your system, a plain block names every
 file and command: `--background-panel`, 1px `--border` left edge, padding `10px 14px`, gap 6px,
