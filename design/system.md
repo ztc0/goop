@@ -111,6 +111,8 @@ Monospace only. A terminal has one font size, so the artboard sizes are roles, n
 | `↓`                 | Download or update in progress                                        | `--text-muted` (percent in `--text`)               | `M8`       |
 | `—`                 | Not applicable (e.g. no reasoning level, no speed)                    | `--text-muted`                                     | `M8`       |
 | `▮`                 | Heartbeat cell: one past run (ok / slow / failed / not run)           | `--success` / `--warning` / `--error` / `--border` | `M7`       |
+| `✎`                 | Profile: corrected by you (your correction wins over the CV)          | `--user`                                           | `M9`       |
+| `✓` `~` (profile)   | Profile: read from the CV and confirmed / goop is not sure            | `--success` / `--accent`                           | `M9`       |
 | U+F06D (nf-fa-fire) | goop turn marker; falls back to `●` without a Nerd Font               | `--primary`                                        | `04`       |
 | Scrollbar thumb     | One cell on the right edge                                            | see Scrollbars                                     | `04`       |
 
@@ -242,3 +244,7 @@ Before finishing an artboard while this file exists:
 ## Tabs
 
 One line of tab names separated by `·`, each with its count; the active tab is bold `--text` and underlined, the others `--text-muted`; `[` and `]` switch tabs. Source: `M7` (`design/tui-sources/01-full-screen.html`).
+
+## Source-line marker
+
+When an item comes from untrusted text shown beside it (the CV, an offer), the lines it came from get a 2px `--accent` left marker in the `│` gutter view. It is not a selection: the orange inset edge stays reserved for the selected row. Source: `M9` (`design/tui-profile/01-full-screen.html`).
