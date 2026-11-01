@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M13 privacy &amp; data · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M8 and M9: title, trust summary, two panes (what goop keeps | details), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .head { padding: 20px 28px 16px; white-space: nowrap; }
+  .title { color: var(--text-muted); }
+  .title b { color: var(--text); }
+  /* Trust summary: one calm dim line, green dot, bold facts; it turns into the pink banner only when the integrity check fails. */
+  .trust { color: var(--text-muted); font-size: 13px; }
+  .trust b { color: var(--text); font-weight: 600; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .dim { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .dim b { color: var(--text); font-weight: 600; }
+  .panes { display: grid; grid-template-columns: 620px 1fr; min-height: 0; padding: 0 28px 12px; }
+  .pane-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; white-space: nowrap; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  /* Left pane: what goop keeps, one line per store: name, count, size, age; the selected row carries its own action. */
+  .keeps { display: flex; flex-direction: column; gap: 12px; padding-right: 20px; border-right: 1px solid var(--border); min-height: 0; }
+  .group { display: flex; flex-direction: column; gap: 2px; }
+  .group h3 { padding: 0 8px 2px; }
+  .store { display: grid; grid-template-columns: 16ch 14ch 8ch 1fr auto; column-gap: 12px; padding: 5px 8px; font-size: 14px; white-space: nowrap; }
+  .store .name { font-weight: 600; }
+  .store .n, .store .age, .store .act { color: var(--text-muted); font-size: 13px; align-self: center; }
+  .store .size { text-align: right; }
+  /* Selection: inset 2px orange edge on --background-element. */
+  .store.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .store .act b { color: var(--text); font-weight: 600; }
+  .total { margin-top: auto; padding: 8px 8px 0; border-top: 1px solid var(--border-subtle); }
+  /* Right pane: details of the selection, then protection facts and retention as terminal form rows. */
+  .detail { display: flex; flex-direction: column; gap: 14px; padding-left: 24px; min-height: 0; }
+  .detail-name { font-weight: 600; white-space: nowrap; }
+  .detail-name span { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  .facts { display: flex; flex-direction: column; gap: 2px; }
+  .row { display: grid; grid-template-columns: 14ch 1fr; column-gap: 16px; padding: 3px 8px; font-size: 14px; white-space: nowrap; }
+  .row .label { color: var(--text-muted); }
+  .row .note { grid-column: 2; color: var(--text-muted); font-size: 13px; }
+  .row .value b { font-weight: 600; }
+  .clears { padding: 6px 12px; background: var(--background-panel); border-left: 1px solid var(--border); }
+  .clears .dim { white-space: normal; }
+  .sep { border-top: 1px solid var(--border-subtle); padding-top: 12px; }
+  /* One status line, three zones: focus label | hints for the focused list | background state + help. */
+  footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b, .fbar b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-privacy::before { color: var(--secondary); }
+  .mode.m-chat::before { color: var(--user); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .alert { color: var(--background); background: var(--error); padding: 0 8px; font-weight: 600; }
+  /* Below the screen: export toast, the clear ask and the integrity-failed alert. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 1.1fr); gap: 24px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin-bottom: 8px; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; white-space: nowrap; overflow: hidden; font-size: 13px; }
+  .toast b { color: var(--text); font-weight: 600; }
+  /* The ask: one line, question bold, answers with yellow keys; orange edge because goop is asking. */
+  .ask { background: var(--background-element); border-left: 2px solid var(--primary); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .ask .q { font-weight: 600; }
+  .ask .opts { color: var(--text-muted); font-size: 13px; }
+  .ask .opts b { color: var(--accent); font-weight: 700; }
+  .fbar { border: 0; background: var(--background-panel); }
+  .feedback .line { margin-top: 6px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <p class="title">Settings › <b>Privacy &amp; data</b> · goop.db on this machine · esc back to settings</p>
+    <p class="trust"><span class="ok">●</span> <b>all local</b> · <b>encrypted</b> · <b>no telemetry</b> · <b>0 personal data</b> sent</p>
+  </header>
+
+  <div class="panes">
+    <nav class="keeps" aria-labelledby="keeps-head">
+      <div class="pane-head"><h2 id="keeps-head">What goop keeps</h2><span class="count">personal data · 7 stores</span></div>
+      <section class="group" aria-labelledby="personal-head">
+        <h3 id="personal-head">Your data · each can be cleared</h3>
+        <ul>
+          <li class="store"><span class="name">Offers</span><span class="n">412</span><span class="size">18 MB</span><span class="age">kept 90 days</span><span></span></li>
+          <li class="store sel" aria-current="true"><span class="name">Sessions</span><span class="n">7</span><span class="size">2.1 MB</span><span class="age">until you clear</span><span class="act"><b>x</b> clear</span></li>
+          <li class="store"><span class="name">Rules</span><span class="n">7</span><span class="size">4 KB</span><span class="age">until you clear</span><span></span></li>
+          <li class="store"><span class="name">Profile and CV</span><span class="n">cv-2026.pdf</span><span class="size">310 KB</span><span class="age">read Oct 28</span><span></span></li>
+          <li class="store"><span class="name">Search index</span><span class="n">from offers</span><span class="size">9 MB</span><span class="age">rebuilt daily</span><span></span></li>
+          <li class="store"><span class="name">Logs</span><span class="n">no text</span><span class="size">1.2 MB</span><span class="age">kept 14 days</span><span></span></li>
+        </ul>
+      </section>
+      <section class="group" aria-labelledby="other-head">
+        <h3 id="other-head">Not personal data</h3>
+        <ul>
+          <li class="store"><span class="name">Models</span><span class="n">5 roles</span><span class="size">31 GB</span><span class="age">/models</span><span></span></li>
+        </ul>
+      </section>
+      <p class="dim total">your data <b>30.6 MB</b> · models <b>31 GB</b> · all on this machine</p>
+    </nav>
+
+    <section class="detail" aria-labelledby="detail-name">
+      <p class="detail-name" id="detail-name">Sessions <span>· 7 · 2.1 MB · oldest Oct 3 · last today 10:42</span></p>
+      <div class="facts">
+        <p class="row"><span class="label">What it holds</span><span class="value">your chat turns, goop's replies, tool results</span></p>
+        <p class="row"><span class="label">Stored</span><span class="value">inside goop.db, encrypted with the rest</span></p>
+        <p class="row"><span class="label">Kept</span><span class="value">until you clear it</span></p>
+      </div>
+      <p class="clears"><span class="dim"><b>x</b> clear removes all 7 sessions and their chat history · offers, rules and your profile stay · cannot be undone</span></p>
+
+      <section class="facts sep" aria-labelledby="prot-head">
+        <h3 id="prot-head">Protection</h3>
+        <p class="row"><span class="label">Encryption</span><span class="value"><b>AES-256</b> (SQLite3MultipleCiphers) · key sealed by <b>TPM2</b> on this machine</span></p>
+        <p class="row"><span class="label">Integrity</span><span class="value">checked at start · <span class="ok">ok</span> 09:00</span></p>
+        <p class="row"><span class="label">Network</span><span class="value">only public job boards and model downloads; never your data</span></p>
+        <p class="row"><span class="label">Secrets</span><span class="value">removed before a model sees text · <b>3</b> removed this month</span></p>
+      </section>
+
+      <section class="facts sep" aria-labelledby="ret-head">
+        <h3 id="ret-head">Retention · r to change</h3>
+        <p class="row"><span class="label">Offers kept</span><span class="value"><b>90 days</b></span><span class="note">older offers are deleted at start; saved and applied ones stay</span></p>
+        <p class="row"><span class="label">Logs kept</span><span class="value"><b>14 days</b></span><span class="note">logs hold timings and errors, never offer or CV text</span></p>
+      </section>
+    </section>
+  </div>
+
+  <footer><span class="mode m-privacy">privacy</span><span><b>↑↓</b> move · <b>x</b> clear this · <b>e</b> export (encrypted .zip) · <b>r</b> retention · <b>D</b> delete all data · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around privacy and data">
+  <div>
+    <h3>After export (e)</h3>
+    <p class="toast"><span class="ok">✓</span> Exported to <b>.local/exports/goop-export-2026-11-01.zip</b> · encrypted with your passphrase</p>
+  </div>
+  <div>
+    <h3>Clear sessions (x)</h3>
+    <p class="ask"><span class="q">Clear 7 sessions · 2.1 MB?</span><span class="opts">type <b>clear</b> to confirm · esc cancel</span></p>
+  </div>
+  <div>
+    <h3>Integrity check failed (any screen)</h3>
+    <div class="fbar"><span class="mode m-chat">chat</span><span><b>enter</b> send</span><span class="zone-right"><span class="alert">⚠ database changed outside goop · opened read-only · /privacy to review</span></span></div>
+  </div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /privacy opens from Settings like M8 and M9: title breadcrumb, no key-hint line under the header, one status line. The first line is a calm trust summary, not a banner (green ● all local · encrypted · no telemetry · 0 personal data sent); only when the integrity check fails does it become the pink banner, and every other screen shows the pink status line chip below (⚠ database changed outside goop · opened read-only · /privacy to review). Two panes. On the left, what goop keeps, one line per store with count, size and age; your data is grouped apart from the models (31 GB, not personal data, managed in /models), so the big number does not look like a privacy problem. Each personal store can be cleared on its own; the selected one (Sessions) gets the fill and the orange edge and carries x clear at the right. On the right, the selection's details and exactly what clearing removes and keeps, then the protection facts as form rows (AES-256 SQLite3MultipleCiphers with the key sealed by TPM2 here, DPAPI on Windows; integrity checked at start; network only to public job boards and model downloads; secrets removed before a model sees text) and the retention rows (offers 90 days, logs 14 days), edited with r. All actions live in the one status line (↑↓ move · x clear this · e export (encrypted .zip) · r retention · D delete all data · esc back). D needs shift on purpose and opens the M11 type-to-confirm dialog over this screen (type "delete" to wipe goop.db, the key and the index; models stay). Clearing sessions cannot be undone and uses M11 type-to-confirm; export writes a passphrase-encrypted zip and shows a toast. Trades a single plain list for two panes: every store, its size and what protects it are visible at once, but the details show one store at a time, the facts are static text the user may skim, and the screen hides the chat. Below the screen: the export toast, the clear-sessions ask and the integrity-failed status line chip.</p>
+</body>
+</html>
