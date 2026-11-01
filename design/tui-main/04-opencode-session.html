@@ -21,20 +21,33 @@
   .title { color: var(--text-muted); margin-bottom: 18px; }
   .title b { color: var(--text); }
   .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; }
-  /* User turn: a filled block with a colored left edge and a prompt marker (opencode + Claude Code).
-     Assistant turn: plain text on the session background, opened by a bullet in the brand color.
-     Tool calls: one muted line before the reply they fed. */
+  /* Turns (opencode + Claude Code + Crush):
+     you   = filled block with a colored left edge and a › marker;
+     goop  = plain text opened by a ● bullet, with its thinking and tool calls nested under it;
+     every finished reply ends with a speed line: prompt processing and generation in tokens/s. */
   .user { background: var(--background-element); border-left: 3px solid var(--secondary); padding: 8px 14px; }
   .user p::before { content: "› "; color: var(--secondary); font-weight: 700; }
-  .assistant { display: grid; grid-template-columns: 2ch 1fr; }
-  .assistant::before { content: "●"; color: var(--primary); }
-  .assistant p, .user p { margin: 0; }
+  .user p { margin: 0; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  .turn::before { content: "●"; color: var(--primary); grid-row: 1; }
+  .turn > * { grid-column: 2; }
+  .turn p { margin: 0; }
   .meta { color: var(--text-muted); font-size: 13px; }
-  .assistant .meta { grid-column: 2; }
-  .tool { color: var(--text-muted); padding-left: 2ch; }
-  .tool::before { content: "◦ "; }
-  .tool .ok { color: var(--success); }
-  .tool kbd { color: var(--text-muted); font-family: inherit; }
+  .think-head, .tool-head { font-size: 13px; color: var(--text-muted); }
+  .think-head b { color: var(--text); font-weight: 600; }
+  .think { background: var(--background-panel); border-left: 1px solid var(--border); padding: 4px 12px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+  .think .hidden { font-style: normal; color: var(--text-muted); opacity: .8; }
+  .tool-card { border-left: 1px solid var(--border); padding: 2px 12px; font-size: 13px; }
+  .tool-head .name { color: var(--text); }
+  .tool-card .args { color: var(--text-muted); }
+  .tool-card .res { color: var(--text-muted); }
+  .tool-card .res b { color: var(--success); font-weight: 600; }
+  .tool-head kbd { color: var(--text-muted); font-family: inherit; float: right; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  .speed { display: flex; gap: 14px; font-size: 13px; color: var(--text-muted); }
+  .speed b { color: var(--text); font-weight: 600; }
+  .speed .live { color: var(--warning); }
+  .caret { display: inline-block; width: 8px; height: 16px; background: var(--text); vertical-align: -2px; }
   /* Composer: no box, panel background + a left edge in the focus color; grows from 1 to ~6 lines. */
   .composer-wrap { position: relative; }
   .composer { background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 10px 16px; }
@@ -78,7 +91,6 @@
   .rows .label { color: var(--text); }
   .rows .where { color: var(--text-muted); }
   .rows .val { color: var(--text-muted); text-align: right; }
-  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
   .meter { grid-column: 2 / 5; height: 6px; background: var(--background-element); }
   .meter span { display: block; height: 100%; background: var(--primary); }
   .meter.ctx span { background: var(--success); }
@@ -97,11 +109,20 @@
     <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
     <div class="msgs">
       <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
-      <div class="tool"><span class="ok">✓</span> search_offers · 8 matches · 3 new <kbd>ctrl+o</kbd></div>
-      <div class="assistant"><p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p><div class="meta">goop · gpt-oss-20b · 4.1s</div></div>
+      <div class="turn">
+        <div class="think-head">▾ <b>Thought</b> for 2.4s · ctrl+t</div>
+        <div class="think">The user wants remote backend roles open to 2 years… I should search, then filter by seniority and modality.<br><span class="hidden">… 6 lines hidden</span></div>
+        <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">search_offers</span> · 0.3s <kbd>ctrl+o</kbd></div><div class="args">query "backend remote" · max years 2</div><div class="res">→ <b>8 matches</b> · 3 new</div></div>
+        <p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p>
+        <div class="speed"><span>gpt-oss-20b</span><span>prefill <b>412</b> tok/s</span><span>output <b>18.4</b> tok/s</span><span>1,240 → 186 tok</span><span>4.1s</span></div>
+      </div>
       <div class="user"><p>¿Por qué la de Kraft tiene menos?</p><div class="meta">you · 10:43</div></div>
-      <div class="tool"><span class="ok">✓</span> explain_score · Kraft Python Developer <kbd>ctrl+o</kbd></div>
-      <div class="assistant"><p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja.</p><div class="meta">goop · gpt-oss-20b · 2.7s</div></div>
+      <div class="turn">
+        <div class="think-head">▸ <b>Thought</b> for 0.9s</div>
+        <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">explain_score</span> · Kraft · Python Developer · 0.1s <kbd>ctrl+o</kbd></div></div>
+        <p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja<span class="caret"></span></p>
+        <div class="speed"><span class="live">◐ writing</span><span>prefill <b>398</b> tok/s</span><span>output <b class="live">17.9</b> tok/s</span><span>esc stop</span></div>
+      </div>
     </div>
     <div class="composer-wrap">
       <div class="popup">
@@ -158,6 +179,6 @@
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
   <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
 </section>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded models and chat context) with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded models and chat context) with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
