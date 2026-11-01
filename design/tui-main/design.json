@@ -13,9 +13,9 @@
     {
       "file": "05-home.html",
       "title": "Home screen",
-      "tradeoff": "Logo-centered first screen with prompt and today's numbers; an extra screen, logo hidden under ~30 rows",
+      "tradeoff": "Quiet home: prompt, recent activity, one rotating tip and a first-run version with steps; commands sit behind ctrl+p",
       "width": 1440,
-      "height": 900
+      "height": 1100
     },
     {
       "file": "06-session-idle.html",

@@ -9,7 +9,7 @@
     --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
     --text: #f4ede6; --text-muted: #a89c91;
     --primary: #ff7a2e; --accent: #ffc24a; --success: #8fd694; --warning: #ffc24a;
-    --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --border-active: #ff7a2e; --user: #b9a6ff; --border: #3a302a; --border-subtle: #2a231f;
     --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
@@ -19,15 +19,35 @@
   #logo { display: grid; grid-template-columns: repeat(24, 10px); grid-auto-rows: 10px; }
   .name { font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: .02em; }
   .tagline { color: var(--text-muted); margin-top: -14px; }
-  .today { display: flex; gap: 28px; color: var(--text-muted); }
-  .today b { color: var(--text); }
-  .today .new b { color: var(--accent); }
-  .composer { width: 720px; background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 14px 18px; }
+  .composer { width: 720px; background: var(--background-panel); border-left: 2px solid var(--user); padding: 14px 18px; }
+  .composer .prompt { color: var(--user); margin-right: 8px; }
+  .composer .cursor { display: inline-block; width: 9px; height: 1.1em; background: var(--user); vertical-align: -3px; margin-right: 6px; }
   .composer .hint { color: var(--text-muted); }
   .composer .model { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
   .composer .model b { color: var(--primary); }
-  .shortcuts { display: grid; grid-template-columns: auto auto; gap: 4px 28px; color: var(--text-muted); font-size: 14px; }
-  .shortcuts b { color: var(--text); font-weight: 600; }
+  /* Recent activity: a short list you move through with the arrows (like Claude Code's welcome box). */
+  .recent { width: 720px; display: grid; gap: 2px; font-size: 14px; }
+  .recent div { display: grid; grid-template-columns: 2ch 1fr auto; padding: 3px 10px; color: var(--text-muted); }
+  .recent div b { color: var(--text); font-weight: 600; }
+  .recent .new { color: var(--accent); }
+  .recent .sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .recent .sel span:first-child { color: var(--primary); }
+  .recent kbd { font: inherit; color: var(--text-muted); }
+  /* One rotating tip instead of a fixed list of commands (like opencode's "Did you know"). */
+  .tip { width: 720px; color: var(--text-muted); font-size: 14px; }
+  .tip .dot { color: var(--accent); }
+  .tip b { color: var(--text); font-weight: 600; }
+  /* First run: numbered steps to get started (like Gemini CLI), shown until a CV and a search exist. */
+  .first { width: 1440px; display: grid; grid-template-columns: 1fr 1fr; gap: 0; background: var(--background); color: var(--text); font: 15px/1.5 var(--mono); border-top: 1px solid var(--border); }
+  .first > div { padding: 22px 28px; }
+  .first > div + div { border-left: 1px solid var(--border-subtle); }
+  .first h3 { margin: 0 0 10px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+  .first ol { margin: 0; padding-left: 3ch; display: grid; gap: 4px; }
+  .first li::marker { color: var(--primary); }
+  .first .done { color: var(--text-muted); text-decoration: line-through; }
+  .first .now { color: var(--text); }
+  .first .now::after { content: "  ← now"; color: var(--primary); }
+  .first .later { color: var(--text-muted); }
   footer { display: flex; justify-content: space-between; padding: 6px 28px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; }
   .ok { color: var(--success); }
   .notes { width: 1440px; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
@@ -40,17 +60,30 @@
     <div id="logo" role="img" aria-label="goop logo: a pixel-art flame with two square eyes"></div>
     <div class="name">goop</div>
     <div class="tagline">your local job search agent</div>
-    <div class="today"><span><b>8</b> offers for you</span><span class="new"><b>3</b> new today</span><span><b>1</b> rule to review</span></div>
-    <div class="composer"><div class="hint">Preguntá o pedí algo… por ejemplo "mostrame las nuevas"</div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
-    <div class="shortcuts">
-      <span><b>/offers</b> today's offers</span><span><b>ctrl+x l</b> sessions</span>
-      <span><b>/search</b> search now</span><span><b>ctrl+x n</b> new session</span>
-      <span><b>/profile</b> your profile</span><span><b>ctrl+p</b> all commands</span>
-    </div>
+    <div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="hint">¿por qué Kraft tiene menos puntaje?</span></div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
+    <nav class="recent" aria-label="Recent activity">
+      <div class="sel"><span>▸</span><span><b class="new">3 new offers</b> today · best 92 at Acme Labs</span><kbd>enter</kbd></div>
+      <div><span>▸</span><span><b>1 rule</b> to review</span><kbd>enter</kbd></div>
+      <div><span>▸</span><span>continue: <b>Backend remoto, 2 años</b> · 10:43</span><kbd>enter</kbd></div>
+    </nav>
+    <div class="tip"><span class="dot">●</span> Tip  type <b>@</b> and an offer's name to ask about it · <b>ctrl+p</b> all commands</div>
   </section>
-  <footer><span><span class="ok">●</span> models ready · last search 09:00 · next tomorrow 09:00</span><span>v0.1.0 · ? help</span></footer>
+  <footer><span><span class="ok">●</span> local · encrypted · gpt-oss-20b ready · next search tomorrow 09:00</span><span>v0.1.0 · ? help</span></footer>
 </main>
-<p class="notes"><strong>Tradeoff:</strong> the opencode and Crush pattern for an empty or fresh session: the logo centered with the prompt below, today's numbers and the main shortcuts. Friendly first impression and a natural place for the pixel logo; it is a second screen to build, and the logo is hidden when the terminal is shorter than ~30 rows.</p>
+<section class="first" aria-label="First run version of the home screen">
+  <div><h3>First run · getting started</h3><ol>
+    <li class="done">Download the models</li>
+    <li class="now">Load your CV  <b>/reload-cv</b></li>
+    <li class="later">Tell goop what you look for (role, remote, salary)</li>
+    <li class="later">Run the first search  <b>/search</b></li>
+  </ol></div>
+  <div><h3>Placeholder rotates on each start</h3><ol>
+    <li class="later">mostrame las nuevas</li>
+    <li class="later">¿por qué Kraft tiene menos puntaje?</li>
+    <li class="later">buscá solo remoto en Europa</li>
+  </ol></div>
+</section>
+<p class="notes"><strong>Tradeoff:</strong> a quiet home in the style of opencode, Claude Code and Gemini CLI: the logo, the prompt (lavender like in the session, with a placeholder that rotates on each start), a short recent-activity list you open with the arrows and enter, and one rotating tip instead of a fixed list of commands. Below the screen, the first-run version replaces recent activity with numbered steps until a CV and a search exist. Calm and familiar; the commands are one ctrl+p away, so first-time users depend on the tip and the steps.</p>
 <script>
   // The implemented logo grid (src/shared/model/logo.ts), 24x29.
   const FLAME = ["........................","........................","............Y...........","...........YYY..........","...........YYY..........","...........YYYY.........","..........YYYYYY........","..........OOOOOOO.......","..........OOOOOOOO......","..........OOOOOOOO......",".........OOOOOOOOOO.....",".........OOOOOOOOOOO....","......O..OOOOOOOOOOO....",".....OOO.OOOOOOOOOOOO...","....OOOO.OOOOOOOOOOOO...","....OOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...PPPPPPPPPPPPPPPPPP...","....PPPPPPPPPPPPPPPP....","....PPPPPPPPPPPPPPPP....",".....PPPPPPPPPPPPPP.....",".....PPPPPPPPPPPPP......",".......PPPPPPPPPP.......",".........PPPPPP.........","........................"];
