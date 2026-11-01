@@ -53,23 +53,23 @@ All of it lives in [`scripts/spikes/encrypted-sqlite/`](../../scripts/spikes/enc
 
 ## Commands
 
-Run from the repository root. `scripts/run.ts` sets `GOOP_HOME=.local/` and `TMPDIR=.temp/tmp/`.
+Run from the repository root. `scripts/dev-env/run.ts` sets `GOOP_HOME=.local/` and `TMPDIR=.temp/tmp/`.
 
 ```sh
 # Download, verify, extract and build into .local/build/sqlite/
-bun scripts/run.ts bun scripts/spikes/encrypted-sqlite/build-artifacts.ts
+bun scripts/dev-env/run.ts bun scripts/spikes/encrypted-sqlite/build-artifacts.ts
 
 # The compile step inside build-artifacts.ts
 gcc -O2 -fPIC -shared -DSQLITE_ENABLE_FTS5 -DSQLITE3MC_USE_DISPATCH_TABLE -DSQLITE_THREADSAFE=1 \
   -o .local/build/sqlite/libsqlite3mc.so .temp/extract/sqlite3mc-2.6.1-<random>/sqlite3mc_amalgamation.c -lm -lpthread
 
 # Checks from source
-bun scripts/run.ts bun scripts/spikes/encrypted-sqlite/check.ts
+bun scripts/dev-env/run.ts bun scripts/spikes/encrypted-sqlite/check.ts
 
 # Compiled executable, run against an empty cache so the copy out of /$bunfs/ is exercised
-bun scripts/run.ts bun build --compile scripts/spikes/encrypted-sqlite/check.ts \
+bun scripts/dev-env/run.ts bun build --compile scripts/spikes/encrypted-sqlite/check.ts \
   --outfile .local/build/sqlite/goop-spike-check
-GOOP_SPIKE_CACHE=$PWD/.temp/scratch/compiled-cache bun scripts/run.ts .local/build/sqlite/goop-spike-check
+GOOP_SPIKE_CACHE=$PWD/.temp/scratch/compiled-cache bun scripts/dev-env/run.ts .local/build/sqlite/goop-spike-check
 ```
 
 The build took about 32 s, all of it compiling the amalgamation. The compiled executable is 83 MB, almost all of it the Bun runtime.

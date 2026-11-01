@@ -6,7 +6,7 @@ This file is the entry point. It stays short on purpose: read the detailed rule 
 
 ## Commands
 
-All scripts run inside the repo-local environment (`scripts/run.ts`).
+All scripts run inside the repo-local environment (`scripts/dev-env/run.ts`).
 
 | Command               | What it does                                       |
 | --------------------- | -------------------------------------------------- |

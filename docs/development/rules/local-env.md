@@ -1,6 +1,6 @@
 # Repo-local environment rules
 
-Development never writes outside the repo. `scripts/run.ts` sets these variables before every package script:
+Development never writes outside the repo. `scripts/dev-env/run.ts` sets these variables before every package script:
 
 | Variable                | Points to           |
 | ----------------------- | ------------------- |

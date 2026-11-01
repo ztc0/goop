@@ -1,6 +1,6 @@
 // T10 spike check: sqlite3mc (encryption) + FTS5 + sqlite-vec through bun:ffi, next to bun:sqlite.
 // Prints PASS/FAIL per item and exits 1 on any FAIL.
-// Run from source:  bun scripts/run.ts bun scripts/spikes/encrypted-sqlite/check.ts
+// Run from source:  bun scripts/dev-env/run.ts bun scripts/spikes/encrypted-sqlite/check.ts
 // Compile and run:  see docs/research/spike-encrypted-sqlite.md
 import { Database } from "bun:sqlite";
 import { mkdirSync, readFileSync, rmSync } from "node:fs";
@@ -42,7 +42,7 @@ function expect(condition: boolean, message: string): void {
 
 const home = process.env.GOOP_HOME;
 if (!home) {
-  process.stderr.write("GOOP_HOME is not set; run through scripts/run.ts\n");
+  process.stderr.write("GOOP_HOME is not set; run through scripts/dev-env/run.ts\n");
   process.exit(2);
 }
 const compiled = import.meta.path.startsWith("/$bunfs/") || import.meta.path.includes("~BUN");
