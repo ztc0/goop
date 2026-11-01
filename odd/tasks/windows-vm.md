@@ -19,7 +19,7 @@ Branch `feat/windows-vm`, based on `feat/spike-encrypted-sqlite` (its first user
 | T2  | S1, S2, S3 | `scripts/windows-vm/`: types, pure model (Podman arguments, readiness, results), Podman and SSH adapters, start/status/run/stop services and CLI, with tests | inline | 16b516e, bbce866 |
 | T3  | S1, S3     | First real run: install Windows in the container under `.local/`, record time and size                                                                       | inline | d39147c, 5bb7c01 |
 | T4  | S1         | Run the T10 checks on Windows through the script and record the result                                                                                       | inline | a8862a5          |
-| T5  | S1         | Developer doc for the Windows VM and the `scripts/` layout                                                                                                   | inline | -                |
+| T5  | S1         | Developer doc for the Windows VM and the `scripts/` layout                                                                                                   | inline | 21b72fa          |
 
 ## Log
 
