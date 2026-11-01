@@ -11,6 +11,7 @@ All scripts run inside the repo-local environment (`scripts/run.ts`).
 | Command               | What it does                                       |
 | --------------------- | -------------------------------------------------- |
 | `bun install`         | Install dependencies (cache in `.local/cache/bun`) |
+| `bun run dev`         | Run goop from source and restart on file changes   |
 | `bun run test`        | Run the test suite                                 |
 | `bun run typecheck`   | TypeScript check, no output files                  |
 | `bun run lint`        | Biome lint and format check                        |
