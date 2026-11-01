@@ -110,7 +110,8 @@
   .mode.chat::before { color: var(--primary); }
   .mode.offers::before { color: var(--secondary); }
   .mode.busy::before { color: var(--warning); }
-  .zone-right { display: flex; gap: 14px; }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
   .alert { color: var(--background); background: var(--error); padding: 0 8px; font-weight: 600; }
   .fbars { width: 1440px; background: var(--background); padding: 8px 0 18px; display: grid; gap: 8px; font-family: var(--mono); }
   .fbar { border: 0; background: var(--background-panel); }
