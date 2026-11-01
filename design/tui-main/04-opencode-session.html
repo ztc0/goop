@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · 04 opencode-style session</title>
+<style>
+  /* Semantic theme tokens (opencode roles). Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff;
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr 420px; grid-template-rows: 1fr auto; }
+  .session { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; }
+  .title b { color: var(--text); }
+  .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .user { border-left: 2px solid var(--secondary); padding-left: 14px; }
+  .assistant { padding-left: 16px; }
+  .assistant p, .user p { margin: 0; }
+  .meta { color: var(--text-muted); font-size: 13px; }
+  .tool { color: var(--text-muted); padding-left: 16px; }
+  .tool .ok { color: var(--success); }
+  .tool kbd { color: var(--text-muted); font-family: inherit; }
+  .progress { color: var(--text-muted); margin: 8px 0; padding-left: 2px; }
+  .bar { display: inline-block; width: 240px; height: 8px; background: var(--background-element); vertical-align: middle; margin: 0 8px; }
+  .bar span { display: block; height: 100%; width: 25%; background: var(--primary); }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 12px 16px; }
+  .composer .hint { color: var(--text-muted); }
+  .composer .model { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  .composer .model b { color: var(--primary); }
+  aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 6px 8px; }
+  li.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .sub { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
+  .new { color: var(--accent); font-size: 12px; font-weight: 700; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; }
+  .kv dt { color: var(--text-muted); } .kv dd { margin: 0; }
+  footer { grid-column: 1 / -1; display: flex; justify-content: space-between; padding: 6px 28px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; }
+  footer b { color: var(--text); font-weight: 600; }
+  .notes { width: 1440px; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop session screen mockup in the style of opencode">
+  <section class="session" aria-label="Session">
+    <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
+    <div class="msgs">
+      <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
+      <div class="tool"><span class="ok">✓</span> search_offers · 8 matches · 3 new <kbd>ctrl+o</kbd></div>
+      <div class="assistant"><p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p><div class="meta">goop · gpt-oss-20b · 4.1s</div></div>
+      <div class="user"><p>¿Por qué la de Kraft tiene menos?</p><div class="meta">you · 10:43</div></div>
+      <div class="tool"><span class="ok">✓</span> explain_score · Kraft Python Developer <kbd>ctrl+o</kbd></div>
+      <div class="assistant"><p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja.</p><div class="meta">goop · gpt-oss-20b · 2.7s</div></div>
+    </div>
+    <div class="progress">searching<span class="bar"><span></span></span>312 / 1,240 companies</div>
+    <div class="composer"><div class="hint">Preguntá o pedí algo… <span style="color:var(--text-muted)">/ for commands</span></div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
+  </section>
+  <aside aria-label="Sidebar with offers and status">
+    <h2>Offers · 8 · <span class="new">3 new</span></h2>
+    <ul>
+      <li class="sel"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">NEW</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
+      <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
+      <li><span class="score maybe">71</span><span>Python Developer</span><span></span><span class="sub">Kraft · Remote · ~ maybe</span></li>
+      <li><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">NEW</span><span class="sub">Lumen · Hybrid Madrid · ~ maybe</span></li>
+      <li><span class="score check">58</span><span>Backend Engineer</span><span></span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+    </ul>
+    <h2>Status</h2>
+    <dl class="kv"><dt>models</dt><dd>qwen ✓ · gpt-oss ✓</dd><dt>search</dt><dd>daily 09:00 · running</dd><dt>profile</dt><dd>Backend · mid · 3 yrs</dd><dt>rules</dt><dd>4 active · 1 to review</dd></dl>
+  </aside>
+  <footer><span><b>tab</b> offers · <b>enter</b> send · <b>ctrl+o</b> expand tool · <b>ctrl+x</b> leader</span><span><b>ctrl+p</b> commands · <b>ctrl+x b</b> sidebar · <b>?</b> help</span></footer>
+</main>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, tool calls collapsed into one line, and a 42-column-style sidebar with the offers and status (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+</body>
+</html>

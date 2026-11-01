@@ -23,6 +23,20 @@
       "tradeoff": "Calm, portfolio-friendly cards; fewer offers fit, needs true color",
       "width": 1440,
       "height": 900
+    },
+    {
+      "file": "04-opencode-session.html",
+      "title": "opencode-style session",
+      "tradeoff": "Familiar agent layout: chat + composer, collapsed tool calls, offers sidebar; smaller list, detail opens full view",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "05-home.html",
+      "title": "Home screen",
+      "tradeoff": "Logo-centered first screen with prompt and today's numbers; an extra screen, logo hidden under ~30 rows",
+      "width": 1440,
+      "height": 900
     }
   ]
 }

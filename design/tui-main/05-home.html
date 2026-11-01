@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · 05 Home screen</title>
+<style>
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --success: #8fd694; --warning: #ffc24a;
+    --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-rows: 1fr auto; }
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+  #logo { display: grid; grid-template-columns: repeat(24, 10px); grid-auto-rows: 10px; }
+  .name { font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: .02em; }
+  .tagline { color: var(--text-muted); margin-top: -14px; }
+  .today { display: flex; gap: 28px; color: var(--text-muted); }
+  .today b { color: var(--text); }
+  .today .new b { color: var(--accent); }
+  .composer { width: 720px; background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 14px 18px; }
+  .composer .hint { color: var(--text-muted); }
+  .composer .model { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  .composer .model b { color: var(--primary); }
+  .shortcuts { display: grid; grid-template-columns: auto auto; gap: 4px 28px; color: var(--text-muted); font-size: 14px; }
+  .shortcuts b { color: var(--text); font-weight: 600; }
+  footer { display: flex; justify-content: space-between; padding: 6px 28px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; }
+  .ok { color: var(--success); }
+  .notes { width: 1440px; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop home screen mockup with the logo and the prompt">
+  <section class="center" aria-label="Home">
+    <div id="logo" role="img" aria-label="goop logo: a pixel-art flame with two square eyes"></div>
+    <div class="name">goop</div>
+    <div class="tagline">your local job search agent</div>
+    <div class="today"><span><b>8</b> offers for you</span><span class="new"><b>3</b> new today</span><span><b>1</b> rule to review</span></div>
+    <div class="composer"><div class="hint">Preguntá o pedí algo… por ejemplo "mostrame las nuevas"</div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
+    <div class="shortcuts">
+      <span><b>/offers</b> today's offers</span><span><b>ctrl+x l</b> sessions</span>
+      <span><b>/search</b> search now</span><span><b>ctrl+x n</b> new session</span>
+      <span><b>/profile</b> your profile</span><span><b>ctrl+p</b> all commands</span>
+    </div>
+  </section>
+  <footer><span><span class="ok">●</span> models ready · last search 09:00 · next tomorrow 09:00</span><span>v0.1.0 · ? help</span></footer>
+</main>
+<p class="notes"><strong>Tradeoff:</strong> the opencode and Crush pattern for an empty or fresh session: the logo centered with the prompt below, today's numbers and the main shortcuts. Friendly first impression and a natural place for the pixel logo; it is a second screen to build, and the logo is hidden when the terminal is shorter than ~30 rows.</p>
+<script>
+  // The implemented logo grid (src/shared/model/logo.ts), 24x29.
+  const FLAME = ["........................","........................","............Y...........","...........YYY..........","...........YYY..........","...........YYYY.........","..........YYYYYY........","..........OOOOOOO.......","..........OOOOOOOO......","..........OOOOOOOO......",".........OOOOOOOOOO.....",".........OOOOOOOOOOO....","......O..OOOOOOOOOOO....",".....OOO.OOOOOOOOOOOO...","....OOOO.OOOOOOOOOOOO...","....OOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...PPPPPPPPPPPPPPPPPP...","....PPPPPPPPPPPPPPPP....","....PPPPPPPPPPPPPPPP....",".....PPPPPPPPPPPPPP.....",".....PPPPPPPPPPPPP......",".......PPPPPPPPPP.......",".........PPPPPP.........","........................"];
+  const C = { O: "#ff7a2e", Y: "#ffc24a", P: "#ff5f7a", W: "#fffaf3", K: "#1a1412" };
+  const grid = FLAME.map((row) => [...row]);
+  for (const left of [6, 14]) for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) grid[17 + y][left + x] = x >= 2 && y >= 2 ? "K" : "W";
+  const logo = document.getElementById("logo");
+  for (const row of grid) for (const c of row) {
+    const cell = document.createElement("span");
+    if (c !== ".") cell.style.background = C[c];
+    logo.appendChild(cell);
+  }
+</script>
+</body>
+</html>
