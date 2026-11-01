@@ -1,0 +1,34 @@
+# Architecture rules
+
+## Screaming Architecture with hexagonal layers
+
+Top-level folders under `src/` name business features, not technologies: `offers`, `discovery`, `profile`, `matching`, `chat`, `scheduler`, `models`, `learner`. `src/shared/` holds what two or more features use, and `src/interfaces/` holds the entry points (`daemon`, `tui`).
+
+Inside a feature, create only the layers it needs, when it needs them:
+
+| Folder                              | Holds                                                 | May depend on                          |
+| ----------------------------------- | ----------------------------------------------------- | -------------------------------------- |
+| `types/`                            | Types and interfaces only, no logic                   | nothing                                |
+| `model/`                            | Pure domain logic, no I/O                             | `types/`                               |
+| `services/`                         | Use cases that orchestrate model and adapters         | `types/`, `model/`, adapter interfaces |
+| `adapters/`                         | The outside world: APIs, SQLite, files, model servers | `types/`, `model/`                     |
+| `tests/unit/`, `tests/integration/` | Tests of this feature only                            | anything in the feature                |
+| `index.ts`                          | The feature's only public entry                       | its own folders                        |
+- `model/` never imports from `adapters/`.
+- `adapters/` stays flat while it has one kind of adapter; it gets subfolders when a second kind appears (for example `offers/adapters/sources/` and `offers/adapters/storage/`).
+
+## Scope rule
+
+- Used by one feature: it lives in that feature.
+- Used by two or more features: it moves to `src/shared/`.
+- Tests that span several features live in the root `tests/integration/` or `tests/e2e/`.
+
+## Imports
+
+- Use the `@/` alias for imports from `src/`: `import { devLayout } from "@/shared/model/dev-layout"`.
+- Another feature is imported only through its `index.ts`: `@/offers`, never `@/offers/model/dedupe`.
+- Inside a feature, relative imports are fine.
+
+## Process model
+
+One executable, two modes: `goop` (TUI) and `goop daemon` (service). They talk JSON-RPC 2.0 over a Unix socket or a Windows named pipe. The daemon owns the models, the queue and the database; the TUI never touches them directly.
