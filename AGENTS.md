@@ -23,7 +23,7 @@ All scripts run inside the repo-local environment (`scripts/run.ts`).
 ## Golden rules
 
 1. **Keep the machine clean.** Write only inside the repo: persistent files in `.local/`, disposable files in `.temp/` (your own scratch work goes to `.temp/scratch/`, never `/tmp`). Ask before anything that must touch the system, naming the exact path.
-2. **Only the maintainer merges into `main`.** Work goes `feat/*` -> `dev` -> `main`; agents open pull requests into `dev` and may open the `dev` -> `main` one, but never merge it, tag or release. No new remote and no GitHub setting change without approval.
+2. **Only the maintainer merges into `main`.** Work goes `feat/*` -> `dev` -> `main`; agents open pull requests into `dev` and may open the `dev` -> `main` one, but never merge it, tag or release. After opening a pull request, wait for the maintainer to run the CodeRabbit **Trigger review**, then fix its valid findings before merging (see `commits.md`). No new remote and no GitHub setting change without approval.
 3. **Test first.** For behavior with a runnable test: write the failing test, see it fail for the right reason, then make it pass.
 4. **Conventional Commits.** `type(scope): subject`, enforced by commitlint on every commit.
 5. **No placeholders.** No `.gitkeep`, no empty folders, no stub files: a folder appears with its first real file.
