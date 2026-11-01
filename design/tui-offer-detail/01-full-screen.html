@@ -58,8 +58,26 @@
   .source { border-left: 1px solid var(--border); padding: 2px 12px; font-size: 13px; color: var(--text-muted); }
   .source b, .count b, .warnline b { color: var(--text); font-weight: 600; }
   /* Actions: one line of keys, like the status line hints but for this offer. */
-  .actions { display: flex; gap: 28px; padding: 10px 8px 0; border-top: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); }
-  .actions b { color: var(--text); font-weight: 600; }
+  /* Action bar: real buttons pinned under the header (lazygit / opencode dialogs).
+     Each button is a filled cell block with its key; the primary action (Apply) is green and takes enter. */
+  .actions { display: flex; align-items: center; gap: 10px; padding: 12px 8px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; }
+  .btn { background: var(--background-element); color: var(--text); padding: 2px 12px; }
+  .btn kbd { font: inherit; font-weight: 700; color: var(--accent); margin-right: 8px; }
+  .btn.primary { background: var(--success); color: var(--background); font-weight: 700; }
+  .btn.primary kbd { color: var(--background); }
+  .btn.done { background: var(--background-panel); color: var(--success); box-shadow: inset 2px 0 var(--success); }
+  .btn.done kbd { color: var(--success); }
+  .actions .minor { margin-left: auto; color: var(--text-muted); font-size: 13px; }
+  .actions .minor b { color: var(--text); font-weight: 600; }
+  /* Feedback after an action: a short toast with undo, and the dismiss reason picker (feeds the Learner). */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; }
+  .toast b { color: var(--accent); }
+  .ask { background: var(--background-element); border-left: 2px solid var(--primary); padding: 8px 12px; display: grid; gap: 4px; }
+  .ask .q { color: var(--text); font-weight: 600; }
+  .ask .opts { color: var(--text-muted); }
+  .ask .opts b { color: var(--accent); }
   /* Status line in three zones: focus label | hints | background state + help. */
   footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
   footer b { color: var(--text); font-weight: 600; }
@@ -81,6 +99,10 @@
       <span class="facts"><b>Acme Labs</b> · Remote (EU hours) · €42–48K / year · Greenhouse · posted Oct 30, 2 days ago</span>
       <span class="verdict apply">✔ apply · matches 5 of 6 requirements</span>
     </header>
+    <nav class="actions" aria-label="Offer actions">
+      <span class="btn primary"><kbd>↵</kbd>Apply</span><span class="btn done"><kbd>✓</kbd>Saved</span><span class="btn"><kbd>a</kbd>Ask goop</span><span class="btn"><kbd>d</kbd>Dismiss</span>
+      <span class="minor"><b>o</b> browser · <b>f</b> full text</span>
+    </nav>
     <div class="body">
       <div class="col">
         <section class="sec" aria-label="Why it fits">
@@ -116,12 +138,14 @@
         </section>
       </div>
     </div>
-    <nav class="actions" aria-label="Offer actions">
-      <span><b>s</b> save</span><span><b>d</b> dismiss</span><span><b>o</b> open in browser</span><span><b>a</b> ask goop about this offer</span><span><b>f</b> full text</span><span><b>esc</b> back</span>
-    </nav>
   </article>
-  <footer><span class="mode detail">detail</span><span><b>↑↓</b> scroll · <b>[ ]</b> prev/next offer · <b>s</b> save · <b>a</b> ask · <b>f</b> full text · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode detail">detail</span><span><b>↑↓</b> scroll · <b>[ ]</b> prev/next offer · <b>tab</b> next button · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
-<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. It is the calmest read, but the list and the chat disappear: moving to the next offer needs <strong>[ ]</strong> or esc and enter again, and <strong>a</strong> returns to the session with <strong>@Acme Backend Developer</strong> in the composer. The original offer text is never rendered here, only counted and opened in the full-text view (M3).</p>
+<section class="feedback" aria-label="Action feedback states">
+  <div><h3>After save</h3><div class="toast"><span>✓ Saved to your list</span><span><b>u</b> undo · 4s</span></div></div>
+  <div><h3>After apply (enter)</h3><div class="ask"><span class="q">Opened the application page. Did you apply?</span><span class="opts"><b>y</b> yes, mark applied · <b>n</b> not yet · <b>esc</b> later</span></div></div>
+  <div><h3>On dismiss</h3><div class="ask"><span class="q">Why not this one? (goop learns from it)</span><span class="opts"><b>1</b> salary · <b>2</b> stack · <b>3</b> location · <b>4</b> seniority · <b>5</b> other · <b>esc</b> skip</span></div></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. The action bar is pinned under the header as real buttons: Apply is the primary action (green, enter) and opens the application page, then asks whether you applied; Save turns into ✓ Saved; Dismiss asks for a reason the Learner uses; every action shows a short toast with undo. tab moves between buttons, and the status line keeps only navigation keys. Below the screen: the feedback states.</p>
 </body>
 </html>
