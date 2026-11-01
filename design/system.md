@@ -299,7 +299,8 @@ Before finishing an artboard while this file exists:
 - [ ] Orange means goop or selection; lavender means you; no color reused for another meaning.
 - [ ] Selection is the inset 2px orange edge on `--background-element` (the command palette
   uses a bold `--primary` label instead, see Command palette); no rounded corners, no shadows.
-- [ ] Glyphs come from the table above; the flame has its `●` fallback.
+- [ ] Glyphs come from the table above; the flame has its `●` fallback. Emoji tiles use only the
+  Icon modes mapping (Command palette), with a neutral `--background-element` tile.
 - [ ] The status line keeps three zones and 28px.
 - [ ] No key-hint line under a header, title or breadcrumb; keys live only in status line zone 2.
 - [ ] Keys are bold `--text` everywhere, content included (never `--accent`); only the primary
@@ -333,7 +334,7 @@ When an item comes from untrusted text shown beside it (the CV, an offer), the l
 
 ## Command palette
 
-The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px `--text-muted` border on all four sides, no radius and no shadow; modal boxes (the palette and the M11 confirmations) are the only bordered boxes in goop. Inside there is only the search line (lavender cursor, muted placeholder) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches, a Nerd Font glyph in `--background`, two spaces, then the label:
+The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px `--text-muted` border on all four sides, no radius and no shadow; modal boxes (the palette and the M11 confirmations) are the only bordered boxes in goop. Inside there is only the search line (lavender cursor, muted placeholder) and a flat list of rows about two lines high. Each row is a 2-cell icon tile, two spaces, then the label. With `icons: nerd` the tile is filled with the color of what the command touches and holds a Nerd Font glyph in `--background`:
 
 | Tile color     | Commands                         |
 | -------------- | -------------------------------- |
@@ -344,4 +345,40 @@ The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px
 | `--text-muted` | Session, Settings, Privacy, Help |
 | `--error`      | Quit                             |
 
-Tiles are never lavender. Without a Nerd Font each tile shows the label's first letter, bold, in `--background`. The selected row has no fill and no edge: its label turns bold `--primary`, and only that row shows its keybind or slash command, right-aligned and muted. The palette has no hint row; its hints live in the status line (`commands` with a `--secondary` dot, `↵ run · ↑↓ move · esc close`). Source: `design/tui-command-palette/01-dialog.html`. Confirmation dialogs (M11, `design/tui-confirm/01-dialog.html`) reuse the same bordered box, tiles and rows, with an `--error` tile for irreversible actions and an `--accent` tile for costly ones.
+Tiles are never lavender.
+
+**Icon modes.** The `icons` setting (Settings, `M6`, Appearance category) picks how every tile is drawn; the tile keeps its place and its 2-cell size in all three, so rows always align:
+
+| Mode              | Tile                                                                                | For                        |
+| ----------------- | ----------------------------------------------------------------------------------- | -------------------------- |
+| `emoji` (default) | Neutral `--background-element` fill, one emoji centered; no semantic color          | Most terminals             |
+| `nerd`            | Filled with the tile color above, Nerd Font glyph in `--background`                 | Terminals with a Nerd Font |
+| `letters`         | Filled with the tile color above, the label's first letter, bold, in `--background` | Old terminals, SSH         |
+
+Emoji bring their own colors, so in emoji mode the tile color goes away; label colors stay (pink for destructive). Only code points with `Emoji_Presentation=Yes` (2 cells wide by default, East Asian Width `W`); no VS16 (U+FE0F) sequences, no ZWJ sequences, no skin tones, no flags (so no gear U+2699, wastebasket U+1F5D1 or pencil U+270F, which need VS16). One emoji per command or store, the same in every screen:
+
+| Item                  | Emoji | Code point |
+| --------------------- | ----- | ---------- |
+| Search now            | 🔍    | U+1F50D    |
+| Offers list           | 💼    | U+1F4BC    |
+| Saved offers          | 📌    | U+1F4CC    |
+| Rules                 | 📋    | U+1F4CB    |
+| New / Resume session  | 💬    | U+1F4AC    |
+| Agents                | 🤖    | U+1F916    |
+| Models                | 🧠    | U+1F9E0    |
+| Sources               | 📡    | U+1F4E1    |
+| Settings              | 🔧    | U+1F527    |
+| Profile and CV        | 👤    | U+1F464    |
+| Privacy               | 🔒    | U+1F512    |
+| Help                  | ❓    | U+2753     |
+| Quit                  | 🚪    | U+1F6AA    |
+| Search index          | 📚    | U+1F4DA    |
+| Logs                  | 📜    | U+1F4DC    |
+| Encrypted database    | 🔐    | U+1F510    |
+| Delete / irreversible | ⛔    | U+26D4     |
+| Costly / unfollow     | 🔕    | U+1F515    |
+| Companies             | 🏢    | U+1F3E2    |
+
+The main frames are drawn with `icons: nerd`; each strip shows an emoji excerpt (palette (c), `M11`, `M13`, `M4`) and the palette also shows `letters` (d).
+
+The selected row has no fill and no edge: its label turns bold `--primary`, and only that row shows its keybind or slash command, right-aligned and muted. The palette has no hint row; its hints live in the status line (`commands` with a `--secondary` dot, `↵ run · ↑↓ move · esc close`). Source: `design/tui-command-palette/01-dialog.html`. Confirmation dialogs (M11, `design/tui-confirm/01-dialog.html`) reuse the same bordered box, tiles and rows, with an `--error` tile for irreversible actions and an `--accent` tile for costly ones.

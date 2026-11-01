@@ -91,6 +91,10 @@
   .palette .tile { display: grid; place-items: center; width: 2ch; height: 22px; color: var(--background); font-weight: 700; }
   .palette .tile svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .t-system { background: var(--text-muted); } .t-offers { background: var(--success); } .t-quit { background: var(--error); }
+  /* Emoji mode (icons: emoji, the default): neutral tile, same 2 cells and place, --background-element
+     fill, emoji centered; Emoji_Presentation=Yes code points only, no VS16 or ZWJ sequences. */
+  .palette .t-emoji { background: var(--background-element); font-weight: 400; font-size: 13px; line-height: 1; }
+  .feedback h3.then { margin-top: 20px; }
   .palette .d-head { padding-top: 21px; row-gap: 2px; }
   .palette .d-head .label { font-weight: 700; }
   .palette .d-head .lead { grid-column: 2 / 4; margin: 0; color: var(--text-muted); font-size: 14px; }
@@ -205,8 +209,22 @@
     </section>
     <p class="dim">status line: <b>confirm</b> with a pink dot · type delete · ↵ delete muted until the word matches · esc cancel</p>
   </div>
-  <div><h3>After delete</h3><div class="toast"><span><span class="ok">✓</span> Deleted 'Backend remoto, 2 años'</span><span class="t">4s</span></div></div>
+  <div>
+    <h3>After delete</h3><div class="toast"><span><span class="ok">✓</span> Deleted 'Backend remoto, 2 años'</span><span class="t">4s</span></div>
+    <h3 class="then">icons: emoji (default) · delete box rows</h3>
+    <section class="palette" aria-label="Delete box rows with emoji icons">
+      <div class="opt d-head"><span class="tile t-emoji">⛔</span><span class="label">Delete 'Backend remoto, 2 años'?</span><span></span></div>
+      <ul aria-label="Deleted">
+        <li class="opt"><span class="tile t-emoji">💬</span><span class="label">Session and its messages</span><span class="k">24</span></li>
+      </ul>
+      <div class="stays">
+        <ul aria-label="Stays">
+          <li class="opt"><span class="tile t-emoji">💼</span><span class="label">Offers it mentions</span><span class="k">3 · in your list</span></li>
+        </ul>
+      </div>
+    </section>
+  </div>
 </section>
-<p class="notes"><strong>Full screen:</strong> ctrl+x l or /resume opens the session list like opencode's: a filter at the top in the composer style, sessions grouped by day with time, messages and how many offers they mention, the current one tagged ● current (muted). There is no key-hint line under the header: the status line carries the keys of the list (↑↓ move · ↵ open in green · n new session · r rename · d delete · / filter · esc back). The list has the focus, so the filter shows blurred and single keys act on the selected row; / moves the focus into the filter (lavender edge, live count), esc clears it. The preview on the right shows your first message and goop's last reply, truncated, plus the offers the session mentions, so you recognize a conversation without opening it. Rename turns the row into a composer (panel fill, lavender edge and cursor, ↵ save · esc cancel). Delete is irreversible, so it uses the M11 confirmation box: pink trash tile, what is deleted (the session and its 24 messages) and what stays (the 3 offers it mentions stay in your list), the warning line and type delete to confirm; esc cancels. Because the session is encrypted and removed for good, the toast after it only shows its timer (4s), with no ctrl+z undo. Tradeoff: the preview takes 560px from the list, so long titles cut earlier; below ~120 columns the preview moves under the selected row.</p>
+<p class="notes"><strong>Full screen:</strong> ctrl+x l or /resume opens the session list like opencode's: a filter at the top in the composer style, sessions grouped by day with time, messages and how many offers they mention, the current one tagged ● current (muted). There is no key-hint line under the header: the status line carries the keys of the list (↑↓ move · ↵ open in green · n new session · r rename · d delete · / filter · esc back). The list has the focus, so the filter shows blurred and single keys act on the selected row; / moves the focus into the filter (lavender edge, live count), esc clears it. The preview on the right shows your first message and goop's last reply, truncated, plus the offers the session mentions, so you recognize a conversation without opening it. Rename turns the row into a composer (panel fill, lavender edge and cursor, ↵ save · esc cancel). Delete is irreversible, so it uses the M11 confirmation box: pink trash tile, what is deleted (the session and its 24 messages) and what stays (the 3 offers it mentions stay in your list), the warning line and type delete to confirm; esc cancels. The box shows icons: nerd; with icons: emoji, the default (Settings M6), the same rows get neutral tiles (--background-element fill, same 2 cells and place) with ⛔ for the header, 💬 for the session and 💼 for the offers, drawn beside the toast. Because the session is encrypted and removed for good, the toast after it only shows its timer (4s), with no ctrl+z undo. Tradeoff: the preview takes 560px from the list, so long titles cut earlier; below ~120 columns the preview moves under the selected row.</p>
 </body>
 </html>

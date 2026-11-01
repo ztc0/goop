@@ -87,8 +87,8 @@
   .opt .m { color: var(--accent); font-weight: 700; }
   .opt.sel .label { color: var(--primary); font-weight: 700; }
   .opt.sel .k { display: block; }
-  /* Icon tile: one Nerd Font glyph in --background on a filled cell pair; the color follows the
-     system meanings (never lavender). Without a Nerd Font the tile shows the label's first letter. */
+  /* Icon tile (icons: nerd): one Nerd Font glyph in --background on a filled cell pair; the color
+     follows the system meanings (never lavender). icons: letters shows the label's first letter. */
   .tile { display: grid; place-items: center; width: 2ch; height: 22px; color: var(--background); font-weight: 700; }
   .tile svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .t-offers { background: var(--success); }
@@ -97,6 +97,10 @@
   .t-agents { background: var(--primary); }
   .t-system { background: var(--text-muted); }
   .t-quit { background: var(--error); }
+  /* Emoji mode (icons: emoji, the default): emoji bring their own colors, so the tile is neutral, same
+     2 cells and place, --background-element fill, emoji centered. Only Emoji_Presentation=Yes code
+     points (always 2 cells wide), no VS16 or ZWJ sequences. */
+  .t-emoji { background: var(--background-element); font-weight: 400; font-size: 13px; line-height: 1; }
   .empty { padding: 11px 3ch; color: var(--text-muted); }
 
   /* One status line, three zones: focus label | hints for the palette | background state + help. */
@@ -108,8 +112,9 @@
   .zone-right { display: flex; gap: 12px; }
   .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
 
-  /* Below the screen: three smaller copies of the box. */
+  /* Below the screen: four smaller copies of the box; (a) and (b) stack in the first column. */
   .strip { width: 1440px; background: var(--background); color: var(--text); padding: 18px 28px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; align-items: start; border-top: 1px solid var(--border); font-family: var(--mono); }
+  .strip .stack { display: flex; flex-direction: column; gap: 28px; }
   .strip h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
@@ -189,29 +194,49 @@
 </main>
 
 <section class="strip" aria-label="Other palette states">
+  <div class="stack">
+    <div>
+      <h3>(a) Filtered · of</h3>
+      <section class="palette" aria-label="Command palette filtered by of">
+        <div class="search"><span class="typed">of</span><span class="cursor" aria-hidden="true"></span></div>
+        <div class="list">
+          <div class="opt sel"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Open <span class="m">of</span>fers list</span><span class="k">/offers</span></div>
+          <div class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Show only new <span class="m">of</span>fers</span><span class="k">n</span></div>
+          <div class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Saved <span class="m">of</span>fers</span><span class="k">/saved</span></div>
+          <div class="opt"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-profile"/></svg></span><span class="label">Pr<span class="m">of</span>ile</span><span class="k">/profile</span></div>
+        </div>
+      </section>
+    </div>
+    <div>
+      <h3>(b) No results · kubernetes</h3>
+      <section class="palette" aria-label="Command palette with no results">
+        <div class="search"><span class="typed">kubernetes</span><span class="cursor" aria-hidden="true"></span></div>
+        <div class="list">
+          <p class="empty">No results</p>
+        </div>
+      </section>
+    </div>
+  </div>
   <div>
-    <h3>(a) Filtered · of</h3>
-    <section class="palette" aria-label="Command palette filtered by of">
-      <div class="search"><span class="typed">of</span><span class="cursor" aria-hidden="true"></span></div>
+    <h3>(c) icons: emoji · Emoji icons (default)</h3>
+    <section class="palette" aria-label="Command palette with emoji icons">
+      <div class="search"><span class="cursor" aria-hidden="true"></span><span class="placeholder">search commands</span></div>
       <div class="list">
-        <div class="opt sel"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Open <span class="m">of</span>fers list</span><span class="k">/offers</span></div>
-        <div class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Show only new <span class="m">of</span>fers</span><span class="k">n</span></div>
-        <div class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Saved <span class="m">of</span>fers</span><span class="k">/saved</span></div>
-        <div class="opt"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-profile"/></svg></span><span class="label">Pr<span class="m">of</span>ile</span><span class="k">/profile</span></div>
+        <div class="opt sel"><span class="tile t-emoji">🔍</span><span class="label">Search now</span><span class="k">/search</span></div>
+        <div class="opt"><span class="tile t-emoji">💼</span><span class="label">Open offers list</span></div>
+        <div class="opt"><span class="tile t-emoji">📋</span><span class="label">Rules goop learned</span></div>
+        <div class="opt"><span class="tile t-emoji">💬</span><span class="label">New session</span></div>
+        <div class="opt"><span class="tile t-emoji">💬</span><span class="label">Resume session</span></div>
+        <div class="opt"><span class="tile t-emoji">🤖</span><span class="label">Agents</span></div>
+        <div class="opt"><span class="tile t-emoji">🧠</span><span class="label">Models</span></div>
+        <div class="opt"><span class="tile t-emoji">📡</span><span class="label">Sources</span></div>
+        <div class="opt"><span class="tile t-emoji">🔧</span><span class="label">Settings</span></div>
+        <div class="opt"><span class="tile t-emoji">❓</span><span class="label">Help</span></div>
       </div>
     </section>
   </div>
   <div>
-    <h3>(b) No results · kubernetes</h3>
-    <section class="palette" aria-label="Command palette with no results">
-      <div class="search"><span class="typed">kubernetes</span><span class="cursor" aria-hidden="true"></span></div>
-      <div class="list">
-        <p class="empty">No results</p>
-      </div>
-    </section>
-  </div>
-  <div>
-    <h3>(c) No Nerd Font · letter tiles</h3>
+    <h3>(d) icons: letters · letter tiles</h3>
     <section class="palette" aria-label="Command palette without a Nerd Font">
       <div class="search"><span class="cursor" aria-hidden="true"></span><span class="placeholder">search commands</span></div>
       <div class="list">
@@ -230,6 +255,6 @@
   </div>
 </section>
 
-<p class="notes"><strong>Dialog, launcher style:</strong> ctrl+p opens a launcher-like box over the session: the 04 layout stays behind, dimmed and inert, the composer edge turns --border because focus left it, and the status line switches to the commands focus (blue dot). The box is about 600px (≈ 66 cells), centered, on the panel color with a 1px muted border on all four sides, no radius and no shadow; modal boxes (this palette and M11 confirmations) are the only bordered boxes in goop. Inside there is no title, no esc label and no hint row: just the search line (muted placeholder search commands, lavender cursor because typing is you) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches (green offers, blue search and sources, yellow rules and profile, orange agents and models, gray session, settings, privacy and help, pink quit; never lavender), a dark Nerd Font glyph inside, two spaces, then the label. The selected row's label turns bold orange, and only that row shows its keybind or slash command, right-aligned and muted. All hints live in the status line: ↵ run · ↑↓ move · esc close. Typing flattens the list to fuzzy matches with matched letters in bold yellow, like every goop search match (a); no match shows a muted No results (b); a terminal without a Nerd Font gets the label's first letter in each tile (c). <strong>Tradeoff:</strong> calmer and closer to a launcher, and the tiles let you find a command by color and shape; but the icon tiles need a Nerd Font (the letter fallback is plainer), categories are gone so the list relies on its order (suggested and recent first), and keybinds show only on the selected row, so they are less discoverable (? help lists every key).</p>
+<p class="notes"><strong>Dialog, launcher style:</strong> ctrl+p opens a launcher-like box over the session: the 04 layout stays behind, dimmed and inert, the composer edge turns --border because focus left it, and the status line switches to the commands focus (blue dot). The box is about 600px (≈ 66 cells), centered, on the panel color with a 1px muted border on all four sides, no radius and no shadow; modal boxes (this palette and M11 confirmations) are the only bordered boxes in goop. Inside there is no title, no esc label and no hint row: just the search line (muted placeholder search commands, lavender cursor because typing is you) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches (green offers, blue search and sources, yellow rules and profile, orange agents and models, gray session, settings, privacy and help, pink quit; never lavender), a dark Nerd Font glyph inside, two spaces, then the label. The selected row's label turns bold orange, and only that row shows its keybind or slash command, right-aligned and muted. All hints live in the status line: ↵ run · ↑↓ move · esc close. Typing flattens the list to fuzzy matches with matched letters in bold yellow, like every goop search match (a); no match shows a muted No results (b); (a) and (b) stack in the first column. <strong>Icon modes:</strong> the setting icons in Settings (M6) picks nerd · emoji · letters. The screen above is icons: nerd (the Nerd Font look). (c) is icons: emoji, the default: each tile turns neutral (--background-element fill, same 2 cells and place) with one emoji centered, because emoji bring their own colors; only Emoji_Presentation=Yes code points with no VS16 or ZWJ sequence, so every emoji is 2 cells wide and rows never shift (🔍 search, 💼 offers, 📋 rules, 💬 sessions, 🤖 agents, 🧠 models, 📡 sources, 🔧 settings, ❓ help; full mapping in system.md). (d) is icons: letters for old terminals or SSH: the label's first letter, bold, on the colored tile. <strong>Tradeoff:</strong> calmer and closer to a launcher, and the tiles let you find a command by color and shape; emoji work on most terminals without a Nerd Font, but in emoji mode the tiles lose the meaning colors and the emoji look depends on the terminal's emoji font, categories are gone so the list relies on its order (suggested and recent first), and keybinds show only on the selected row, so they are less discoverable (? help lists every key).</p>
 </body>
 </html>

@@ -91,6 +91,9 @@
   .t-agents { background: var(--primary); }
   .t-system { background: var(--text-muted); }
   .t-quit { background: var(--error); }
+  /* Emoji mode (icons: emoji, the default): neutral tile, same 2 cells and place, --background-element
+     fill, emoji centered; Emoji_Presentation=Yes code points only, no VS16 or ZWJ sequences. */
+  .t-emoji { background: var(--background-element); font-weight: 400; font-size: 13px; line-height: 1; }
 
   /* Confirm-only parts, built from the palette pieces above. */
   /* Header: a palette row whose tile says the level (--error irreversible, --accent costly), the
@@ -221,6 +224,14 @@
       </div>
     </section>
     <p class="dim">↵ now deletes; esc still cancels. A wrong word keeps ↵ muted, and nothing is half-deleted.</p>
+    <h3>icons: emoji (default) · Deleted rows</h3>
+    <section class="palette only-confirm" aria-label="Deleted rows with emoji icons">
+      <ul class="list" aria-label="Deleted">
+        <li class="opt item"><span class="tile t-emoji">💼</span><span class="label">Offers</span><span class="k">412</span></li>
+        <li class="opt item"><span class="tile t-emoji">💬</span><span class="label">Sessions</span><span class="k">7</span></li>
+        <li class="opt item"><span class="tile t-emoji">🔐</span><span class="label">Encrypted database</span><span class="k">38 MB</span></li>
+      </ul>
+    </section>
   </div>
 </section>
 
@@ -234,7 +245,7 @@
       <tr><td>Irreversible</td><td>Delete all goop data (Privacy M13)</td><td>Bordered box with what goes, what stays, a pink warning and a type-to-confirm line</td><td>--error</td><td>esc cancel</td></tr>
     </tbody>
   </table>
-  <p><strong>Same style as the command palette.</strong> The dialogs now share the palette's box, tiles and rows: a centered ~600px box on the panel color with a 1px muted border on all four sides, no radius and no shadow, no colored left edge and no esc label. The header is a palette row: a tile that says the level (pink trash for irreversible, yellow for costly), the question as a bold label and a muted subline. Each affected item is a palette row with its tile in the palette's colors (green offers, gray sessions and the database, yellow rules and profile, orange models, blue companies), the label and its muted count on the right; small uppercase Deleted and Stays labels head the groups, and the Stays row is dimmed. The type-to-confirm input is the palette's search line at the bottom of the box, under a subtle separator: typed text, lavender cursor, and the muted type delete to confirm on the right. There is no hint row inside the box: as in the palette, keys live in the status line (confirm with a pink dot, type delete · ↵ delete muted until the word matches · esc cancel as the green default). The costly box in the strip keeps a muted y unfollow · n keep line only because it is drawn as a small inline copy; in the real screen those keys sit in the status line too.</p>
+  <p><strong>Same style as the command palette.</strong> The dialogs now share the palette's box, tiles and rows: a centered ~600px box on the panel color with a 1px muted border on all four sides, no radius and no shadow, no colored left edge and no esc label. The header is a palette row: a tile that says the level (pink trash for irreversible, yellow for costly), the question as a bold label and a muted subline. Each affected item is a palette row with its tile in the palette's colors (green offers, gray sessions and the database, yellow rules and profile, orange models, blue companies), the label and its muted count on the right (the screen shows icons: nerd; with icons: emoji, the default, the tiles turn neutral with one emoji each, 💼 offers, 💬 sessions, 🔐 database, ⛔ for the irreversible header and 🔕 for the costly one, as in the excerpt at the bottom of column 3); small uppercase Deleted and Stays labels head the groups, and the Stays row is dimmed. The type-to-confirm input is the palette's search line at the bottom of the box, under a subtle separator: typed text, lavender cursor, and the muted type delete to confirm on the right. There is no hint row inside the box: as in the palette, keys live in the status line (confirm with a pink dot, type delete · ↵ delete muted until the word matches · esc cancel as the green default). The costly box in the strip keeps a muted y unfollow · n keep line only because it is drawn as a small inline copy; in the real screen those keys sit in the status line too.</p>
   <p><strong>Tradeoff:</strong> one box style for everything modal, so the confirm reads as part of the same family and the tiles let you see by color what the loss touches (412 offers, 38 MB) and what survives (31 GB of models you would not want to download again). Typing the word is slower than y, on purpose: ↵ stays muted until the line reads delete, and esc is the safe default, so a stray enter or a key-repeat can never delete anything. Costs: the palette's border is no longer palette-only, so the bordered box now means "modal" rather than "commands"; the danger is carried by a single pink tile and the warning line instead of a full pink edge, which is quieter; the word is English even when goop talks Spanish; and each new action needs its level chosen when it is designed.</p>
 </section>
 </body>
