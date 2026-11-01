@@ -54,37 +54,37 @@ User wording is quoted verbatim (Spanish) where it exists; the rest restates dec
 
 ## Tasks
 
-| ID | Task | Specs | Route | Commit |
-|---|---|---|---|---|
-| T1 | Create the local git repository in `goop/` with `main` and a working branch; `.gitignore` with `.local/` and `.temp/` | S4, S5, S25, S26 | inline | - |
-| T2 | Create the complete folder structure (src features, shared, interfaces, tests, prompts, eval, tools/quantize, docs, design, `.local/`, `.temp/` layout) | S4, S10, S11, S25, S26 | inline | - |
-| T3 | TypeScript, Bun and Biome configuration with the `@/` alias and scripts that set `GOOP_HOME`, cache dirs and `TMPDIR` to the repo; `clean` script | S8, S12, S25, S26 | inline | - |
-| T4 | Husky + commitlint (Conventional Commits) + pre-commit checks | S7 | inline | - |
-| T5 | Root `AGENTS.md` and detailed rule files with progressive disclosure, including the repo-local paths rule and the Mermaid rule for docs | S6, S25, S26, S27 | inline | - |
-| T6 | Public repo files: README (+es), LICENSE GPL-3.0, NOTICE, THIRD_PARTY_LICENSES, SECURITY, CHANGELOG, CONTRIBUTING with CLA, CODE_OF_CONDUCT, `.github/` CI, templates, CODEOWNERS, Dependabot | S9, S10 | inline | - |
-| T7 | Document the GitHub permissions to apply after publishing (branch protection, required CI, secret scanning) | S4, S5 | inline | - |
-| T8 | Design the logo (fire with two eyes) | S2, S13 | inline | - |
-| T9 | Design the TUI screens (onboarding, main, detail, sessions, rules, settings, sources, models, profile, alerts, help, privacy) | S13, S14, S15 | inline | - |
-| T10 | Spike: SQLite3MultipleCiphers + sqlite-vec + FTS5 in bun:sqlite, Linux and Windows, inside the compiled executable | S12, S17, S24 | inline | - |
-| T11 | Spike: data key wrapping with TPM2 (systemd-creds) and DPAPI, touching the system only with the user's permission and undoing it afterwards | S24, S25 | inline | - |
-| T12 | Spike: CI build of minimal llama-server with sha256 and attestation | S23 | inline | - |
-| T13 | Spike: benchmark sweep on the user's PC (threads, ubatch, KV, -fit, MTP, EAGLE3, ngram-mod, top_k) | S23 | inline | - |
-| T14 | Spike: LangGraph on Bun with a bun:sqlite checkpointer and tool calling on gpt-oss and Qwen | S20 | inline | - |
-| T15 | Spike: OpenTUI and a user-only named pipe on Windows | S11, S12 | inline | - |
-| T16 | Storage, crypto and integrity layer | S24 | inline | - |
-| T17 | Daemon, JSON-RPC IPC and the two executable modes | S11 | inline | - |
-| T18 | Model manager: download, verify, llama-swap config, forbidden flags, supervisor, API mode, router, sampling profiles | S23, S24 | inline | - |
-| T19 | Offer connectors and shared runner | S16 | inline | - |
-| T20 | Company discovery and follow-list | S16 | inline | - |
-| T21 | Profiler and two-layer Validator with user confirmation | S20, S21 | inline | - |
-| T22 | Hybrid retrieval, funnel, Security and Analytic | S17, S18, S20 | inline | - |
-| T23 | Scheduler: queue lanes, systemd timer, Task Scheduler | S19 | inline | - |
-| T24 | Orchestrator chat: tools, lazy loading, skills, DLP, sessions, compaction, NL settings | S15, S20, S21, S22 | inline | - |
-| T25 | TUI screens from the approved designs | S14, S15 | inline | - |
-| T26 | Learner: experience log, reflection, curator, replay test, /rules approval | S20 | inline | - |
-| T27 | Reranker conversion and Unsloth-style quantization in `tools/quantize/` | S9, S23 | inline | - |
-| T28 | Quality evaluation set with synthetic profiles | S18, S21 | inline | - |
-| T29 | Privacy operations: purge, retention, outbound allowlist test | S24 | inline | - |
+| ID  | Task                                                                                                                                                                                          | Specs                  | Route  | Commit |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------ | ------ |
+| T1  | Create the local git repository in `goop/` with `main` and a working branch; `.gitignore` with `.local/` and `.temp/`                                                                         | S4, S5, S25, S26       | inline | -      |
+| T2  | Create the complete folder structure (src features, shared, interfaces, tests, prompts, eval, tools/quantize, docs, design, `.local/`, `.temp/` layout)                                       | S4, S10, S11, S25, S26 | inline | -      |
+| T3  | TypeScript, Bun and Biome configuration with the `@/` alias and scripts that set `GOOP_HOME`, cache dirs and `TMPDIR` to the repo; `clean` script                                             | S8, S12, S25, S26      | inline | -      |
+| T4  | Husky + commitlint (Conventional Commits) + pre-commit checks                                                                                                                                 | S7                     | inline | -      |
+| T5  | Root `AGENTS.md` and detailed rule files with progressive disclosure, including the repo-local paths rule and the Mermaid rule for docs                                                       | S6, S25, S26, S27      | inline | -      |
+| T6  | Public repo files: README (+es), LICENSE GPL-3.0, NOTICE, THIRD_PARTY_LICENSES, SECURITY, CHANGELOG, CONTRIBUTING with CLA, CODE_OF_CONDUCT, `.github/` CI, templates, CODEOWNERS, Dependabot | S9, S10                | inline | -      |
+| T7  | Document the GitHub permissions to apply after publishing (branch protection, required CI, secret scanning)                                                                                   | S4, S5                 | inline | -      |
+| T8  | Design the logo (fire with two eyes)                                                                                                                                                          | S2, S13                | inline | -      |
+| T9  | Design the TUI screens (onboarding, main, detail, sessions, rules, settings, sources, models, profile, alerts, help, privacy)                                                                 | S13, S14, S15          | inline | -      |
+| T10 | Spike: SQLite3MultipleCiphers + sqlite-vec + FTS5 in bun:sqlite, Linux and Windows, inside the compiled executable                                                                            | S12, S17, S24          | inline | -      |
+| T11 | Spike: data key wrapping with TPM2 (systemd-creds) and DPAPI, touching the system only with the user's permission and undoing it afterwards                                                   | S24, S25               | inline | -      |
+| T12 | Spike: CI build of minimal llama-server with sha256 and attestation                                                                                                                           | S23                    | inline | -      |
+| T13 | Spike: benchmark sweep on the user's PC (threads, ubatch, KV, -fit, MTP, EAGLE3, ngram-mod, top_k)                                                                                            | S23                    | inline | -      |
+| T14 | Spike: LangGraph on Bun with a bun:sqlite checkpointer and tool calling on gpt-oss and Qwen                                                                                                   | S20                    | inline | -      |
+| T15 | Spike: OpenTUI and a user-only named pipe on Windows                                                                                                                                          | S11, S12               | inline | -      |
+| T16 | Storage, crypto and integrity layer                                                                                                                                                           | S24                    | inline | -      |
+| T17 | Daemon, JSON-RPC IPC and the two executable modes                                                                                                                                             | S11                    | inline | -      |
+| T18 | Model manager: download, verify, llama-swap config, forbidden flags, supervisor, API mode, router, sampling profiles                                                                          | S23, S24               | inline | -      |
+| T19 | Offer connectors and shared runner                                                                                                                                                            | S16                    | inline | -      |
+| T20 | Company discovery and follow-list                                                                                                                                                             | S16                    | inline | -      |
+| T21 | Profiler and two-layer Validator with user confirmation                                                                                                                                       | S20, S21               | inline | -      |
+| T22 | Hybrid retrieval, funnel, Security and Analytic                                                                                                                                               | S17, S18, S20          | inline | -      |
+| T23 | Scheduler: queue lanes, systemd timer, Task Scheduler                                                                                                                                         | S19                    | inline | -      |
+| T24 | Orchestrator chat: tools, lazy loading, skills, DLP, sessions, compaction, NL settings                                                                                                        | S15, S20, S21, S22     | inline | -      |
+| T25 | TUI screens from the approved designs                                                                                                                                                         | S14, S15               | inline | -      |
+| T26 | Learner: experience log, reflection, curator, replay test, /rules approval                                                                                                                    | S20                    | inline | -      |
+| T27 | Reranker conversion and Unsloth-style quantization in `tools/quantize/`                                                                                                                       | S9, S23                | inline | -      |
+| T28 | Quality evaluation set with synthetic profiles                                                                                                                                                | S18, S21               | inline | -      |
+| T29 | Privacy operations: purge, retention, outbound allowlist test                                                                                                                                 | S24                    | inline | -      |
 
 Route `inline` is the default; a task moves to a worker only when it qualifies under the Writer rule.
 
