@@ -9,13 +9,6 @@
       "tradeoff": "Calmest read with requirements and summary side by side; hides the list and the chat, so moving between offers needs [ ] or esc",
       "width": 1440,
       "height": 900
-    },
-    {
-      "file": "02-split.html",
-      "title": "Split with the offers sidebar",
-      "tradeoff": "Keeps the session layout and the list: ↑↓ moves through offers and the detail follows; half the width, so long offers scroll",
-      "width": 1440,
-      "height": 900
     }
   ]
 }
