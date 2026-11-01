@@ -1,6 +1,6 @@
 // T10 spike: downloads the pinned sqlite3mc amalgamation and the sqlite-vec loadable build,
 // verifies their sha256, extracts each archive into a fresh folder and compiles libsqlite3mc.so.
-// Linux x86_64 only. Run: bun scripts/run.ts bun scripts/spikes/encrypted-sqlite/build-artifacts.ts
+// Linux x86_64 only. Run: bun scripts/dev-env/run.ts bun scripts/spikes/encrypted-sqlite/build-artifacts.ts
 import {
   copyFileSync,
   existsSync,
@@ -11,7 +11,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { devLayout } from "@/shared/model/dev-layout";
-import { repoRoot } from "../../repo-root";
+import { repoRoot } from "../../shared/repo-root";
 import { sha256File } from "./native-cache";
 
 interface Artifact {

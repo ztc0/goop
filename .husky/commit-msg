@@ -1,1 +1,1 @@
-bun scripts/run.ts commitlint --edit "$1"
+bun scripts/dev-env/run.ts commitlint --edit "$1"

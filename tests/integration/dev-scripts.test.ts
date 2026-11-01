@@ -3,8 +3,8 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const repo = resolve(import.meta.dir, "..", "..");
-const runScript = join(repo, "scripts", "run.ts");
-const cleanScript = join(repo, "scripts", "clean.ts");
+const runScript = join(repo, "scripts", "dev-env", "run.ts");
+const cleanScript = join(repo, "scripts", "dev-env", "clean.ts");
 
 let fixture: string;
 
@@ -29,13 +29,13 @@ function run(script: string, args: string[]) {
   };
 }
 
-describe("scripts/run.ts", () => {
+describe("scripts/dev-env/run.ts", () => {
   test("without a command it prints the usage, exits 2 and creates nothing", () => {
     const result = run(runScript, []);
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("Usage: bun scripts/run.ts <command> [args...]\n");
+    expect(result.stderr).toBe("Usage: bun scripts/dev-env/run.ts <command> [args...]\n");
     expect(existsSync(join(fixture, ".local"))).toBe(false);
     expect(existsSync(join(fixture, ".temp"))).toBe(false);
   });
@@ -87,7 +87,7 @@ describe("scripts/run.ts", () => {
   });
 });
 
-describe("scripts/clean.ts", () => {
+describe("scripts/dev-env/clean.ts", () => {
   function seed() {
     mkdirSync(join(fixture, ".temp", "tmp"), { recursive: true });
     writeFileSync(join(fixture, ".temp", "tmp", "scratch.txt"), "disposable");
@@ -130,6 +130,6 @@ describe("scripts/clean.ts", () => {
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("Usage: bun scripts/clean.ts [--local]\n");
+    expect(result.stderr).toBe("Usage: bun scripts/dev-env/clean.ts [--local]\n");
   });
 });
