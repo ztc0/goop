@@ -25,3 +25,8 @@ dist/
 *.gguf
 *.safetensors
 *.imatrix
+
+# Design canvas review files (comments and screenshots stay local)
+design/**/.screenshots/
+design/**/comments.json
+design/**/handoffs.json
