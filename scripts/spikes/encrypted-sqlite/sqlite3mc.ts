@@ -2,8 +2,8 @@
 //
 // libsqlite3mc.so is built with SQLITE3MC_USE_DISPATCH_TABLE: every sqlite3_* symbol is static
 // and the library exports only pointers to three tables of function pointers. The wrapper reads
-// the functions out of those tables. A library with plain sqlite3_* exports (for example the
-// official Windows DLL) is loaded by symbol name instead.
+// the functions out of those tables. A library with plain sqlite3_* exports (the official
+// Windows DLL sqlite3mc_x64.dll) is loaded by symbol name instead.
 import {
   CFunction,
   CString,
@@ -121,13 +121,12 @@ export class Sqlite3mc {
     readonly mode: "dispatch-table" | "exports",
   ) {}
 
-  static load(path: string, expectedVersion: string): Sqlite3mc {
-    let loaded: { native: Native; mode: "dispatch-table" | "exports" };
-    try {
-      loaded = fromTables(path);
-    } catch {
-      loaded = fromExports(path);
-    }
+  static load(
+    path: string,
+    expectedVersion: string,
+    mode: "dispatch-table" | "exports",
+  ): Sqlite3mc {
+    const loaded = mode === "dispatch-table" ? fromTables(path) : fromExports(path);
     const lib = new Sqlite3mc(loaded.native, loaded.mode);
     const version = lib.version();
     if (version !== expectedVersion) {

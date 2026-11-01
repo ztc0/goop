@@ -1,6 +1,8 @@
-// T10 spike: downloads the pinned sqlite3mc amalgamation and the sqlite-vec loadable build,
-// verifies their sha256, extracts each archive into a fresh folder and compiles libsqlite3mc.so.
-// Linux x86_64 only. Run: bun scripts/dev-env/run.ts bun scripts/spikes/encrypted-sqlite/build-artifacts.ts
+// T10 spike: downloads the pinned sqlite3mc and sqlite-vec release archives, verifies their
+// sha256 and extracts each archive into a fresh folder.
+// linux (default): compiles libsqlite3mc.so from the amalgamation and takes vec0.so, on Linux x86_64.
+// windows: takes the official sqlite3mc_x64.dll and vec0.dll into .local/build/sqlite/windows/.
+// Run: bun scripts/dev-env/run.ts bun scripts/spikes/encrypted-sqlite/build-artifacts.ts [linux|windows]
 import {
   copyFileSync,
   existsSync,
@@ -30,6 +32,16 @@ const SQLITE_VEC: Artifact = {
   name: "sqlite-vec-0.1.9-loadable-linux-x86_64.tar.gz",
   url: "https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-loadable-linux-x86_64.tar.gz",
   sha256: "b959baa1d8dc88861b1edb337b8587178cdcb12d60b4998f9d10b6a82052d5d7",
+};
+const SQLITE3MC_WIN64: Artifact = {
+  name: "sqlite3mc-2.6.1-sqlite-3.54.0-win64.zip",
+  url: "https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v2.6.1/sqlite3mc-2.6.1-sqlite-3.54.0-win64.zip",
+  sha256: "0183b85d2abc9e3418abd92736cb71355b2bc933f6cda6b56f91653e6628cd74",
+};
+const SQLITE_VEC_WINDOWS: Artifact = {
+  name: "sqlite-vec-0.1.9-loadable-windows-x86_64.tar.gz",
+  url: "https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-loadable-windows-x86_64.tar.gz",
+  sha256: "51581189d52066b4dfc6631f6d7a3eab7dedc2260656ab09ca97ab3fb8165983",
 };
 
 // Compile flags for libsqlite3mc.so. The dispatch table makes every SQLite symbol static and
@@ -88,18 +100,43 @@ function freshExtractDir(name: string): string {
   return mkdtempSync(join(layout.temp.extract, `${name}-`));
 }
 
-async function main(): Promise<void> {
+async function extractZip(artifact: Artifact, name: string): Promise<string> {
+  const zip = await download(artifact);
+  assertSafeEntries(run(["unzip", "-Z1", zip]).trim().split("\n"), zip);
+  const dir = freshExtractDir(name);
+  run(["unzip", "-q", zip, "-d", dir]);
+  return dir;
+}
+
+async function extractTarball(artifact: Artifact, name: string): Promise<string> {
+  const tarball = await download(artifact);
+  assertSafeEntries(run(["tar", "-tzf", tarball]).trim().split("\n"), tarball);
+  const dir = freshExtractDir(name);
+  run(["tar", "-xzf", tarball, "-C", dir, "--no-same-owner", "--no-same-permissions"]);
+  return dir;
+}
+
+async function report(path: string): Promise<void> {
+  process.stdout.write(`${await sha256File(path)}  ${path}\n`);
+}
+
+/** The official Windows binaries, used as released: no local build, so their hashes are upstream's. */
+async function windows(): Promise<void> {
+  const target = join(output, "windows");
+  mkdirSync(target, { recursive: true });
+  const mcDir = await extractZip(SQLITE3MC_WIN64, "sqlite3mc-2.6.1-win64");
+  const vecDir = await extractTarball(SQLITE_VEC_WINDOWS, "sqlite-vec-0.1.9-windows");
+  copyFileSync(join(mcDir, "dll", "sqlite3mc_x64.dll"), join(target, "sqlite3mc_x64.dll"));
+  copyFileSync(join(vecDir, "vec0.dll"), join(target, "vec0.dll"));
+  await report(join(target, "sqlite3mc_x64.dll"));
+  await report(join(target, "vec0.dll"));
+}
+
+async function linux(): Promise<void> {
   mkdirSync(output, { recursive: true });
 
-  const zip = await download(SQLITE3MC);
-  assertSafeEntries(run(["unzip", "-Z1", zip]).trim().split("\n"), zip);
-  const mcDir = freshExtractDir("sqlite3mc-2.6.1");
-  run(["unzip", "-q", zip, "-d", mcDir]);
-
-  const tarball = await download(SQLITE_VEC);
-  assertSafeEntries(run(["tar", "-tzf", tarball]).trim().split("\n"), tarball);
-  const vecDir = freshExtractDir("sqlite-vec-0.1.9");
-  run(["tar", "-xzf", tarball, "-C", vecDir, "--no-same-owner", "--no-same-permissions"]);
+  const mcDir = await extractZip(SQLITE3MC, "sqlite3mc-2.6.1");
+  const vecDir = await extractTarball(SQLITE_VEC, "sqlite-vec-0.1.9");
 
   const library = join(output, "libsqlite3mc.so");
   const building = `${library}.building`;
@@ -119,9 +156,13 @@ async function main(): Promise<void> {
   const libraryHash = await sha256File(library);
   writeFileSync(`${library}.sha256`, `${libraryHash}\n`);
   process.stdout.write(`${libraryHash}  ${library}\n`);
-  process.stdout.write(
-    `${await sha256File(join(output, "vec0.so"))}  ${join(output, "vec0.so")}\n`,
-  );
+  await report(join(output, "vec0.so"));
 }
 
-await main();
+const target = process.argv[2] ?? "linux";
+if (target === "linux") await linux();
+else if (target === "windows") await windows();
+else {
+  process.stderr.write(`Unknown target ${target}; use linux or windows\n`);
+  process.exit(2);
+}
