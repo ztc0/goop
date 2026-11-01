@@ -37,5 +37,5 @@ The encrypted database uses sqlite3mc through `bun:ffi` (option 6):
 - `bun:sqlite` is used only for stores that hold no personal data, if any.
 - A test keeps sqlite-vec out of `bun:sqlite`.
 - CI verifies the Cosign signature of sqlite3mc's `SHA256SUMS` before pinning hashes; the spike could not.
-- The Windows run of the spike checks is still due before T16.
+- The spike checks passed on Windows 11 too; the tampered-cache case and the `%LOCALAPPDATA%` default were not run there and are covered in T16.
 - Turso Database stays a candidate to check again once its encryption and full-text search are stable. Moving to it would need a new ADR that supersedes this one.
