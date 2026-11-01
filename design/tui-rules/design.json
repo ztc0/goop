@@ -1,14 +1,14 @@
 {
   "title": "Rules (M5)",
-  "brief": "Rules screen of goop (/rules): what the Learner agent (ACE-style playbook) learned from your dismiss reasons, saves, applies and chat corrections. Two groups, To review (proposed, not active, yellow count) and Active (paused rules muted); each row has the rule in plain English, where it came from, its effect this week and a state tag. The selected rule expands with goop's reason and the offers that triggered it. Key hints: enter accept (primary, green, on a proposed rule), e edit, p pause, x delete, t test on today's offers, esc back, ? all actions. Status line with the rules focus mode. Below the screen: edit in place, the test result and the toast after accept.",
+  "brief": "Rules screen of goop (/rules): what the Learner agent (ACE-style playbook) learned from your dismiss reasons, saves, applies and chat corrections. A proposed rule is a decision card (plain-English rule, goop's reason with the dismissed offers, the offers it would hide today, keys enter accept, e edit first, x reject); active rules are a one-line list (effect muted on the right, paused muted, the selected one shows its source) with p pause, e edit, x delete. Key hints follow the focus. Status line with the rules focus mode. Below the screen: the chat notice that leads here, the toast with undo after accept and edit in place.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {
       "file": "01-full-screen.html",
       "title": "Full screen",
-      "tradeoff": "Consistent with M2 and M10, rules scan as columns and you accept with the evidence in view; hides the chat and shows the evidence of one rule at a time",
+      "tradeoff": "A proposed rule is a decision card that shows its reason and the exact offers it would hide today, above a plain one-line list of active rules with focus-aware key hints; hides the chat and reviews proposals one card at a time",
       "width": 1440,
-      "height": 1080
+      "height": 1160
     }
   ]
 }
