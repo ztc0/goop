@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { baseFilesToCopy, formatBytes, resolveCopyPath } from "../../model/base-files";
 import { passwordFromBytes, runContainerName, runId } from "../../model/vm-config";
+import { describeOnLinuxHost } from "../linux-host";
 
 describe("baseFilesToCopy", () => {
   test("copies the small files and skips the disk and any ISO, sorted", () => {
@@ -17,7 +18,7 @@ describe("baseFilesToCopy", () => {
   });
 });
 
-describe("resolveCopyPath", () => {
+describeOnLinuxHost("resolveCopyPath", () => {
   test("resolves paths inside the repo", () => {
     expect(resolveCopyPath("/repo", "src")).toBe("/repo/src");
     expect(resolveCopyPath("/repo", "./package.json")).toBe("/repo/package.json");

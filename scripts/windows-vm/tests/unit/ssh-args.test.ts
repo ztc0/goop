@@ -10,6 +10,7 @@ import {
   scpUploadArgs,
   sshArgs,
 } from "../../model/ssh-args";
+import { describeOnLinuxHost } from "../linux-host";
 
 const paths = windowsVmPaths("/repo");
 
@@ -30,7 +31,7 @@ const OPTIONS = [
   "LogLevel=ERROR",
 ];
 
-describe("ssh and scp arguments", () => {
+describeOnLinuxHost("ssh and scp arguments", () => {
   test("ssh uses the VM key, a known_hosts file inside the repo and port 2222", () => {
     expect(sshArgs(paths, REACHABLE_CHECK)).toEqual([
       "ssh",

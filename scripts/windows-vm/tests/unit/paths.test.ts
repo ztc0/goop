@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { displayPath, resultsDirectory, runDirectory, windowsVmPaths } from "../../model/paths";
+import { describeOnLinuxHost } from "../linux-host";
 
-describe("windowsVmPaths", () => {
+describeOnLinuxHost("windowsVmPaths", () => {
   test("keeps Podman, the Windows base and the runs inside the repo (S3)", () => {
     expect(windowsVmPaths("/repo")).toEqual({
       root: "/repo",
