@@ -12,6 +12,7 @@ import {
   stopArgs,
 } from "../../model/podman-args";
 import { WINDOWS_IMAGE } from "../../model/vm-config";
+import { describeOnLinuxHost } from "../linux-host";
 
 const paths = windowsVmPaths("/repo");
 
@@ -48,7 +49,7 @@ const VM_OPTIONS = [
   "127.0.0.1:8006:8006",
 ];
 
-describe("podman arguments", () => {
+describeOnLinuxHost("podman arguments", () => {
   test("pins the dockur image", () => {
     expect(WINDOWS_IMAGE).toBe("docker.io/dockurr/windows:6.06");
   });

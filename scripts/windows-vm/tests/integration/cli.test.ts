@@ -10,6 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
+import { describeOnLinuxHost } from "../linux-host";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
 const cliScript = join(repo, "scripts", "windows-vm", "cli.ts");
@@ -222,7 +223,7 @@ function expectBaseUnchanged(base: string): void {
   }
 }
 
-describe("scripts/windows-vm/cli.ts usage", () => {
+describeOnLinuxHost("scripts/windows-vm/cli.ts usage", () => {
   test("without a command it prints the usage to stderr and exits 2", () => {
     const result = cli([]);
 
@@ -250,7 +251,7 @@ describe("scripts/windows-vm/cli.ts usage", () => {
   });
 });
 
-describe("scripts/windows-vm/cli.ts run", () => {
+describeOnLinuxHost("scripts/windows-vm/cli.ts run", () => {
   test("without a base it exits 1 with the install hint and creates nothing", () => {
     const result = cli(["run", "--", "Get-Date"]);
 
@@ -414,7 +415,7 @@ describe("scripts/windows-vm/cli.ts run", () => {
   });
 });
 
-describe("scripts/windows-vm/cli.ts install", () => {
+describeOnLinuxHost("scripts/windows-vm/cli.ts install", () => {
   test("refuses when a base already exists and never calls podman", () => {
     const base = seedBase();
 
@@ -494,7 +495,7 @@ describe("scripts/windows-vm/cli.ts install", () => {
   });
 });
 
-describe("scripts/windows-vm/cli.ts status", () => {
+describeOnLinuxHost("scripts/windows-vm/cli.ts status", () => {
   test("without a base it says so and lists the running VMs", () => {
     const result = cli(["status"]);
 
