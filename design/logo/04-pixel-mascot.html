@@ -39,6 +39,9 @@
   #copied { color: var(--text); }
   pre { margin: 0; background: #000; border-radius: 8px; padding: 20px; font-family: var(--mono); font-size: 14px; line-height: 1; color: var(--text); display: flex; gap: 32px; align-items: center; }
   pre .info { line-height: 1.6; }
+  /* A terminal cell is about 1:2, and "▀" fills exactly its top half, so each cell is two square pixels. */
+  #blocks { display: grid; grid-auto-rows: 20px; }
+  #blocks span { width: 10px; height: 20px; color: transparent; overflow: hidden; user-select: all; }
   .m { color: var(--muted); }
   .notes { grid-column: 1 / -1; color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0; }
   .notes strong { color: var(--text); }
@@ -179,20 +182,20 @@
     });
   }
 
-  // Terminal rendering: "▀" uses the foreground for the top pixel and the background for the bottom one.
+  // Terminal rendering: one "▀" cell holds two pixels, the top one as foreground and the bottom one
+  // as background. The preview paints each cell exactly like a terminal does, with no font seams.
   function halfBlocks(grid) {
     const rgb = (c) => (c ? `rgb(${c.join(",")})` : "transparent");
-    const lines = [];
+    const cells = [];
     for (let y = 0; y < grid.height; y += 2) {
-      let line = "";
       for (let x = 0; x < grid.width; x++) {
         const top = grid.pixels[y * grid.width + x];
         const bottom = y + 1 < grid.height ? grid.pixels[(y + 1) * grid.width + x] : null;
-        line += top || bottom ? `<span style="color:${rgb(top)};background:${rgb(bottom)}">▀</span>` : " ";
+        const paint = `linear-gradient(${rgb(top)} 50%, ${rgb(bottom)} 50%)`;
+        cells.push(`<span style="background:${paint}">${top || bottom ? "▀" : " "}</span>`);
       }
-      lines.push(line);
     }
-    return lines.join("\n");
+    return cells.join("");
   }
 
   const slider = document.getElementById("grid");
@@ -208,7 +211,9 @@
       const own = canvas.dataset.grid ? pixelate(image, Number(canvas.dataset.grid)) : grid;
       draw(canvas, own, Number(canvas.dataset.size));
     }
-    document.getElementById("blocks").innerHTML = halfBlocks(grid);
+    const blocks = document.getElementById("blocks");
+    blocks.style.gridTemplateColumns = `repeat(${grid.width}, 10px)`;
+    blocks.innerHTML = halfBlocks(grid);
   }
 
   image.onload = render;
