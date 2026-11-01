@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · onboarding · W1 system check</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Setup frame like M6/M8: breadcrumb, two panes (steps | current step), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .title { padding: 20px 28px 18px; color: var(--text-muted); white-space: nowrap; }
+  /* Bold keys and numbers inside dim text (speed line style): one rule for every line. */
+  b { color: var(--text); font-weight: 600; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .panes { display: grid; grid-template-columns: 360px 1fr; min-height: 0; padding: 0 28px 12px; }
+  .pane-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .pane-foot { margin-top: auto; color: var(--text-muted); font-size: 13px; padding-top: 8px; border-top: 1px solid var(--border-subtle); white-space: nowrap; }
+  /* Left pane: the step list. Progress only, never focused: ↵ and shift+tab move between steps. */
+  .steps { display: flex; flex-direction: column; gap: 10px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .step { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 8px; padding: 4px 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .step .tag { font-size: 13px; color: var(--text-muted); }
+  /* Current step while the pane has no focus: fill and bold text, no edge (M6 current category; the edge belongs to the focused pane). */
+  .step.current { background: var(--background-element); color: var(--text); font-weight: 600; }
+  .step.current .tag { font-weight: 400; }
+  /* Right pane: the current step. */
+  .body { display: flex; flex-direction: column; gap: 14px; padding-left: 24px; min-height: 0; }
+  /* Problem banner (M8) at the top of the step. Warning: 2px --warning edge; error: 2px --error edge. */
+  .banner { display: flex; justify-content: space-between; gap: 24px; padding: 6px 14px; background: var(--background-panel); font-size: 14px; white-space: nowrap; }
+  .banner.warn { border-left: 2px solid var(--warning); }
+  .banner.fail { border-left: 2px solid var(--error); }
+  .banner .hint { color: var(--text-muted); font-size: 13px; }
+  /* Check rows: glyph, label column, value, muted note on the right (M6 form rows plus a state glyph). */
+  .check { display: grid; grid-template-columns: 2ch 12ch 1fr auto; column-gap: 16px; padding: 4px 8px; font-size: 14px; white-space: nowrap; }
+  .check .label { color: var(--text-muted); }
+  .check .note { color: var(--text-muted); font-size: 13px; }
+  .check .more { grid-column: 3 / -1; color: var(--text-muted); font-size: 13px; }
+  /* Selection: inset 2px orange edge on --background-element (the focused pane). */
+  .check.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .check.sel .label { color: var(--text); font-weight: 600; }
+  /* One status line, three zones: focus label | keys of the focused pane | busy state + help. */
+  footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b.next, .fbar b.next { color: var(--success); }
+  /* Blocked primary key: plain muted, not bold. */
+  .fbar .blocked { color: var(--text-muted); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: a failing check and the W0 welcome excerpt. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; border-top: 1px solid var(--border); }
+  .feedback > div { display: flex; flex-direction: column; gap: 8px; }
+  .feedback .line { white-space: nowrap; font-size: 14px; }
+  .feedback .line .k { color: var(--text); font-weight: 600; }
+  .fbar { border: 0; background: var(--background-panel); }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="title">Setup › <b>System check</b> · step 2 of 10 · esc quit setup</header>
+
+  <div class="panes">
+    <nav class="steps" aria-labelledby="steps-head">
+      <div class="pane-head"><h2 id="steps-head">Steps</h2><span class="count">1 of 10 done</span></div>
+      <ol class="step-list">
+        <li class="step"><span class="ok">✓</span><span>Welcome</span><span class="tag"></span></li>
+        <li class="step current" aria-current="step"><span class="busy">◐</span><span>System check</span><span class="tag"></span></li>
+        <li class="step"><span>○</span><span>Models</span><span class="tag"></span></li>
+        <li class="step"><span>○</span><span>Download</span><span class="tag"></span></li>
+        <li class="step"><span>○</span><span>Benchmark</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Security</span><span class="tag">required</span></li>
+        <li class="step"><span>○</span><span>CV &amp; profile</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Preferences</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Schedule</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Done</span><span class="tag"></span></li>
+      </ol>
+      <p class="pane-foot">you can leave and come back; nothing is lost</p>
+    </nav>
+
+    <section class="body" aria-labelledby="body-head">
+      <div class="pane-head"><h2 id="body-head">System check</h2><span class="count">9 checks · 2.1s · nothing sent anywhere</span></div>
+
+      <p class="banner warn" role="status"><span><span class="busy">⚠</span> Vulkan lists the 780M iGPU first · goop will use the RX 7700S (device 1)</span><span class="hint"><b>↵</b> ok</span></p>
+
+      <ul aria-label="Checks">
+        <li class="check"><span class="ok">✓</span><span class="label">GPU</span><span>RX 7700S · 8 GB VRAM · Vulkan RADV</span><span class="note">chat &amp; analysis model runs here</span></li>
+        <li class="check sel" aria-current="true">
+          <span class="busy">⚠</span><span class="label">GPU order</span><span>780M iGPU is device 0 · pinned to the RX 7700S</span><span class="note">fixed automatically</span>
+          <span class="more">goop starts llama.cpp on device <b>1</b> only · the iGPU shares RAM and would be ~4× slower · change later in /models</span>
+        </li>
+        <li class="check"><span class="ok">✓</span><span class="label">RAM</span><span>30 GB · models need ~16 GB at once</span><span class="note">gpt-oss-20b runs here</span></li>
+        <li class="check"><span class="ok">✓</span><span class="label">Disk</span><span>142 GB free in ~/.local/share/goop · models need ~32 GB</span><span class="note">downloads resume if stopped</span></li>
+        <li class="check"><span class="ok">✓</span><span class="label">CPU</span><span>Ryzen 9 7940HS · 8 cores / 16 threads · AVX2 AVX-512</span><span class="note">16 threads for CPU models</span></li>
+        <li class="check"><span class="ok">✓</span><span class="label">Vulkan</span><span>1.3 · RADV</span><span class="note">llama.cpp Vulkan build</span></li>
+        <li class="check"><span class="ok">✓</span><span class="label">TPM2</span><span>found · your key can be sealed to this machine</span><span class="note">used in Security</span></li>
+        <li class="check"><span class="ok">✓</span><span class="label">Terminal</span><span>truecolor</span><span class="note">all theme colors shown as designed</span></li>
+        <li class="check"><span class="ok">✓</span><span class="label">Icons</span><span>emoji icons (default)</span><span class="note">no Nerd Font detected · change in Settings</span></li>
+      </ul>
+
+      <p class="pane-foot"><b>8</b> of 9 ok · <b>1</b> warning fixed automatically · nothing blocks setup</p>
+    </section>
+  </div>
+
+  <footer><span class="mode">setup</span><span><b class="next">↵</b> next · <b>shift+tab</b> back · <b>↑↓</b> move · <b>esc</b> quit setup</span><span class="zone-right"><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around the system check">
+  <div>
+    <h3>Failing check · ↵ blocked</h3>
+    <p class="banner fail" role="alert"><span><span class="err">⚠</span> RAM 8 GB is not enough for the recommended models · small CPU-only models still work</span><span class="hint"><b>c</b> CPU-only set</span></p>
+    <ul aria-label="Failing check">
+      <li class="check"><span class="err">✕</span><span class="label">RAM</span><span>8 GB · models need ~16 GB</span><span class="note">gpt-oss-20b alone needs 12.1 GB</span></li>
+    </ul>
+    <div class="fbar"><span class="mode">setup</span><span><span class="blocked">↵ next</span> · <b>c</b> use CPU-only small models · <b>shift+tab</b> back · <b>esc</b> quit setup</span><span class="zone-right"><span><b>?</b> help</span></span></div>
+  </div>
+  <div>
+    <h3>Welcome (step 1 of 10)</h3>
+    <p class="line">goop runs only on this machine · 10 steps · about 20 minutes, most of it the download</p>
+    <p class="line idle"><span class="k">↵</span> start · <span class="k">esc</span> quit setup</p>
+  </div>
+</section>
+<p class="notes"><strong>Setup frame (shared by W0–W9):</strong> setup opens full screen like M6 and M8: a breadcrumb (Setup › System check · step 2 of 10 · esc quit setup) with no key line under it, two unbordered panes split by the usual 1px line, and one status line. On the left the step list, like archinstall's checkmark menu: one row per step (W0 Welcome … W9 Done; W2a/W2b fold into Models and W6b into CV &amp; profile), ✓ done in green, ◐ current or running in yellow, ○ to do muted, and muted tags on the right: required on Security, optional on Schedule, and a live ↓ 42% on Download while it runs in the background (see the W2 artboard). The rows show step names only; the W codes stay in the design docs. The list is progress, not a menu: ↵ goes next and shift+tab goes back (huh), and a failing check blocks ↵. So the list never takes focus and its current row keeps only the fill and bold text, the M6 rule for a current category; the orange inset edge goes to the focused row in the right pane. The pane foot says you can leave and come back. On the right the current step: an uppercase pane head, the M8 problem banner only when something is wrong, then the step body. <strong>Banner colors:</strong> a warning banner uses a 2px --warning edge and a yellow ⚠; an error banner uses the M8 2px --error edge and a pink ⚠. system.md only defines the error banner, so the warning variant is new here. One ↵ both accepts the banner (↵ ok) and goes next. <strong>Status line:</strong> mode setup with the blue full-screen dot; keys ↵ next (green, the primary action) · shift+tab back · ↑↓ move · esc quit setup. Zone 3 drops ○ next search 09:00, because no search is scheduled before setup ends; it follows the busy-state rule instead: while the model download runs it shows ↓ done of total · speed · time left │ ? help (none of Jan, LM Studio or Ollama show a wizard-wide download speed and ETA), otherwise only ? help. <strong>W1:</strong> nine one-line checks (glyph, label, value, muted note; ✓ pass green, ⚠ warn yellow, ✕ fail pink). The GPU order warning is preselected (problems first) and, as the selected row, shows one extra line on what goop did. Icons is a pass: no Nerd Font is normal, because emoji is the default icon mode, so the footer reads 8 of 9 ok · 1 warning fixed automatically · nothing blocks setup. The 142 GB free on disk is illustrative. Below the screen: a failing RAM check (error banner, ✕ row, ↵ next muted in the status line and c use CPU-only small models offered instead) and the W0 Welcome line. Tradeoff: the step list costs 360px on every step but always shows where you are, what is required and that the download keeps going; the checks are read-only, so ↑↓ only moves the detail line.</p>
+</body>
+</html>

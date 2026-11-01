@@ -1,0 +1,21 @@
+{
+  "title": "Onboarding (W0–W9)",
+  "brief": "First-run setup of goop (W0–W9), one shared full-screen frame shown on two steps. Frame like M6/M8: breadcrumb Setup › <step> · step N of 10 · esc quit setup with no key line under it; on the left (360px, unbordered, 1px divider) the STEPS pane (count N of 10 done) with one row per step (Welcome, System check, Models, Download, Benchmark, Security, CV & profile, Preferences, Schedule, Done; W2a/W2b fold into Models, W6b into CV & profile), glyph ✓ done --success, ◐ current or running --warning, ○ to do --text-muted, muted tags required on Security, optional on Schedule and a live ↓ 42% on Download while it runs; the list is progress only (↵ next, shift+tab back), so the current step keeps the M6 current fill without the edge and the orange inset edge goes to the focused row on the right; pane foot: you can leave and come back; nothing is lost. On the right the current step: uppercase pane head, the M8 problem banner only on a warning (2px --warning edge) or a failure (2px --error edge), then the step body. One status line: mode setup with a --secondary dot; keys ↵ next (--success) · shift+tab back · ↑↓ move · esc quit setup; zone 3 drops ○ next search 09:00 (nothing is scheduled before setup) and follows the busy state: ↓ done of total GB · speed · time left │ ? help while the download runs, otherwise ? help. W1 System check: warning banner (Vulkan lists the 780M iGPU first · goop will use the RX 7700S (device 1), ↵ ok), nine one-line checks (GPU, GPU order ⚠ selected with a detail line, RAM, Disk, CPU, Vulkan, TPM2, Terminal, Icons emoji default), foot 8 of 9 ok · 1 warning fixed automatically · nothing blocks setup; below: a failing RAM check (error banner, ↵ next muted, c use CPU-only small models) and the Welcome line. W2 Models: recommended models preselected (●) as M8 two-line rows grouped GPU · RX 7700S (Profile & matching Qwen3.5-9B Q4_K_M 5.7 GB, Embeddings Qwen3-Embedding-0.6B 0.6 GB) and CPU · RAM (Chat & Learner gpt-oss-20b MXFP4 12.1 GB, Reranker Qwen3-Reranker 0.6 GB, Security gpt-oss-safeguard-20b 12.8 GB on demand, never loaded with gpt-oss-20b), fit badges Fits / May be slow / Won't fit, alternatives line (←→ change quant), M8 memory map (VRAM 6.3 of 8 GB, RAM 14.2 of 30 GB + 12.8 on demand) and Download 31.8 GB · starts in the background when you press ↵; below: an alternative quant (May be slow), the download running while on Benchmark (↓ 42% in the step list, ↓ 13.4 of 31.8 GB · 18 MB/s · 17m in the status line), the resume toast and the disk-full error banner with ↵ retry.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-w1-system-check.html",
+      "title": "W1 System check",
+      "tradeoff": "Shared setup frame with an always-visible step list and one-line checks; you always see where you are, what is required and that problems were fixed, but the step list costs 360px on every step and the read-only checks give ↑↓ little to do",
+      "width": 1440,
+      "height": 1290
+    },
+    {
+      "file": "02-w2-models.html",
+      "title": "W2 Models",
+      "tradeoff": "Recommended set preselected with fit badges, quant alternatives and the memory map on one screen, and the download starts in the background on ↵; the safe default is one key away, but the screen is dense and quant names stay jargon",
+      "width": 1440,
+      "height": 1330
+    }
+  ]
+}
