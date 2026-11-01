@@ -91,27 +91,28 @@ Monospace only. A terminal has one font size, so the artboard sizes are roles, n
 
 ## Glyphs
 
-| Glyph               | Meaning                                                               | Color                                 | Source     |
-| ------------------- | --------------------------------------------------------------------- | ------------------------------------- | ---------- |
-| `›`                 | Prompt and user turn marker                                           | `--user`                              | `04`, `05` |
-| `●`                 | Ok / sources up; focus label dot; tip dot; flame fallback             | per meaning                           | `04`, `05` |
-| `◐`                 | Running, busy, writing                                                | `--warning`                           | `04`       |
-| `○`                 | Queued, waiting, idle, next search                                    | `--text-muted`                        | `04`, `06` |
-| `✓`                 | Tool call or agent done                                               | `--success`                           | `04`       |
-| `✔`                 | Offer verdict "apply"                                                 | inherits row sub text                 | `04`       |
-| `~`                 | Offer verdict "maybe"                                                 | inherits row sub text                 | `04`       |
-| `✕`                 | Offer verdict "skip"                                                  | inherits row sub text                 | `04`       |
-| `⚠`                 | Suspicious text, secret removed, model not responding                 | per chip                              | `04`       |
-| `▾` / `▸`           | Open / folded section or thought; `▸` also marks recent-activity rows | `--text-muted` (`--primary` selected) | `04`, `05` |
-| `├` `└`             | Agents tree branches                                                  | `--border`                            | `04`       |
-| `│`                 | Separator between right-zone items in the status line                 | `--border`                            | `04`, `05` |
-| `·`                 | Separator inside a line                                               | inherits                              | all        |
-| `→`                 | Tool result                                                           | `--text-muted`                        | `04`       |
-| `◇` `◈` `◆`         | Reasoning level low / medium / high; `think off` text when off        | `--accent` (off: `--text-muted`)      | `04`, `05` |
-| `↓`                 | Download or update in progress                                        | `--text-muted` (percent in `--text`)  | `M8`       |
-| `—`                 | Not applicable (e.g. no reasoning level, no speed)                    | `--text-muted`                        | `M8`       |
-| U+F06D (nf-fa-fire) | goop turn marker; falls back to `●` without a Nerd Font               | `--primary`                           | `04`       |
-| Scrollbar thumb     | One cell on the right edge                                            | see Scrollbars                        | `04`       |
+| Glyph               | Meaning                                                               | Color                                              | Source     |
+| ------------------- | --------------------------------------------------------------------- | -------------------------------------------------- | ---------- |
+| `›`                 | Prompt and user turn marker                                           | `--user`                                           | `04`, `05` |
+| `●`                 | Ok / sources up; focus label dot; tip dot; flame fallback             | per meaning                                        | `04`, `05` |
+| `◐`                 | Running, busy, writing                                                | `--warning`                                        | `04`       |
+| `○`                 | Queued, waiting, idle, next search                                    | `--text-muted`                                     | `04`, `06` |
+| `✓`                 | Tool call or agent done                                               | `--success`                                        | `04`       |
+| `✔`                 | Offer verdict "apply"                                                 | inherits row sub text                              | `04`       |
+| `~`                 | Offer verdict "maybe"                                                 | inherits row sub text                              | `04`       |
+| `✕`                 | Offer verdict "skip"                                                  | inherits row sub text                              | `04`       |
+| `⚠`                 | Suspicious text, secret removed, model not responding                 | per chip                                           | `04`       |
+| `▾` / `▸`           | Open / folded section or thought; `▸` also marks recent-activity rows | `--text-muted` (`--primary` selected)              | `04`, `05` |
+| `├` `└`             | Agents tree branches                                                  | `--border`                                         | `04`       |
+| `│`                 | Separator between right-zone items in the status line                 | `--border`                                         | `04`, `05` |
+| `·`                 | Separator inside a line                                               | inherits                                           | all        |
+| `→`                 | Tool result                                                           | `--text-muted`                                     | `04`       |
+| `◇` `◈` `◆`         | Reasoning level low / medium / high; `think off` text when off        | `--accent` (off: `--text-muted`)                   | `04`, `05` |
+| `↓`                 | Download or update in progress                                        | `--text-muted` (percent in `--text`)               | `M8`       |
+| `—`                 | Not applicable (e.g. no reasoning level, no speed)                    | `--text-muted`                                     | `M8`       |
+| `▮`                 | Heartbeat cell: one past run (ok / slow / failed / not run)           | `--success` / `--warning` / `--error` / `--border` | `M7`       |
+| U+F06D (nf-fa-fire) | goop turn marker; falls back to `●` without a Nerd Font               | `--primary`                                        | `04`       |
+| Scrollbar thumb     | One cell on the right edge                                            | see Scrollbars                                     | `04`       |
 
 ## Layout and spacing
 
@@ -237,3 +238,7 @@ Before finishing an artboard while this file exists:
 - [ ] The status line keeps three zones and 28px.
 - [ ] Sections that only exist while something runs (Agents) are absent when idle.
 - [ ] Motion respects `prefers-reduced-motion`.
+
+## Tabs
+
+One line of tab names separated by `·`, each with its count; the active tab is bold `--text` and underlined, the others `--text-muted`; `[` and `]` switch tabs. Source: `M7` (`design/tui-sources/01-full-screen.html`).
