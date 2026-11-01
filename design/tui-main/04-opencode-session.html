@@ -51,8 +51,24 @@
   .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
   .sub { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
   .new { color: var(--accent); font-size: 12px; font-weight: 700; }
-  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; }
-  .kv dt { color: var(--text-muted); } .kv dd { margin: 0; }
+  /* Sidebar sections (opencode / Crush): a header with a fold marker and a count, then rows. */
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; color: var(--text-muted); }
+  .sec.folded .sec-head h2::before { content: "▸ "; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .more { color: var(--text-muted); font-size: 13px; padding-left: 8px; }
+  .rows { display: grid; grid-template-columns: 1.5ch auto 1fr auto; gap: 3px 8px; font-size: 13px; align-items: baseline; }
+  .rows .dot { font-size: 11px; }
+  .rows .label { color: var(--text); }
+  .rows .where { color: var(--text-muted); }
+  .rows .val { color: var(--text-muted); text-align: right; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  .meter { grid-column: 2 / 5; height: 6px; background: var(--background-element); }
+  .meter span { display: block; height: 100%; background: var(--primary); }
+  .meter.ctx span { background: var(--success); }
+  .act { color: var(--accent); }
+  .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
   footer { grid-column: 1 / -1; display: flex; justify-content: space-between; padding: 6px 28px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; }
   footer b { color: var(--text); font-weight: 600; }
   .notes { width: 1440px; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
@@ -75,19 +91,48 @@
     <div class="composer"><div class="hint">Preguntá o pedí algo… <span style="color:var(--text-muted)">/ for commands</span></div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
   </section>
   <aside aria-label="Sidebar with offers and status">
-    <h2>Offers · 8 · <span class="new">3 new</span></h2>
-    <ul>
-      <li class="sel"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">NEW</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
-      <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
-      <li><span class="score maybe">71</span><span>Python Developer</span><span></span><span class="sub">Kraft · Remote · ~ maybe</span></li>
-      <li><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">NEW</span><span class="sub">Lumen · Hybrid Madrid · ~ maybe</span></li>
-      <li><span class="score check">58</span><span>Backend Engineer</span><span></span><span class="sub">Orbit · ⚠ suspicious text</span></li>
-    </ul>
-    <h2>Status</h2>
-    <dl class="kv"><dt>models</dt><dd>qwen ✓ · gpt-oss ✓</dd><dt>search</dt><dd>daily 09:00 · running</dd><dt>profile</dt><dd>Backend · mid · 3 yrs</dd><dt>rules</dt><dd>4 active · 1 to review</dd></dl>
+    <div class="sec">
+      <div class="sec-head"><h2>Offers</h2><span class="count">8 · <span class="new">3 new</span></span></div>
+      <ul>
+        <li class="sel"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">NEW</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
+        <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
+        <li><span class="score maybe">71</span><span>Python Developer</span><span></span><span class="sub">Kraft · Remote · ~ maybe</span></li>
+        <li><span class="score check">58</span><span>Backend Engineer</span><span></span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+      </ul>
+      <div class="more">+ 4 more · enter to open the list</div>
+    </div>
+    <div class="sec">
+      <div class="sec-head"><h2>Search</h2><span class="count busy">running</span></div>
+      <div class="rows">
+        <span class="dot busy">◐</span><span class="label">companies</span><span></span><span class="val">312 / 1,240</span>
+        <span class="meter"><span style="width:25%"></span></span>
+        <span class="dot ok">●</span><span class="label">sources</span><span class="where">5 ok</span><span class="val">0 failed</span>
+        <span class="dot idle">○</span><span class="label">next</span><span class="where">daily</span><span class="val">tomorrow 09:00</span>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-head"><h2>Models</h2><span class="count">2 / 4 loaded</span></div>
+      <div class="rows">
+        <span class="dot ok">●</span><span class="label">chat</span><span class="where">gpt-oss · CPU</span><span class="val">answering</span>
+        <span class="dot ok">●</span><span class="label">analytic</span><span class="where">qwen · GPU</span><span class="val">scoring</span>
+        <span class="dot idle">○</span><span class="label">embed</span><span class="where">CPU</span><span class="val">on demand</span>
+        <span class="dot idle">○</span><span class="label">rerank</span><span class="where">CPU</span><span class="val">on demand</span>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-head"><h2>Context</h2><span class="count">2.1K / 6K</span></div>
+      <div class="rows"><span class="meter ctx"><span style="width:35%"></span></span></div>
+    </div>
+    <div class="sec folded">
+      <div class="sec-head"><h2>Profile</h2><span class="count">Backend · mid · 3 yrs</span></div>
+    </div>
+    <div class="sec folded">
+      <div class="sec-head"><h2>Rules</h2><span class="count act">1 to review · /rules</span></div>
+    </div>
+    <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
   </aside>
   <footer><span><b>tab</b> offers · <b>enter</b> send · <b>ctrl+o</b> expand tool · <b>ctrl+x</b> leader</span><span><b>ctrl+p</b> commands · <b>ctrl+x b</b> sidebar · <b>?</b> help</span></footer>
 </main>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a 42-column-style sidebar with the offers and status (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a sidebar of collapsible sections (offers, search progress, models by role, chat context, profile, rules) with colored status dots (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
