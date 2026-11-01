@@ -21,6 +21,10 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`
 - A change that touches security, stored data or delivery gets its own commit.
 - Record the commit of each task in the plan (`odd/tasks/goop.md`).
 
+## Merging
+
+Every pull request lands on `main` as **one squashed commit**. Its message is the pull request title, so the title must be a Conventional Commit (`feat(offers): add the Greenhouse connector`). Rebase and merge commits are disabled in the repository.
+
 ## Publishing
 
 No push, no remote, no pull request and no release without the maintainer's explicit approval.
