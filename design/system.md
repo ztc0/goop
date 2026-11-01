@@ -108,6 +108,8 @@ Monospace only. A terminal has one font size, so the artboard sizes are roles, n
 | `·`                 | Separator inside a line                                               | inherits                              | all        |
 | `→`                 | Tool result                                                           | `--text-muted`                        | `04`       |
 | `◇` `◈` `◆`         | Reasoning level low / medium / high; `think off` text when off        | `--accent` (off: `--text-muted`)      | `04`, `05` |
+| `↓`                 | Download or update in progress                                        | `--text-muted` (percent in `--text`)  | `M8`       |
+| `—`                 | Not applicable (e.g. no reasoning level, no speed)                    | `--text-muted`                        | `M8`       |
 | U+F06D (nf-fa-fire) | goop turn marker; falls back to `●` without a Nerd Font               | `--primary`                           | `04`       |
 | Scrollbar thumb     | One cell on the right edge                                            | see Scrollbars                        | `04`       |
 

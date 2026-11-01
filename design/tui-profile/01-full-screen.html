@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M9 profile · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M2, M5 and M10: one column, no sidebar; profile on the left, the Validator's questions on the right. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .profile-view { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; white-space: nowrap; }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul, ol { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  /* Profile head: the summary line in bold, where it came from dim below; state as header tags, never buttons. */
+  .head { display: grid; grid-template-columns: 1fr auto; row-gap: 2px; padding: 6px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .head .name { font-weight: 600; }
+  .head .facts { grid-column: 1 / -1; color: var(--text-muted); font-size: 13px; }
+  .head .facts b { color: var(--text); font-weight: 600; }
+  .tag-check { color: var(--accent); font-size: 12px; font-weight: 700; }
+  /* Key hints: one plain line for the focused pane, key in yellow bold, action muted, no boxes; the primary is told apart only by green. */
+  .keys { display: flex; gap: 24px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .keys b { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .keys .primary { color: var(--success); font-weight: 600; }
+  .keys .primary b { color: var(--success); }
+  .keys .more { margin-left: auto; }
+  /* Keys of a pane without focus: same line, all muted, so no key looks live where it does nothing. */
+  .keys.unfocused b { color: var(--text-muted); font-weight: 600; }
+  .actions { padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); }
+  /* Body: two columns at full width so lines stay short. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; padding-top: 16px; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 18px; }
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; color: var(--text-muted); }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .count b { color: var(--text); font-weight: 600; }
+  .count .todo { color: var(--accent); }
+  /* Skills: an inline list that wraps like chips, but square and unboxed; years muted after the name. */
+  .skills { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: 14px; }
+  .skills li { padding: 2px 8px; white-space: nowrap; }
+  .skills .yrs { color: var(--text-muted); font-size: 13px; margin-left: 6px; }
+  .skills .unsure { color: var(--warning); font-size: 13px; margin-left: 6px; }
+  /* Focused skill: the selection style (selected fill + inset 2px orange edge). */
+  .skills li.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  /* One-line rows: what, where, when; the dates sit muted on the right. */
+  .rows li { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
+  .rows .mark { color: var(--text-muted); }
+  .rows .sub { color: var(--text-muted); font-size: 13px; }
+  .rows .when { color: var(--text-muted); font-size: 13px; }
+  .rows .link { color: var(--text-muted); font-size: 13px; }
+  .rows .link b { color: var(--accent); font-weight: 700; }
+  /* Check these: the Validator's questions. Panel fill and a 2px yellow edge (to review), square. */
+  .check { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 14px 20px 14px 18px; display: flex; flex-direction: column; gap: 16px; }
+  .check-top { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; }
+  .check-top .badge { color: var(--accent); font-weight: 700; }
+  .item { display: flex; flex-direction: column; gap: 6px; }
+  .item .q { font-size: 14px; font-weight: 600; }
+  .item .why { color: var(--text-muted); font-size: 13px; }
+  /* CV lines quoted as inert plain text: dim, behind a │ gutter with line numbers; never the flame, never goop's voice. */
+  .quote { font-size: 13px; color: var(--text-muted); }
+  .quote li { display: grid; grid-template-columns: 4ch 1fr; column-gap: 8px; }
+  .quote .ln { text-align: right; opacity: .8; }
+  .quote .txt { border-left: 1px solid var(--border); padding-left: 10px; white-space: pre-wrap; }
+  .item .keys { font-size: 13px; gap: 18px; }
+  .private { margin-top: auto; padding: 0 8px; color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-profile::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: edit in place, the toast after confirm, and the reload-CV state. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  /* Edit in place: the focused skill becomes a composer (lavender edge = you are typing). */
+  .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--user); font-weight: 700; }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; white-space: nowrap; }
+  .below b { color: var(--accent); font-weight: 700; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast b { color: var(--accent); }
+  .running { background: var(--background-panel); box-shadow: inset 2px 0 var(--warning); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; color: var(--text-muted); }
+  .running b { color: var(--text); font-weight: 600; }
+  .running .k { color: var(--accent); font-weight: 700; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <article class="profile-view">
+    <div class="title">Profile › <b>from cv-2026.pdf</b> · read Oct 28 · checked by Validator · esc back to session 3</div>
+    <header class="head">
+      <span class="name">Backend · mid · 3 yrs · Spanish native, English B2 · Madrid, remote</span><span class="tag-check">2 to check</span>
+      <span class="facts">what goop understood from your CV · <b>Profiler</b> read it · <b>Validator</b> checked it · your corrections win over the CV</span>
+    </header>
+    <nav class="actions keys" aria-labelledby="skills-head">
+      <span><b>↵</b>edit</span><span><b>a</b>add skill</span><span><b>x</b>remove</span><span class="primary"><b>c</b>confirm</span><span><b>r</b>reload CV</span><span><b>esc</b>back</span><span class="more"><b>?</b>all actions</span>
+    </nav>
+    <div class="body">
+      <div class="col">
+        <section class="sec" aria-labelledby="skills-head">
+          <div class="sec-head"><h2 id="skills-head">Skills</h2><span class="count">6 · <span class="todo">1 unsure</span></span></div>
+          <ul class="skills">
+            <li>Python<span class="yrs">3y</span></li>
+            <li>Django<span class="yrs">2y</span></li>
+            <li>REST APIs</li>
+            <li>PostgreSQL<span class="yrs">3y</span></li>
+            <li class="sel">Docker<span class="yrs">1y</span></li>
+            <li>FastAPI<span class="unsure">~ unsure</span><span class="yrs">· mentioned once</span></li>
+          </ul>
+        </section>
+        <section class="sec" aria-labelledby="exp-head">
+          <div class="sec-head"><h2 id="exp-head">Experience</h2><span class="count">2 roles · 3 yrs as backend</span></div>
+          <ul class="rows">
+            <li><span class="mark">▸</span><span>Backend Developer · <b>Tickit</b> <span class="sub">· Django, public REST API, PostgreSQL</span></span><span class="when">Jul 2025 – now</span></li>
+            <li><span class="mark">▸</span><span>Python Developer · <b>Ledgerly</b> <span class="sub">· Django, payments reports</span></span><span class="when">Oct 2023 – Jun 2025</span></li>
+          </ul>
+        </section>
+        <section class="sec" aria-labelledby="edu-head">
+          <div class="sec-head"><h2 id="edu-head">Education</h2><span class="count">1</span></div>
+          <ul class="rows">
+            <li><span class="mark">▸</span><span>BSc Computer Engineering · <b>Universidad Politécnica de Madrid</b></span><span class="when">2019 – 2023</span></li>
+          </ul>
+        </section>
+        <section class="sec" aria-labelledby="lang-head">
+          <div class="sec-head"><h2 id="lang-head">Languages</h2><span class="count">2</span></div>
+          <ul class="rows">
+            <li><span class="mark">▸</span><span>Spanish</span><span class="when">native</span></li>
+            <li><span class="mark">▸</span><span>English</span><span class="when">B2</span></li>
+          </ul>
+        </section>
+        <section class="sec" aria-labelledby="pref-head">
+          <div class="sec-head"><h2 id="pref-head">Preferences</h2><span class="count">set by you, not read from the CV</span></div>
+          <ul class="rows">
+            <li><span class="mark">→</span><span>Madrid or remote · EU hours · €40K+ <span class="sub">· backend, mid</span></span><span class="link"><b>/settings</b> to change</span></li>
+          </ul>
+        </section>
+      </div>
+      <div class="col">
+        <section class="check" aria-labelledby="check-head">
+          <div class="check-top"><span>the Validator is not sure about these</span><span><span class="badge">2</span> to check</span></div>
+          <h2 id="check-head">Check these</h2>
+          <div class="item">
+            <p class="q">Is Docker 1 yr or 3 yrs?</p>
+            <p class="why">the skills list says 1 yr, but your CV says:</p>
+            <ol class="quote">
+              <li><span class="ln">14</span><span class="txt">Docker in all projects</span></li>
+            </ol>
+            <p class="keys unfocused"><span><b>1</b>one year</span><span><b>3</b>three years</span><span><b>e</b>edit</span></p>
+          </div>
+          <div class="item">
+            <p class="q">Did you use FastAPI at work, or only try it?</p>
+            <p class="why">it is mentioned once, with no role or dates:</p>
+            <ol class="quote">
+              <li><span class="ln">31</span><span class="txt">Proyectos personales: API de recetas con FastAPI</span></li>
+            </ol>
+            <p class="keys unfocused"><span><b>1</b>side project only</span><span><b>2</b>used at work</span><span><b>x</b>remove</span><span><b>e</b>edit</span></p>
+          </div>
+        </section>
+      </div>
+    </div>
+    <p class="private">Your CV stays encrypted on this machine and is never sent anywhere.</p>
+  </article>
+  <footer><span class="mode m-profile">profile</span><span><b>←→</b> move · <b>tab</b> to check these · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around the profile">
+  <div><h3>Edit in place (↵ on Docker)</h3><div class="composer"><div class="line"><span class="prompt">›</span><span>Docker 3y</span><span class="cursor"></span></div><div class="below"><span>editing a skill · name and years</span><span><b>enter</b> save · <b>esc</b> cancel</span></div></div></div>
+  <div><h3>After confirm (c)</h3><div class="toast"><span><span class="ok">✓</span> Profile updated · rescoring today's 8 offers</span><span><b>u</b> undo · 4s</span></div></div>
+  <div><h3>Reload CV (r · /reload-cv)</h3><div class="running"><span><span class="busy">◐</span> reading <b>cv-2026.pdf</b> · Profiler · 12s</span><span><span class="k">esc</span> stop</span></div></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /profile opens like M2, M5 and M10 (title breadcrumb with where the profile came from, summary header with a yellow "2 to check" tag, one plain key-hint line, status line in profile mode). The profile reads as terminal blocks in the left column: skills as an inline wrapping list with muted years (FastAPI flagged ~ unsure in yellow), one-line rows for experience, education and languages, and a pointer to /settings (M6), which you set and the CV never does. The right column is the Validator's "Check these" block with the yellow to-review edge: each question quotes the CV line as dim plain text behind a │ gutter with its line number, so the CV is shown, never followed, and offers quick answers. Focus starts on Skills: Docker has the orange selection edge and the hint line is live for it (↵ edit, a add skill, x remove, c confirm in green, r reload CV); the check block is not focused, so its keys are muted until tab moves there. Costs a full screen that hides the chat, and the two columns leave the right side short when nothing needs checking. Below the screen: edit in place, the toast after confirm that rescores today's offers, and the reload-CV state.</p>
+</body>
+</html>

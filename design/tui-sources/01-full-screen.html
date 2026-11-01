@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M7 sources · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M2, M5 and M10: one column, no sidebar; summary, the sources list, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .sources-view { display: flex; flex-direction: column; gap: 18px; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  /* Summary: one dim line with bold numbers, like the speed line. */
+  .summary { color: var(--text-muted); font-size: 13px; white-space: nowrap; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); }
+  .summary b { color: var(--text); font-weight: 600; }
+  .summary .new { color: var(--success); }
+  /* Key hints: one plain line, key in yellow bold, action muted, no boxes; the primary is told apart only by green. */
+  .keys { display: flex; gap: 24px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .keys b { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .keys .primary { color: var(--success); font-weight: 600; }
+  .keys .primary b { color: var(--success); }
+  .keys .more { margin-left: auto; }
+  /* Sources list: one row per source, fixed columns; the head row is dim like a table head. */
+  .sec { display: flex; flex-direction: column; gap: 8px; }
+  .cols { display: grid; grid-template-columns: 2ch 22ch 14ch 16ch 12ch 1fr; column-gap: 12px; padding: 5px 8px; font-size: 14px; white-space: nowrap; }
+  .cols.head { color: var(--text-muted); font-size: 13px; padding-top: 0; padding-bottom: 0; }
+  .src .name { font-weight: 600; }
+  .src .meta { color: var(--text-muted); }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .found { color: var(--accent); font-weight: 600; }
+  .src.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  /* Selected source opens below its row: same fill and edge, two columns (companies | last errors). */
+  .open { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); padding: 4px 16px 14px calc(8px + 2ch + 12px); display: grid; grid-template-columns: 1fr 1fr; column-gap: 36px; row-gap: 12px; }
+  .open h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .open h3 .count { text-transform: none; letter-spacing: normal; font-weight: 400; }
+  .company { display: grid; grid-template-columns: 2ch 16ch 1fr auto; column-gap: 10px; font-size: 14px; padding: 1px 0; white-space: nowrap; }
+  .company .meta, .company .act { color: var(--text-muted); font-size: 13px; }
+  .company.suggested { color: var(--text-muted); }
+  .company.suggested .act { color: var(--accent); }
+  .more-line { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  /* Last errors: quoted as dim plain text, never colored or parsed into UI. */
+  .log { margin: 0; color: var(--text-muted); font: 13px/1.5 var(--mono); white-space: pre; }
+  .privacy { grid-column: 1 / -1; color: var(--text-muted); font-size: 13px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+  .privacy .ok { margin-right: 6px; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-sources::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: discovery toast, add-company composer, run-now progress. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast b { color: var(--accent); }
+  /* Add a company: a composer (lavender edge = you are typing). */
+  .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--user); font-weight: 700; }
+  .placeholder { color: var(--text-muted); }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; white-space: nowrap; }
+  .below b { color: var(--accent); font-weight: 700; }
+  .progress { color: var(--text-muted); font-size: 13px; white-space: nowrap; padding: 6px 0; display: flex; gap: 10px; align-items: center; }
+  .progress b { color: var(--text); font-weight: 600; }
+  .meter { display: inline-block; width: 70px; height: 6px; background: var(--background-element); }
+  .meter i { display: block; height: 100%; width: 51%; background: var(--warning); }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <article class="sources-view">
+    <div class="title">Sources › <b>where goop finds offers</b> · 1 with errors · esc back to session 3</div>
+    <p class="summary"><b>5</b> sources · <b>1,240</b> companies followed · last search <b>09:00</b> · <span class="new"><b>312</b> new offers today</span></p>
+
+    <section class="sec" aria-labelledby="list-head">
+      <h2 id="list-head">▾ Sources</h2>
+      <p class="keys"><span class="primary"><b>↵</b>open</span><span><b>r</b>run now</span><span><b>p</b>pause</span><span><b>f</b>follow company</span><span><b>x</b>unfollow</span><span><b>esc</b>back</span><span class="more"><b>?</b>all actions</span></p>
+      <ul>
+        <li class="cols head" aria-hidden="true"><span></span><span>name</span><span>kind</span><span>size</span><span>last run</span><span>health</span></li>
+        <li class="cols src"><span class="ok">●</span><span class="name">Greenhouse</span><span class="meta">ATS board</span><span>612 companies</span><span class="meta">09:00</span><span><span class="ok">ok</span> <span class="meta">· 184 new</span></span></li>
+        <li class="cols src"><span class="ok">●</span><span class="name">Ashby</span><span class="meta">ATS board</span><span>380 companies</span><span class="meta">09:00</span><span><span class="ok">ok</span> <span class="meta">· 71 new</span></span></li>
+        <li class="cols src sel"><span class="err">●</span><span class="name">Lever</span><span class="meta">ATS board</span><span>248 companies</span><span class="meta">09:00</span><span class="err">⚠ 3 boards failed · rate limited · retry 10:15</span></li>
+        <li>
+          <div class="open">
+            <section aria-labelledby="lever-companies">
+              <h3 id="lever-companies">Followed companies <span class="count">· 248 · 245 ok · 3 failed</span></h3>
+              <ul>
+                <li class="company"><span class="ok">●</span><span>Brightwave</span><span class="meta">6 open · 2 new</span><span class="act">− unfollow</span></li>
+                <li class="company"><span class="ok">●</span><span>Nordtech</span><span class="meta">4 open · 1 new</span><span class="act">− unfollow</span></li>
+                <li class="company"><span class="err">●</span><span>Quanta</span><span class="meta">HTTP 429 · retry 10:15</span><span class="act">− unfollow</span></li>
+                <li class="company"><span class="err">●</span><span>Mirelo</span><span class="meta">HTTP 429 · retry 10:15</span><span class="act">− unfollow</span></li>
+                <li class="company"><span class="err">●</span><span>Tessel</span><span class="meta">board not found · moved?</span><span class="act">− unfollow</span></li>
+                <li class="company suggested"><span>○</span><span>Oakline</span><span class="meta">found by Common Crawl · 3 open</span><span class="act">+ follow</span></li>
+              </ul>
+              <p class="more-line">… 242 more · / filter</p>
+            </section>
+            <section aria-labelledby="lever-errors">
+              <h3 id="lever-errors">Last errors <span class="count">· run 09:00</span></h3>
+<pre class="log">09:00:41  api.lever.co/v0/postings/quanta  429 Too Many Requests
+09:00:42  api.lever.co/v0/postings/mirelo  429 Too Many Requests
+09:00:44  api.lever.co/v0/postings/tessel  404 Not Found
+09:00:44  backing off · next try 10:15 · 245 of 248 boards read</pre>
+            </section>
+            <p class="privacy"><span class="ok">●</span>goop only reads public job boards; it never logs in or sends your data</p>
+          </div>
+        </li>
+        <li class="cols src"><span class="busy">◐</span><span class="name">Remotive</span><span class="meta">aggregator</span><span>1,930 offers</span><span class="meta">09:02</span><span><span class="busy">slow</span> <span class="meta">· 41 s per page · 38 new</span></span></li>
+        <li class="cols src"><span class="idle">○</span><span class="name">Common Crawl</span><span class="meta">discovery</span><span>weekly</span><span class="meta">Sun 03:00</span><span><span class="meta">next Sun ·</span> <span class="found">+ 42 companies found</span></span></li>
+      </ul>
+    </section>
+  </article>
+  <footer><span class="mode m-sources">sources</span><span><b>↑↓</b> move · <b>tab</b> to companies · <b>/</b> filter · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around a source">
+  <div><h3>Discovery result</h3><div class="toast"><span><span class="ok">✓</span> Common Crawl found 42 companies</span><span><b>↵</b> review list</span></div></div>
+  <div><h3>Add a company (a)</h3><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">company name or careers URL</span><span class="cursor"></span></div><div class="below"><span>goop finds its board (Greenhouse, Ashby or Lever)</span><span><b>enter</b> follow · <b>esc</b> cancel</span></div></div></div>
+  <div><h3>Run now (r)</h3><p class="progress"><span class="busy">◐</span><span><b>Greenhouse</b> 312 / 612</span><span class="meter"><i></i></span><span>esc stop</span></p></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /sources opens like M2, M5 and M10 (title breadcrumb, one plain key-hint line, status line). A dim summary line on top, then one row per source with fixed columns (name, kind, size, last run, health) and a state dot: green ok, yellow ◐ slow, muted ○ for the weekly Common Crawl discovery (its + 42 companies found is yellow, something to review), pink for Lever with 3 boards failed. The selected source keeps the orange edge and opens below its row: a sample of its followed companies (failed ones in pink, a discovered one muted with + follow) next to its last errors, quoted as dim plain text and never parsed into UI, plus the privacy line. The key hints follow the focus: on a source ↵ open (green, primary), r run now, p pause, f follow company, x unfollow; tab moves into the companies. Costs a full screen that hides the chat, and only one source opens at a time, so comparing two sources' errors needs moving between them. Below the screen: the discovery toast, the add-company composer and the run-now progress line.</p>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "title": "Models (M8)",
+  "brief": "Models screen of goop (/models), local llama.cpp servers only: hardware line with RAM, VRAM (RX 7700S, Vulkan) and CPU meters; one row per role (Chat · Orchestrator, Profile & matching, Security, Reranker, Embeddings) with model, quantization and size on disk, device, state, reasoning level and output speed; a failing model (qwen not responding, restarting 2/3) selected and unfolded with its last log lines, what goop did and context-sensitive keys (r restart, d device, ctrl+r reasoning, b benchmark, enter details, esc back, ? all actions). Status line with the models focus mode. Below the screen: the update download, a benchmark result and the status line alert chip that leads here. Model startup never blocks the TUI.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "One row per role with hardware meters on top and the failing model unfolded in place (logs, what goop did, row-aware keys); hides the chat and unfolds one row at a time",
+      "width": 1440,
+      "height": 1223
+    }
+  ]
+}

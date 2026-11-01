@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M8 models · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M2, M5 and M10: one column, no sidebar; hardware line, models table, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .models-view { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin: 0 0 18px; }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  /* Reasoning level of the thinking model: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (qwen); ctrl+r cycles it. */
+  .reason { color: var(--accent); }
+  .reason.off { color: var(--text-muted); }
+  /* Hardware line: the top status strip pattern (mini meters 70 × 6px, dim labels, bold numbers). */
+  .hw { display: flex; gap: 28px; align-items: center; padding: 0 8px 14px; border-bottom: 1px solid var(--border-subtle); font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+  .hw b { color: var(--text); font-weight: 600; }
+  .hw .item { display: flex; gap: 8px; align-items: center; }
+  .hw .server { margin-left: auto; }
+  .meter { display: inline-block; width: 70px; height: 6px; background: var(--background-element); }
+  .meter span { display: block; height: 100%; background: var(--success); }
+  /* Models table: one row per role, role first (what the user cares about), then what runs it. */
+  .table { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; }
+  .cols, .row { display: grid; grid-template-columns: 30ch 25ch 18ch 6ch 1fr 15ch 10ch; column-gap: 14px; align-items: baseline; padding: 5px 8px; white-space: nowrap; }
+  .cols { padding-top: 0; }
+  .cols h2:last-child, .row .speed { text-align: right; }
+  .row { font-size: 14px; }
+  .row .role { color: var(--text); font-weight: 600; }
+  .row .role small { color: var(--text-muted); font-size: 13px; font-weight: 400; }
+  .row .model { color: var(--text); }
+  .row .quant, .row .dev, .row .speed { color: var(--text-muted); font-size: 13px; }
+  .row .quant b, .row .speed b { color: var(--text); font-weight: 600; }
+  .row .state { font-size: 13px; }
+  .row .state .sub { color: var(--text-muted); }
+  .row.is-err .model { color: var(--error); }
+  /* Selection: inset 2px orange edge on --background-element; the selected row unfolds in place. */
+  .sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .row-fold::before { content: "▸ "; color: var(--text-muted); }
+  .sel .row-fold::before { content: "▾ "; color: var(--primary); }
+  .row .role { display: flex; }
+  .expand { display: flex; flex-direction: column; gap: 14px; padding: 6px 8px 14px calc(8px + 2ch); }
+  .expand h3 { margin: 0 0 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .expand .grid { display: grid; grid-template-columns: 1.25fr 1fr; column-gap: 48px; }
+  /* Last log lines: dim plain text, never colored or interpreted; one cell grid, no wrapping. */
+  .log { margin: 0; border-left: 1px solid var(--border); padding: 2px 12px; font: 13px/1.5 var(--mono); color: var(--text-muted); white-space: pre; overflow: hidden; }
+  .log-foot { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  /* What goop did: a goop turn (flame marker, ● fallback), so it reads as goop's words. */
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; font-size: 14px; }
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .dim { color: var(--text-muted); font-size: 13px; }
+  .dim b { color: var(--text); font-weight: 600; }
+  /* Key hints: one plain line, key in yellow bold, action muted, no boxes; the primary is told apart only by green.
+     They follow the selected row: ctrl+r says "think on" on qwen, a level on gpt-oss, and is absent on the reranker. */
+  .keys { display: flex; gap: 24px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .keys b { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .keys .primary { color: var(--success); font-weight: 600; }
+  .keys .primary b { color: var(--success); }
+  .keys .more { margin-left: auto; }
+  .table-foot { margin-top: auto; display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; padding: 0 8px; white-space: nowrap; }
+  .table-foot b { color: var(--text); font-weight: 600; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b, .fbar b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-models::before { color: var(--secondary); }
+  .mode.m-chat::before { color: var(--user); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .alert { color: var(--background); background: var(--error); padding: 0 8px; font-weight: 600; }
+  /* Below the screen: the download/update line, a benchmark result and the status line chip that leads here. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .feedback .line { white-space: nowrap; font-size: 13px; color: var(--text-muted); }
+  .feedback .line b { color: var(--text); font-weight: 600; }
+  .feedback .line .k { color: var(--accent); font-weight: 700; }
+  .feedback .meter.wide { width: 100%; margin: 6px 0; }
+  .feedback .meter.wide span { background: var(--warning); }
+  .fbar { border: 0; background: var(--background-panel); }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <article class="models-view">
+    <p class="title">Models › <b>local models</b> · 5 roles · 4 ready · 1 restarting · esc back to session 3</p>
+
+    <section class="hw" aria-labelledby="hw-head">
+      <h2 id="hw-head">Hardware</h2>
+      <span class="item">RAM <span class="meter"><span style="width: 47%"></span></span> <b>14.2</b> / 30 GB</span>
+      <span class="item">VRAM <span class="meter"><span style="width: 76%"></span></span> <b>6.1</b> / 8 GB · RX 7700S (Vulkan)</span>
+      <span class="item">CPU <span class="meter"><span style="width: 38%"></span></span> <b>38%</b> · Ryzen 9 7940HS · 16 threads</span>
+      <span class="server">llama-server b6950 · llama-swap · <span class="ok">● all local</span></span>
+    </section>
+
+    <section class="table" aria-labelledby="models-head">
+      <div class="cols"><h2 id="models-head">Role</h2><h2>Model</h2><h2>Quant · disk</h2><h2>Device</h2><h2>State</h2><h2>Reasoning</h2><h2>Output</h2></div>
+      <ul>
+        <li class="row"><span class="role row-fold">Chat <small>&nbsp;· Orchestrator</small></span><span class="model">gpt-oss-20b</span><span class="quant">MXFP4 · <b>12.1</b> GB</span><span class="dev">CPU</span><span class="state ok">● ready</span><span class="reason">◆ high</span><span class="speed"><b>17.9</b> tok/s</span></li>
+        <li class="sel">
+          <div class="row is-err"><span class="role row-fold">Profile &amp; matching</span><span class="model">Qwen3.5-9B</span><span class="quant">Q4_K_M · <b>5.7</b> GB</span><span class="dev">GPU</span><span class="state err">⚠ not responding · restarting (2/3)</span><span class="reason off">think off</span><span class="speed">last 41</span></div>
+          <div class="expand">
+            <div class="grid">
+              <section aria-labelledby="log-head">
+                <h3 id="log-head">Last log lines · llama-server :8082</h3>
+<pre class="log">10:41:52  ggml_vulkan: 0 = AMD Radeon RX 7700S (RADV NAVI33) | uma: 0 | fp16: 1
+10:41:58  srv  update_slots: id 0 | task 812 | prompt processing, n_tokens = 3072
+10:42:31  llama-swap: health check /health timed out after 30s (1/3)
+10:43:04  llama-swap: health check /health timed out after 30s (2/3)
+10:43:05  llama-swap: stopping qwen3.5-9b (pid 48211), starting again
+10:43:09  load_tensors: offloaded 33/33 layers to GPU · 5.4 GiB</pre>
+                <p class="log-foot">profiler · analytic · 1 slot · ctx 8K · KV q8_0 · <b>l</b> full log</p>
+              </section>
+              <section aria-labelledby="did-head">
+                <h3 id="did-head">What goop did</h3>
+                <div class="turn">
+                  <p>El chat sigue en gpt-oss. Pausé el matching: 3 ofertas nuevas esperan y las analizo solas cuando qwen vuelva a responder.</p>
+                  <p class="dim">chat still on <b>gpt-oss-20b</b> · matching <span class="busy">paused</span> · 3 offers waiting</p>
+                  <p class="dim">next try <b>3/3</b> in 25s · if it fails: matching moves to gpt-oss on CPU, slower</p>
+                </div>
+              </section>
+            </div>
+            <nav class="keys" aria-label="Actions for the selected model"><span class="primary"><b>r</b>restart now</span><span><b>d</b>device GPU → CPU</span><span><b>ctrl+r</b>think on</span><span><b>b</b>benchmark</span><span><b>l</b>full log</span><span><b>↵</b>hide details</span><span><b>esc</b>back</span><span class="more"><b>?</b>all actions</span></nav>
+          </div>
+        </li>
+        <li class="row"><span class="role row-fold">Security <small>&nbsp;· guard</small></span><span class="model">gpt-oss-safeguard-20b</span><span class="quant">MXFP4 · <b>12.8</b> GB</span><span class="dev">CPU</span><span class="state idle">○ loads on demand <span class="sub">· ↓ update 32%</span></span><span class="reason">◇ low <span class="idle">· locked</span></span><span class="speed">—</span></li>
+        <li class="row"><span class="role row-fold">Reranker</span><span class="model">bge-reranker-v2-m3</span><span class="quant">Q8_0 · <b>0.6</b> GB</span><span class="dev">CPU</span><span class="state ok">● ready</span><span class="reason off">—</span><span class="speed">—</span></li>
+        <li class="row"><span class="role row-fold">Embeddings</span><span class="model">Qwen3-Embedding-0.6B</span><span class="quant">Q8_0 · <b>0.6</b> GB</span><span class="dev">GPU</span><span class="state ok">● ready</span><span class="reason off">—</span><span class="speed">—</span></li>
+      </ul>
+    </section>
+
+    <p class="table-foot"><span>on disk <b>31.8 GB</b> in .local/models · sha256 verified</span><span>a model starting or failing never blocks the chat</span></p>
+  </article>
+  <footer><span class="mode m-models">models</span><span><b>↑↓</b> move · <b>↵</b> details · <b>r</b> restart · <b>esc</b> back</span><span class="zone-right"><span class="busy">◐ restarting qwen 2/3</span><span class="busy">↓ 32%</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-labelledby="fb-download fb-bench fb-leads">
+  <div>
+    <h3 id="fb-download">Download / update</h3>
+    <p class="line"><span class="busy">↓</span> <b>gpt-oss-safeguard-20b</b> 4.1 / 12.8 GB · 38 MB/s · 4m left · <span class="k">p</span> pause</p>
+    <span class="meter wide"><span style="width: 32%"></span></span>
+    <p class="line">update · current version stays in use until sha256 checks out</p>
+  </div>
+  <div>
+    <h3 id="fb-bench">Benchmark result (b)</h3>
+    <p class="line"><span class="ok">✓</span> <b>gpt-oss-20b</b> · CPU · prefill <b>142</b> tok/s · output <b>17.9</b> tok/s · 2m ago</p>
+    <p class="line"><span class="ok">✓</span> <b>Qwen3.5-9B</b> · GPU · prefill <b>1,210</b> tok/s · output <b>41.0</b> tok/s · yesterday</p>
+    <p class="line">4K prompt · 256 tokens out · drafts off</p>
+  </div>
+  <div>
+    <h3 id="fb-leads">Status line (leads here)</h3>
+    <div class="fbar"><span class="mode m-chat">chat</span><span><b>enter</b> send</span><span class="zone-right"><span class="alert">⚠ qwen not responding · /models</span><span><b>?</b> help</span></span></div>
+  </div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /models opens like M2, M5 and M10 (title breadcrumb, hardware line, plain key hints, status line in the models mode). One row per role, role first because that is what you care about (Chat, Profile &amp; matching, Security, Reranker, Embeddings), then the model, quantization and size on disk, device, state, reasoning level (◇ low ◈ medium ◆ high, think on/off, — when the model has none; the guard's level is locked) and output speed. The hardware line shows RAM, VRAM and CPU as the same mini meters as the session's top strip, so you see why qwen sits on the 8 GB GPU and gpt-oss on CPU. A failing model is pink only in its model name and state; selection stays the orange edge. The selected row unfolds in place: the last log lines as dim plain text (never interpreted), what goop did as a goop turn (chat still on gpt-oss, matching paused and resumed on its own, the fallback if the third try fails), and its key hints, which follow the row: r restart is the primary (green) on a failing model, d shows the device it would move to, ctrl+r says think on for qwen, a level for gpt-oss and disappears on the reranker and embeddings. Model startup never blocks the TUI: models load and restart in the background through llama-swap, the chat keeps working on whatever is ready, and the status line only shows a short ◐ indicator. Costs a full screen that hides the chat, and only one row unfolds at a time. Below the screen: the update download (current version stays in use until the hash checks out), a benchmark result line and the status line chip that leads here.</p>
+</body>
+</html>

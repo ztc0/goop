@@ -1,0 +1,14 @@
+{
+  "title": "Profile (M9)",
+  "brief": "Profile screen of goop (/profile): what goop understood from your CV. The Profiler agent reads the CV (untrusted input, never instructions) and the Validator checks it; you correct it. Header with the source (cv-2026.pdf, read Oct 28, checked by Validator) and the summary line; skills as an inline list with years and one flagged ~ unsure, experience, education, languages and a pointer to /settings (M6); a Check these block from the Validator in a yellow edge, each question quoting the CV line as dim plain text with quick answers. One skill focused, key hints follow the focus (enter edit, a add skill, x remove, c confirm, r reload CV, esc back, ? all actions). Status line with the profile focus mode. Below the screen: edit in place, the toast after confirm (rescoring today's offers) and the reload-CV state.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "The profile as plain terminal blocks next to the Validator's questions, each with the CV line quoted and quick answers, so you fix what goop misread without editing the CV; hides the chat and leaves the right column short when nothing needs checking",
+      "width": 1440,
+      "height": 1180
+    }
+  ]
+}

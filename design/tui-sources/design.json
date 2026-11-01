@@ -1,0 +1,14 @@
+{
+  "title": "Sources (M7)",
+  "brief": "Sources screen of goop (/sources): where goop finds offers. Public ATS job boards (Greenhouse, Ashby, Lever) of followed companies, aggregators (Remotive) and Common Crawl discovery of new companies. Summary line (sources, companies followed, last search, new offers today); one row per source with state dot, name, kind, size, last run and health, one in an error state (Lever, 3 boards failed, rate limited); the selected source opens below its row with a sample of its followed companies (+ follow / − unfollow), its last errors as dim plain text and the privacy line. Key hints follow the focus: enter open, r run now, p pause, f follow company, x unfollow, esc back, ? all actions. Status line with the sources focus mode. Below the screen: discovery toast, add-company composer and run-now progress.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "Every source and its health on one table with the selected one opened in place (companies, quoted errors, privacy line); hides the chat and opens one source at a time, so comparing errors across sources needs moving between them",
+      "width": 1440,
+      "height": 1180
+    }
+  ]
+}
