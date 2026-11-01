@@ -20,9 +20,12 @@ async function run(args: string[], input: Uint8Array): Promise<Uint8Array> {
   return output;
 }
 
-/** Returns the encrypted credential (base64 text, as systemd-creds writes it). */
+/**
+ * Returns the encrypted credential (base64 text, as systemd-creds writes it). The key type is
+ * explicit so a machine without a TPM2 fails instead of silently using the host key alone.
+ */
 export function wrapWithTpm(key: Uint8Array, name = CREDENTIAL_NAME): Promise<Uint8Array> {
-  return run(["encrypt", `--name=${name}`, "-", "-"], key);
+  return run(["encrypt", "--with-key=host+tpm2", `--name=${name}`, "-", "-"], key);
 }
 
 export function unwrapWithTpm(credential: Uint8Array, name = CREDENTIAL_NAME): Promise<Uint8Array> {

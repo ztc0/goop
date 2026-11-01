@@ -41,11 +41,14 @@ function lastError(call: string): Error {
 function takeOutput(out: Buffer): Uint8Array {
   const length = read.u32(ptr(out), 0);
   const data = read.ptr(ptr(out), 8) as Pointer;
-  const view = new Uint8Array(toArrayBuffer(data, 0, length));
-  const copy = new Uint8Array(view);
-  view.fill(0);
-  kernel32.symbols.LocalFree(data);
-  return copy;
+  try {
+    const view = new Uint8Array(toArrayBuffer(data, 0, length));
+    const copy = new Uint8Array(view);
+    view.fill(0);
+    return copy;
+  } finally {
+    kernel32.symbols.LocalFree(data);
+  }
 }
 
 type DpapiCall = typeof crypt32.symbols.CryptProtectData;

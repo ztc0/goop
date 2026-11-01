@@ -8,16 +8,16 @@ Can goop keep its random data key (DEK) wrapped by the operating system, so that
 
 ## Short answer
 
-Yes. On Linux, `systemd-creds --user` wrapped and unwrapped the DEK with the host key and the TPM2, scoped to the calling user, from source and from the compiled executable. On Windows 11, DPAPI in user scope, called through `bun:ffi`, did the same in an executable cross-compiled on Linux, and a second local user could not open the blob. The recovery key and the scrypt passphrase passed on both systems.
+Yes. On Linux, `systemd-creds --user` wrapped and unwrapped the DEK with the host key and the TPM2, scoped to the calling user, from source and from the compiled executable. On Windows 11, DPAPI in user scope, called through `bun:ffi`, did the same in an executable cross-compiled on Linux, and a second local user's attempt to open the blob was rejected (see the limit on item u below). The recovery key and the scrypt passphrase passed on both systems.
 
-Two costs were found. On Linux, the first use creates a system file, `/var/lib/systemd/credential.secret`. On Windows, DPAPI failed for the owner for about 20-40 s after another user logged on; the owner's checks passed only after waiting.
+Two costs were found. On Linux, the first use creates a system file, `/var/lib/systemd/credential.secret`. On Windows, DPAPI failed for the owner for about 20-40 s after another user logged on; the owner's checks in the report run after that logon passed only after waiting.
 
 ## Findings
 
 1. **`--with-key=tpm2` is refused in user scope.** Without any system change, `systemd-creds --user encrypt --with-key=tpm2` printed `Selected key not available in --uid= scoped mode, refusing.` In systemd v262, `src/creds/creds.c:994-1010` allows only the host key or host+tpm2 in user scope.
 2. **host+tpm2 needs the host key, and systemd creates it.** `/var/lib/systemd/credential.secret` did not exist. With the user's permission, systemd created it on first use: root, `0400`, 4112 bytes, written by the root `io.systemd.Credentials` service. A listing before and after showed no other change; `/run/systemd/tpm2-srk-public-key.pem` did not appear.
 3. **goop needs no root and no `tss` group.** User `ztc` is not in group `tss`, and `/dev/tpmrm0` is `root:tss 0660`. The varlink service does the TPM work.
-4. **The credential is bound to the user, the name and the SRK.** Its key type id is `2a1f877a4275431ab3f9ed1f5d8f6601`, `CRED_AES256_GCM_BY_HOST_AND_TPM2_HMAC_SCOPED_PINNED_SRK` in systemd v262 `src/shared/creds-util.h`. A wrong `--name` fails with `Name in credential doesn't match expectations.` Decrypting it with `--uid=0` or in system scope fails with `io.systemd.InteractiveAuthenticationRequired` (tried by hand).
+4. **The credential is bound to the user, the name and the SRK.** Its key type id is `2a1f877a4275431ab3f9ed1f5d8f6601`, `CRED_AES256_GCM_BY_HOST_AND_TPM2_HMAC_SCOPED_PINNED_SRK` in systemd v262 `src/shared/creds-util.h`. A wrong `--name` fails with `Name in credential doesn't match expectations.` Decrypting it with `--uid=0` or in system scope fails with `io.systemd.InteractiveAuthenticationRequired` (tried by hand). That proves systemd refuses the request, not a completed decryption attempt by another user.
 5. **The key never touches argv or a file.** goop runs `systemd-creds --user encrypt|decrypt --name=goop-dek - -` and passes the DEK and the credential through stdin and stdout.
 6. **The format is new.** `man systemd-creds`: from v262, credentials are pinned to the TPM2 SRK and are incompatible with earlier systemd versions. `--user` exists since v256.
 7. **DPAPI works through `bun:ffi`.** `crypt32.dll` `CryptProtectData` and `CryptUnprotectData` in user scope, with `CRYPTPROTECT_UI_FORBIDDEN` and the entropy `goop-dek-v1`. The output buffer is copied, zeroed and released with `LocalFree`.
@@ -83,7 +83,9 @@ Linux source and compiled runs gave the same results. Windows ran only the compi
 | r    | Recovery key round trip                     | PASS         | PASS           | PASS             | Typed form (lowercase, spaces, `o` for `0`) accepted; wrong key and tamper rejected                                                                                                                                  |
 | p    | Passphrase fallback                         | PASS         | PASS           | PASS             | scrypt `N=2^17 r=8 p=1`: ~335-360 ms per derivation on Linux, 271 ms on Windows; wrong passphrase and tamper rejected                                                                                                |
 
-**Windows a and b passed only after waiting.** `run-windows.ps1` runs item u first, then retries the owner's wrap every 5 s, up to 180 s, before the report. The owner's wrap failed with `0x00000005` until DPAPI recovered (finding 9). A run of the report right after the other user's logon would have failed a and b.
+**Windows a and b passed cleanly before the second user existed, and only after waiting after it.** `run-windows.ps1` first runs the report twice as a baseline (both passed a, b, r and p and exited 0), then sets up item u, then retries the owner's wrap every 5 s, up to 180 s, before the final report. In that final run the owner's wrap failed with `0x00000005` until DPAPI recovered (finding 9); a report right after the other user's logon would have failed a and b.
+
+**Item u is not conclusive.** The second user's `0x8009000b` was observed while the owner's DPAPI was also failing, and the second user was not retried once the owner had recovered. It shows the rejection, not its cause.
 
 On Linux, item u is covered by hand only: the `--uid=0` and system-scope decrypts in finding 4. No second Linux user was created.
 
@@ -118,7 +120,7 @@ The S# text is unchanged. This note and the ADR record the design.
 ## Limits
 
 - **System change on Linux.** `/var/lib/systemd/credential.secret` was created by this spike. T11 asks to undo system changes afterwards; that step is still pending with the user. Deleting the host key makes every credential wrapped with it unreadable.
-- **The DPAPI outage was seen once, in a VM.** Its cause was not found. It was not tried on a real Windows PC.
+- **The DPAPI outage was seen in three separate VM runs** (two report runs and one probe). Its cause was not found. It was not tried on a real Windows PC.
 - **Logon types.** Only the SSH network logon (with `goop` also on the console) and a batch logon of another user were run. An interactive-only logon, and the owner's daemon under a scheduled task, were not tested.
 - **`GetLastError` is read in a separate FFI call.** Bun could in theory overwrite the code between the two calls. The observed codes were consistent.
 - **One systemd version.** Only v262 was run. Older versions cannot read v262 credentials (finding 6), and a TPM clear or an OS reinstall was not tried.
