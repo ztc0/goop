@@ -20,7 +20,7 @@
   .session { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
   .title { color: var(--text-muted); margin-bottom: 18px; }
   .title b { color: var(--text); }
-  .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .msgs { position: relative; padding-right: 14px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
   /* Turns (opencode + Claude Code + Crush):
      you   = filled block with a colored left edge and a › marker;
      goop  = plain text opened by a ● bullet, with its thinking and tool calls nested under it;
@@ -75,7 +75,7 @@
   .popup .on { background: var(--background-panel); }
   .popup .on span:first-child { color: var(--user); }
   .popup span:last-child { color: var(--text-muted); }
-  aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  aside { position: relative; background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
   h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
   ul { list-style: none; margin: 0; padding: 0; }
   li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 6px 8px; }
@@ -107,6 +107,12 @@
   .meter span { display: block; height: 100%; background: var(--primary); }
   .meter.ctx span { background: var(--success); }
   .act { color: var(--accent); }
+  /* Scrollbars (one cell wide, right edge): the chat history shows a dim track and a thumb;
+     the sidebar shows only the thumb, and only while its content overflows. */
+  .scroll { position: absolute; top: 0; bottom: 0; right: 0; width: 4px; background: var(--background-element); }
+  .scroll span { position: absolute; left: 0; right: 0; background: var(--border-active); opacity: .55; }
+  aside .scroll { right: 3px; background: none; }
+  aside .scroll span { background: var(--text-muted); opacity: .4; }
   .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
   /* Status line in three zones (opencode, Helix, lazygit): focus label | hints for the focused pane | background state + help. */
   footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
@@ -132,6 +138,7 @@
   <section class="session" aria-label="Session">
     <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
     <div class="msgs">
+      <div class="scroll" aria-hidden="true"><span style="top: 58%; height: 42%"></span></div>
       <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
       <div class="turn">
         <div class="think-head">▾ <b>Thought</b> for 2.4s · ctrl+t</div>
