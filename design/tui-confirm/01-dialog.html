@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M11 confirmations · 01 dialog</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  p { margin: 0; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  /* Screen: the 04 session stays drawn under the dialog, dimmed and inert; only the dialog and the status line are live. */
+  main { position: relative; width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-rows: 1fr auto; }
+  .under { display: grid; grid-template-columns: 1fr 420px; min-height: 0; opacity: .3; }
+  .session { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; }
+  .title b { color: var(--text); }
+  .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  /* goop marker: Nerd Font flame (U+F06D) drawn with an SVG mask; terminals without a Nerd Font show "●". */
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .meta { color: var(--text-muted); font-size: 13px; }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--border); padding: 10px 16px; }
+  .composer .prompt { color: var(--text-muted); font-weight: 700; }
+  .placeholder { color: var(--text-muted); }
+  aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .offers li { display: grid; grid-template-columns: 3ch 1fr; column-gap: 10px; padding: 6px 8px; }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .sub { grid-column: 2; color: var(--text-muted); font-size: 13px; }
+  /* Dialog (opencode-style): panel fill, no radius, no shadow; bold title left, muted esc right.
+     The left edge says how hard the action is to undo: 2px --error = irreversible. */
+  .dialog { position: absolute; top: 170px; left: 50%; transform: translateX(-50%); width: 640px; background: var(--background-panel); border-left: 2px solid var(--error); padding: 14px 22px 14px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .dialog.costly { position: static; transform: none; width: auto; border-left-color: var(--accent); }
+  .d-head { display: flex; justify-content: space-between; align-items: baseline; white-space: nowrap; }
+  .d-head .t { font-weight: 700; }
+  .d-head .esc { color: var(--text-muted); font-size: 13px; }
+  .lead { color: var(--text-muted); font-size: 14px; }
+  .what { display: flex; flex-direction: column; gap: 2px; }
+  .what h3 { margin-bottom: 2px; }
+  .what li { display: grid; grid-template-columns: 1fr auto; padding: 1px 8px; font-size: 14px; white-space: nowrap; }
+  .what .n { color: var(--text-muted); font-size: 13px; }
+  .stays li { color: var(--text-muted); }
+  .warn-line { color: var(--error); font-weight: 600; font-size: 14px; }
+  /* Type-to-confirm input: composer-like, --background-element fill on the panel, lavender edge because you type in it. */
+  .confirm-in { background: var(--background-element); border-left: 2px solid var(--user); padding: 8px 14px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .confirm-in .line { display: flex; gap: 8px; }
+  .confirm-in .prompt { color: var(--user); font-weight: 700; }
+  .confirm-in .ask-word { color: var(--text-muted); font-size: 13px; }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  /* Key hints inside the dialog: key bold --accent, action muted; the safe default key is green;
+     the destructive key stays muted until the word matches, then turns --error. */
+  .hints { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .hints b { color: var(--accent); font-weight: 700; }
+  .hints b.default { color: var(--success); }
+  .hints .off, .hints .off b { color: var(--text-muted); font-weight: 400; }
+  .hints b.danger { color: var(--error); }
+  /* One status line, three zones: focus label | hints for the dialog | background state + help. */
+  footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  footer b.default { color: var(--success); }
+  footer .off b { color: var(--text-muted); font-weight: 400; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-confirm::before { color: var(--error); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: the two lighter levels of the same pattern, and the matched state of this one. */
+  .levels { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; border-top: 1px solid var(--border); }
+  .levels > div { display: flex; flex-direction: column; gap: 8px; }
+  .levels .dim { color: var(--text-muted); font-size: 13px; }
+  .ask { background: var(--background-element); border-left: 2px solid var(--primary); padding: 8px 12px; display: grid; gap: 4px; }
+  .ask .q { color: var(--text); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast b { color: var(--accent); }
+  .typed { color: var(--text); }
+  .confirm-in .ask-word b { color: var(--text); font-weight: 600; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+  .notes table { border-collapse: collapse; margin: 8px 0 10px; }
+  .notes th, .notes td { text-align: left; padding: 3px 18px 3px 0; vertical-align: top; }
+  .notes th { color: #f4ede6; font-weight: 600; }
+  .notes p + p { margin-top: 6px; }
+</style>
+</head>
+<body>
+<main aria-label="goop confirm dialog for deleting all data, over the dimmed session">
+  <div class="under" inert aria-hidden="true">
+    <section class="session">
+      <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
+      <div class="msgs">
+        <div class="user"><p>/privacy</p><div class="meta">you · 11:05</div></div>
+        <div class="turn">
+          <p>Abrí Privacy. Desde ahí podés exportar tus datos o borrarlos todos.</p>
+        </div>
+      </div>
+      <div class="composer"><span class="prompt">›</span> <span class="placeholder">tab to write</span></div>
+    </section>
+    <aside>
+      <div class="sec-head"><h2>Offers</h2><span class="count">7 ranked · 3 new</span></div>
+      <ul class="offers">
+        <li><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
+        <li><span class="score apply">85</span><span>API Engineer</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
+        <li><span class="score maybe">71</span><span>Python Developer</span><span class="sub">Kraft · Remote · ~ maybe</span></li>
+        <li><span class="score check">—</span><span>Backend Engineer</span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+      </ul>
+    </aside>
+  </div>
+
+  <section class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="d-title" aria-describedby="d-warn" tabindex="-1">
+    <div class="d-head"><span class="t" id="d-title">Delete all goop data?</span><span class="esc">esc</span></div>
+    <p class="lead">From Privacy · everything goop stored on this machine</p>
+    <div class="what">
+      <h3>Deleted</h3>
+      <ul>
+        <li><span>Offers</span><span class="n">412</span></li>
+        <li><span>Sessions</span><span class="n">7</span></li>
+        <li><span>Rules</span><span class="n">7</span></li>
+        <li><span>Profile and CV</span><span class="n">cv-2026.pdf</span></li>
+        <li><span>Encrypted database</span><span class="n">38 MB</span></li>
+      </ul>
+    </div>
+    <div class="what stays">
+      <h3>Stays</h3>
+      <ul><li><span>Downloaded models</span><span class="n">31 GB · reusable</span></li></ul>
+    </div>
+    <p class="warn-line" id="d-warn">This cannot be undone. goop keeps no backup.</p>
+    <div class="confirm-in">
+      <span class="line"><span class="prompt">›</span><span class="typed">dele</span><span class="cursor"></span></span>
+      <span class="ask-word">type <b>delete</b> to confirm</span>
+    </div>
+    <p class="hints"><span class="off"><b>↵</b> delete · type the word first</span> · <b class="default">esc</b> cancel</p>
+  </section>
+
+  <footer><span class="mode m-confirm">confirm</span><span>confirmation required</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+
+<section class="levels" aria-label="The other confirm levels and the matched state">
+  <div>
+    <h3>1 · Reversible · one-line ask</h3>
+    <div class="ask"><span class="q">Dismiss 3 offers?</span><span class="hints"><b class="default">y</b> yes · <b>n</b> no</span></div>
+    <p class="dim">or no ask at all: do it and offer undo</p>
+    <div class="toast"><span><span class="ok">✓</span> 3 offers dismissed</span><span><b>ctrl+z</b> undo</span></div>
+  </div>
+  <div>
+    <h3>2 · Costly · dialog with y/n</h3>
+    <section class="dialog costly" role="alertdialog" aria-labelledby="c-title">
+      <div class="d-head"><span class="t" id="c-title">Unfollow 3 companies?</span><span class="esc">esc</span></div>
+      <p class="lead">They stop being searched. Their offers stay in your list.</p>
+      <div class="what"><ul><li><span>Acme Labs · Kraft · Orbit</span><span class="n">from /sources</span></li></ul></div>
+      <p class="hints"><b>y</b> unfollow · <b class="default">n</b> keep · <b>esc</b> cancel</p>
+    </section>
+  </div>
+  <div>
+    <h3>3 · Irreversible · word typed</h3>
+    <div class="confirm-in">
+      <span class="line"><span class="prompt">›</span><span class="typed">delete</span><span class="cursor"></span></span>
+      <span class="ask-word">matches</span>
+    </div>
+    <p class="hints"><b class="danger">↵</b> delete all data · <b class="default">esc</b> cancel</p>
+    <p class="dim">a wrong word keeps ↵ muted; nothing is half-deleted</p>
+  </div>
+</section>
+
+<section class="notes" aria-label="Notes">
+  <p><strong>Confirmations, three levels of one pattern.</strong> The weight of the ask follows how hard the action is to undo, so a heavy dialog always means something real:</p>
+  <table>
+    <thead><tr><th>Level</th><th>Example</th><th>Shape</th><th>Edge</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Reversible</td><td>Dismiss 3 offers</td><td>One-line ask in place (like M2/M6), or no ask and an undo toast</td><td>--primary</td><td>y</td></tr>
+      <tr><td>Costly</td><td>Unfollow 3 companies</td><td>Dialog with what changes and y/n</td><td>--accent</td><td>n keep</td></tr>
+      <tr><td>Irreversible</td><td>Delete all goop data (Privacy M13)</td><td>Dialog with what goes, what stays, a pink warning and type-to-confirm</td><td>--error</td><td>esc cancel</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Tradeoff:</strong> the irreversible dialog draws over the dimmed session (inert) with the opencode dialog chrome: panel fill, no radius, bold title left and a muted esc right. It lists counts so you see the size of the loss (412 offers, 38 MB) and what survives (31 GB of models you would not want to download again). Typing the word is slower than y, on purpose: ↵ stays muted until the input reads delete, and esc, the safe choice, is the green default, so a stray enter or a key-repeat can never delete anything. The status line switches to the confirm mode with a pink dot and a brief state label; keys remain in the dialog. Costs: an extra step for a deliberate user, the word is English even when goop talks Spanish (one word to learn, no locale guessing), and three levels means each new action needs a level chosen when it is designed.</p>
+</section>
+</body>
+</html>

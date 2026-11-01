@@ -1,0 +1,14 @@
+{
+  "title": "Confirmations (M11)",
+  "brief": "Confirm dialog pattern for hard-to-undo actions. Centered dialog over the dimmed, inert 04 session with opencode-style dialog chrome (--background-panel, no radius, bold title left, muted esc right). Main frame: Delete all goop data? (from Privacy M13) listing what is deleted (offers 412, sessions 7, rules 7, profile and CV, encrypted database 38 MB), what stays (downloaded models 31 GB · reusable), a pink line This cannot be undone. goop keeps no backup., and a lavender type-to-confirm input with dele typed; ↵ delete muted until the word matches, esc cancel as the safe default; 2px --error left edge. Status line mode confirm with an --error dot. Strip below: a reversible one-line ask (Dismiss 3 offers? · y yes · n no, --primary edge) with its undo toast, a costly y/n dialog (Unfollow 3 companies? They stop being searched. · y unfollow · n keep) and the matched type-to-confirm state; notes with a table of the three levels.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-dialog.html",
+      "title": "Dialog levels",
+      "tradeoff": "The weight of the ask follows how hard the action is to undo, so a type-to-confirm dialog always means a real loss and a stray enter can never delete; costs an extra deliberate step, an English confirm word in a Spanish chat, and each new action needs its level chosen at design time",
+      "width": 1440,
+      "height": 1340
+    }
+  ]
+}
