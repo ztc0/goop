@@ -16,6 +16,13 @@
       "tradeoff": "Logo-centered first screen with prompt and today's numbers; an extra screen, logo hidden under ~30 rows",
       "width": 1440,
       "height": 900
+    },
+    {
+      "file": "06-session-idle.html",
+      "title": "Session, nothing running",
+      "tradeoff": "Same session with no subagents running: the agents section disappears and offers keep the space",
+      "width": 1440,
+      "height": 900
     }
   ]
 }
