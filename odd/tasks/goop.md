@@ -61,7 +61,7 @@ User wording is quoted verbatim (Spanish) where it exists; the rest restates dec
 | T2  | Create the feature entry points (`src/<feature>/index.ts`, `src/shared/index.ts`); every other folder is created only with its first real file, never as an empty placeholder                 | S4, S11, S28       | inline | 831f282, 09c5aaf |
 | T3  | TypeScript, Bun and Biome configuration with the `@/` alias and scripts that set `GOOP_HOME`, cache dirs and `TMPDIR` to the repo; `clean` script                                             | S8, S12, S25, S26  | inline | 6586f03          |
 | T4  | Husky + commitlint (Conventional Commits) + pre-commit checks                                                                                                                                 | S7                 | inline | 6afe955          |
-| T5  | Root `AGENTS.md` and detailed rule files with progressive disclosure, including the repo-local paths rule and the Mermaid rule for docs                                                       | S6, S25, S26, S27  | inline | -                |
+| T5  | Root `AGENTS.md` and detailed rule files with progressive disclosure, including the repo-local paths rule and the Mermaid rule for docs                                                       | S6, S25, S26, S27  | inline | c30bf2c          |
 | T6  | Public repo files: README (+es), LICENSE GPL-3.0, NOTICE, THIRD_PARTY_LICENSES, SECURITY, CHANGELOG, CONTRIBUTING with CLA, CODE_OF_CONDUCT, `.github/` CI, templates, CODEOWNERS, Dependabot | S9, S10            | inline | -                |
 | T7  | Document the GitHub permissions to apply after publishing (branch protection, required CI, secret scanning)                                                                                   | S4, S5             | inline | -                |
 | T8  | Design the logo (fire with two eyes)                                                                                                                                                          | S2, S13            | inline | -                |
@@ -87,7 +87,7 @@ User wording is quoted verbatim (Spanish) where it exists; the rest restates dec
 | T28 | Quality evaluation set with synthetic profiles                                                                                                                                                | S18, S21           | inline | -                |
 | T29 | Privacy operations: purge, retention, outbound allowlist test                                                                                                                                 | S24                | inline | -                |
 
-Review slices: slice 1 = T1-T3 (4041827..6586f03, ~590 authored lines including the plan); slice 2 starts at T4.
+Review slices: slice 1 = T1-T3 (4041827..6586f03, ~590 authored lines including the plan); slice 2 = T4-T5 (6afe955..c30bf2c); slice 3 starts at T6.
 
 Route `inline` is the default; a task moves to a worker only when it qualifies under the Writer rule.
 
