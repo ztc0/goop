@@ -35,9 +35,6 @@
   .tool::before { content: "◦ "; }
   .tool .ok { color: var(--success); }
   .tool kbd { color: var(--text-muted); font-family: inherit; }
-  .progress { color: var(--text-muted); margin: 8px 0; padding-left: 2px; }
-  .bar { display: inline-block; width: 240px; height: 8px; background: var(--background-element); vertical-align: middle; margin: 0 8px; }
-  .bar span { display: block; height: 100%; width: 25%; background: var(--primary); }
   .composer { background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 12px 16px; }
   .composer .hint { color: var(--text-muted); }
   .composer .model { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
@@ -87,7 +84,6 @@
       <div class="tool"><span class="ok">✓</span> explain_score · Kraft Python Developer <kbd>ctrl+o</kbd></div>
       <div class="assistant"><p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja.</p><div class="meta">goop · gpt-oss-20b · 2.7s</div></div>
     </div>
-    <div class="progress">searching<span class="bar"><span></span></span>312 / 1,240 companies</div>
     <div class="composer"><div class="hint">Preguntá o pedí algo… <span style="color:var(--text-muted)">/ for commands</span></div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
   </section>
   <aside aria-label="Sidebar with offers and status">
@@ -124,8 +120,8 @@
     </div>
     <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
   </aside>
-  <footer><span><b>tab</b> offers · <b>enter</b> send · <b>ctrl+o</b> expand tool · <b>ctrl+x</b> leader</span><span><b>ctrl+p</b> commands · <b>ctrl+x b</b> sidebar · <b>?</b> help</span></footer>
+  <footer><span><b>tab</b> offers · <b>enter</b> send · <b>ctrl+o</b> expand tool · <b>ctrl+x</b> leader</span><span><span class="busy">◐ searching 25%</span> · <b>ctrl+p</b> commands · <b>ctrl+x b</b> sidebar · <b>?</b> help</span></footer>
 </main>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded models and chat context) with colored status dots (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded models and chat context) with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
