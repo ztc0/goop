@@ -13,6 +13,12 @@ import { containsBytes, createReport, expect, sameBytes } from "./report";
 const [mode, dir] = process.argv.slice(2);
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
+// A mode without its folder must not fall through to the plain report and pass.
+if (mode !== undefined && (!["--wrap", "--unwrap", "--other"].includes(mode) || !dir)) {
+  process.stderr.write("usage: goop-key-check.exe [--wrap|--unwrap|--other <dir>]\n");
+  process.exit(2);
+}
+
 if (mode === "--wrap" && dir) {
   await Bun.write(`${dir}\\blob.bin`, wrapWithDpapi(crypto.getRandomValues(new Uint8Array(32))));
   process.exit(0);
