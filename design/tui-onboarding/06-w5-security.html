@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · onboarding · W5 security</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Setup frame like M6/M8: breadcrumb, two panes (steps | current step), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .title { padding: 20px 28px 18px; color: var(--text-muted); white-space: nowrap; }
+  /* Bold keys and numbers inside dim text (speed line style): one rule for every line. */
+  b { color: var(--text); font-weight: 600; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .panes { display: grid; grid-template-columns: 360px 1fr; min-height: 0; padding: 0 28px 12px; }
+  .pane-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .pane-foot { margin-top: auto; color: var(--text-muted); font-size: 13px; padding-top: 8px; border-top: 1px solid var(--border-subtle); white-space: nowrap; }
+  /* Left pane: the step list. Progress only, never focused: ↵ and shift+tab move between steps. */
+  .steps { display: flex; flex-direction: column; gap: 10px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .step { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 8px; padding: 4px 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .step .tag { font-size: 13px; color: var(--text-muted); }
+  /* Current step while the pane has no focus: fill and bold text, no edge (M6 current category; the edge belongs to the focused pane). */
+  .step.current { background: var(--background-element); color: var(--text); font-weight: 600; }
+  .step.current .tag { font-weight: 400; }
+  /* Right pane: the current step. */
+  .body { display: flex; flex-direction: column; gap: 14px; padding-left: 24px; min-height: 0; }
+  .lead { font-size: 14px; padding: 0 8px; white-space: nowrap; }
+  .dim { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  /* Problem banner (M8) at the top of the step. Warning: 2px --warning edge; error: 2px --error edge. */
+  .banner { display: flex; justify-content: space-between; gap: 24px; padding: 6px 14px; background: var(--background-panel); font-size: 14px; white-space: nowrap; }
+  .banner.warn { border-left: 2px solid var(--warning); }
+  .banner .hint { color: var(--text-muted); font-size: 13px; }
+  /* A sub-step: uppercase head, then its lines. */
+  .sub { display: flex; flex-direction: column; gap: 8px; }
+  .sub h3 { padding: 0 8px; }
+  .sub .line { font-size: 14px; padding: 0 8px; white-space: nowrap; }
+  .sub .line .note { color: var(--text-muted); font-size: 13px; }
+  /* The recovery key: goop's content shown once, bold --text on an element block; six groups of five. */
+  .key { background: var(--background-element); padding: 10px 16px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .key .sep { color: var(--text-muted); font-weight: 400; }
+  .key .last { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--text-muted); }
+  /* Typed input (composer look, M4/M6): --background-panel, 2px --user edge, lavender prompt and cursor; the expected word muted on the right (M11). */
+  .input { background: var(--background-panel); border-left: 2px solid var(--user); padding: 6px 14px; display: flex; align-items: center; white-space: nowrap; font-size: 14px; }
+  .input .prompt { color: var(--user); font-weight: 700; margin-right: 1ch; }
+  .input .label { color: var(--text-muted); margin-right: 1ch; }
+  .input .typed { color: var(--text); font-weight: 600; }
+  .input .ask-word { margin-left: auto; color: var(--text-muted); font-size: 13px; }
+  .input .ask-word b { color: var(--text); font-weight: 600; }
+  .input .ask-word.err { color: var(--error); }
+  .cursor { display: inline-block; width: 2px; height: 18px; background: var(--user); vertical-align: -3px; margin-left: 1px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  /* Passphrase strength: four cells like the mini meters (one cell each in the terminal), filled in the state color. */
+  .meter { display: flex; align-items: center; gap: 10px; padding: 0 8px; font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+  .meter .cells { display: inline-flex; gap: 1ch; }
+  .meter .cells i { display: block; width: 3ch; height: 6px; background: var(--background-element); }
+  .meter .cells i.on { background: var(--success); }
+  .meter + .dim { padding: 0 8px; }
+  /* One status line, three zones: focus label | keys of the focused pane | busy state + help. */
+  footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b.next, .fbar b.next { color: var(--success); }
+  /* Blocked primary key: plain muted, not bold. */
+  footer .blocked, .fbar .blocked { color: var(--text-muted); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: matched, no TPM2, wrong group. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; border-top: 1px solid var(--border); align-items: start; }
+  .feedback > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .fbar { border: 0; background: var(--background-panel); }
+  .fbar .mode { padding-left: 14px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="title">Setup › <b>Security</b> · step 6 of 10 · esc quit setup</header>
+
+  <div class="panes">
+    <nav class="steps" aria-labelledby="steps-head">
+      <div class="pane-head"><h2 id="steps-head">Steps</h2><span class="count">4 of 10 done</span></div>
+      <ol class="step-list">
+        <li class="step"><span class="ok">✓</span><span>Welcome</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>System check</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>Models</span><span class="tag"></span></li>
+        <li class="step"><span class="busy">◐</span><span>Download</span><span class="tag">↓ <b>42%</b></span></li>
+        <li class="step"><span class="ok">✓</span><span>Benchmark</span><span class="tag">optional</span></li>
+        <li class="step current" aria-current="step"><span class="busy">◐</span><span>Security</span><span class="tag">required</span></li>
+        <li class="step"><span>○</span><span>CV &amp; profile</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Preferences</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Schedule</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Done</span><span class="tag"></span></li>
+      </ol>
+      <p class="pane-foot">you can leave and come back; nothing is lost</p>
+    </nav>
+
+    <section class="body" aria-labelledby="body-head">
+      <div class="pane-head"><h2 id="body-head">Security</h2><span class="count">required · 2 steps · nothing leaves this machine</span></div>
+
+      <p class="lead">your CV, profile, searches and chats are stored encrypted</p>
+
+      <section class="sub" aria-labelledby="key-head">
+        <h3 id="key-head">Step 1 of 2 · Key</h3>
+        <p class="line"><span class="ok">✓</span> data key created · sealed by TPM2 on this machine <span class="note">(DPAPI on Windows)</span></p>
+      </section>
+
+      <section class="sub" aria-labelledby="rk-head">
+        <h3 id="rk-head">Step 2 of 2 · Recovery key</h3>
+        <p class="key">KQ7RM<span class="sep">-</span>4TZXV<span class="sep">-</span>9HCWN<span class="sep">-</span>P3LDF<span class="sep">-</span>8JYBG<span class="sep">-</span><span class="last">2MSQE</span></p>
+        <p class="dim">write it down or keep it in a password manager · it is shown only once · goop cannot recover your data without it if this machine dies</p>
+        <p class="input"><span class="prompt">›</span><span class="label">type the last group to confirm:</span><span class="typed">2MS</span><span class="cursor" aria-hidden="true"></span><span class="ask-word">type <b>2MSQE</b></span></p>
+      </section>
+
+      <p class="pane-foot">secrets in your CV (emails, phone, IDs) are removed before any model sees the text</p>
+    </section>
+  </div>
+
+  <footer><span class="mode">setup</span><span><span class="blocked">↵ next</span> · <b>shift+tab</b> back · <b>c</b> copy key · <b>esc</b> quit setup</span><span class="zone-right"><span>↓ <b>13.4</b> of 31.8 GB · 18 MB/s · 17m</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around the security step">
+  <div>
+    <h3>Group matches · ↵ next</h3>
+    <p class="input"><span class="prompt">›</span><span class="label">type the last group to confirm:</span><span class="typed">2MSQE</span><span class="cursor" aria-hidden="true"></span><span class="ask-word"><span class="ok">✓</span> recovery key confirmed</span></p>
+    <div class="fbar"><span class="mode">setup</span><span><b class="next">↵</b> next · <b>shift+tab</b> back · <b>c</b> copy key · <b>esc</b> quit setup</span><span class="zone-right"><span><b>?</b> help</span></span></div>
+  </div>
+  <div>
+    <h3>No TPM2 · passphrase instead</h3>
+    <p class="banner warn" role="status"><span><span class="busy">⚠</span> no TPM2 found · the key is protected by a passphrase instead</span></p>
+    <p class="input"><span class="prompt">›</span><span class="label">passphrase:</span><span class="typed">••••••••••••••••••••</span><span class="cursor" aria-hidden="true"></span><span class="ask-word">20 chars</span></p>
+    <p class="meter"><span class="cells" role="img" aria-label="Strength 3 of 4, good"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span><span class="ok">good</span> · 3 of 4</span></p>
+    <p class="dim">4 or more random words are easy to type and hard to guess · asked each time goop starts</p>
+  </div>
+  <div>
+    <h3>Wrong group · ↵ stays blocked</h3>
+    <p class="input"><span class="prompt">›</span><span class="label">type the last group to confirm:</span><span class="typed">2MQSE</span><span class="cursor" aria-hidden="true"></span><span class="ask-word err" role="alert">doesn't match · check the last group</span></p>
+    <div class="fbar"><span class="mode">setup</span><span><span class="blocked">↵ next</span> · <b>shift+tab</b> back · <b>c</b> copy key · <b>esc</b> quit setup</span><span class="zone-right"><span><b>?</b> help</span></span></div>
+  </div>
+</section>
+<p class="notes"><strong>Setup frame:</strong> the same frame as W1 and W2 (breadcrumb Setup › Security · step 6 of 10, step list on the left, current step on the right, one status line with the setup mode; see the W1 notes). The step list shows Welcome, System check, Models and Benchmark done (4 of 10), Download still ◐ with ↓ 42% because it keeps running in the background, Security current with its required tag. <strong>W5:</strong> one plain line says what goop protects (your CV, profile, searches and chats are stored encrypted), then two sub-steps under uppercase heads. Step 1 of 2 · Key is already done when you arrive: ✓ data key created · sealed by TPM2 on this machine (DPAPI on Windows), so there is nothing to answer. Step 2 of 2 · Recovery key shows the key once, as six groups of five in bold --text on an element block (dashes muted, the last group underlined so you know which one you will type), the line on why it matters (write it down or keep it in a password manager · shown only once · goop cannot recover your data without it if this machine dies), and the confirm line in the M11 type-to-confirm style: composer look, lavender › and cursor because you type it, the expected group muted on the right (type 2MSQE). Typing the group proves you kept the key without retyping all 30 characters. The pane foot carries the dim DLP line (secrets in your CV — emails, phone, IDs — are removed before any model sees the text), which prepares the next step. <strong>Status line:</strong> ↵ next stays muted and not bold until the group matches, then turns green; c copy key; there is no skip key because Security is required, and esc quit setup is the only way out. Zone 3 keeps the download line (↓ 13.4 of 31.8 GB · 18 MB/s · 17m │ ? help). <strong>Below the screen:</strong> the group matched (✓ recovery key confirmed on the right of the input, ↵ next green); no TPM2, as the warning banner (no TPM2 found · the key is protected by a passphrase instead) above a lavender passphrase input shown as dots, a four-cell strength meter (good · 3 of 4) and its hint (4 or more random words · asked each time goop starts), and the recovery key still follows; a wrong group, with doesn't match · check the last group in --error on the right of the input and ↵ still blocked. The strip status lines drop zone 3's download line for width. Tradeoff: the recovery key cannot be skipped and costs a moment of friction on first run, but typing only the last group keeps that friction to five characters and makes sure nobody reaches the end of setup with data they could never recover.</p>
+</body>
+</html>
