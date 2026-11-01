@@ -37,14 +37,8 @@
   .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
-  /* Actions: one line of key hints, same style as M2: key in yellow, action muted, primary told apart only by green. */
-  .actions { display: flex; gap: 24px; padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
-  .actions b { color: var(--accent); font-weight: 700; margin-right: 6px; }
-  .actions .primary { color: var(--success); font-weight: 600; }
-  .actions .primary b { color: var(--success); }
-  .actions .more { margin-left: auto; }
-  /* Body: list on the left, preview of the selected session on the right. */
-  .body { flex: 1; display: grid; grid-template-columns: 1fr 560px; min-height: 0; }
+  /* Body: list on the left, preview of the selected session on the right; a subtle line under the filter. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 560px; min-height: 0; margin-top: 12px; border-top: 1px solid var(--border-subtle); }
   .list { display: flex; flex-direction: column; gap: 14px; padding: 16px 28px 0 0; }
   .group { display: flex; flex-direction: column; gap: 4px; }
   .group-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 8px; }
@@ -57,7 +51,7 @@
   .row.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
   .row.sel .mark { color: var(--primary); }
   .row.sel .name { font-weight: 600; }
-  .tag-current { color: var(--success); font-size: 12px; font-weight: 700; margin-left: 10px; }
+  .tag-current { color: var(--text-muted); font-size: 12px; font-weight: 700; margin-left: 10px; }
   .list-foot { color: var(--text-muted); font-size: 13px; padding: 4px 8px; }
   /* Preview: read only; your first message as a user turn, goop's last reply as a goop turn, both truncated. */
   .preview { border-left: 1px solid var(--border); padding: 16px 0 0 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
@@ -76,21 +70,42 @@
   /* Offers the session mentions: offer rows, read only here. */
   .offers li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
   .offers .co { color: var(--text-muted); font-size: 13px; }
-  /* Feedback states below the screen: inline rename, delete ask (pink edge), toast without undo. */
-  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; border-top: 1px solid var(--border); }
-  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  /* Feedback states below the screen: filter, rename in place, the M11 delete box, toast without undo. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 600px 1fr; gap: 20px 28px; align-items: start; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
   .feedback .filter { padding: 6px 12px; }
-  .rename { background: var(--background-element); box-shadow: inset 2px 0 var(--user); padding: 6px 12px; display: grid; gap: 4px; }
-  .rename .opts, .ask .opts { color: var(--text-muted); white-space: nowrap; font-size: 13px; }
-  .rename .opts b, .ask .opts b { color: var(--accent); }
-  .ask { background: var(--background-element); border-left: 2px solid var(--error); padding: 8px 12px; display: grid; gap: 4px; }
-  .ask .q { color: var(--text); font-weight: 600; }
-  .ask .opts .danger { color: var(--error); }
-  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; white-space: nowrap; }
+  .feedback .dim { margin: 8px 0 0; color: var(--text-muted); font-size: 13px; }
+  /* Rename in place: the row becomes a composer (lavender edge = you are typing). */
+  .rename { background: var(--background-panel); border-left: 2px solid var(--user); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .rename .opts { color: var(--text-muted); font-size: 13px; }
+  .rename .opts b { color: var(--text); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast .ok { color: var(--success); }
   .toast .t { color: var(--text-muted); }
+  /* Delete box: the M11 irreversible confirmation (design/tui-confirm/01-dialog.html), copied with
+     scoped class names. 1px --text-muted border, no radius, no shadow; --error tile header,
+     Deleted / Stays rows, type-to-confirm line. Cell = 1ch: every line inset 3 cells. */
+  .palette { background: var(--background-panel); border: 1px solid var(--text-muted); color: var(--text); font-size: 15px; line-height: 1.5; padding: 0 0 21px; }
+  .palette .opt { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 2ch; align-items: center; padding: 11px 3ch; white-space: nowrap; }
+  .palette .opt .k { color: var(--text-muted); text-align: right; }
+  .palette .tile { display: grid; place-items: center; width: 2ch; height: 22px; color: var(--background); font-weight: 700; }
+  .palette .tile svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .t-system { background: var(--text-muted); } .t-offers { background: var(--success); } .t-quit { background: var(--error); }
+  .palette .d-head { padding-top: 21px; row-gap: 2px; }
+  .palette .d-head .label { font-weight: 700; }
+  .palette .d-head .lead { grid-column: 2 / 4; margin: 0; color: var(--text-muted); font-size: 14px; }
+  .palette .box-group { padding: 0 3ch; margin: 10px 0 0; white-space: nowrap; }
+  .palette .stays .opt { opacity: .5; }
+  .palette .warn-line { padding: 0 3ch; margin: 10px 0 0; color: var(--error); font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .palette .confirm { margin-top: 21px; border-top: 1px solid var(--border-subtle); padding-top: 21px; }
+  .palette .search { padding: 0 3ch; display: flex; white-space: nowrap; }
+  .palette .search .cursor { width: 2px; margin: 0 0 0 1px; }
+  .palette .ask-word { margin-left: auto; color: var(--text-muted); font-size: 13px; }
+  .palette .ask-word b { color: var(--text); font-weight: 600; }
   /* Status line in three zones: focus label | hints | background state + help. */
   footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
   footer b { color: var(--text); font-weight: 600; }
+  footer b.default { color: var(--success); }
   .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
   .mode::before { content: "● "; }
   .mode.m-sessions::before { color: var(--secondary); }
@@ -103,14 +118,11 @@
 <body>
 <main aria-label="goop sessions, full screen">
   <article class="sessions" aria-label="Sessions">
-    <div class="title">Sessions › <b>Backend remoto, 2 años</b> · 2 of 7 · esc back to session</div>
+    <div class="title">Sessions › <b>Backend remoto, 2 años</b> · 2 of 7 · esc back to session 3</div>
     <search class="filter blur">
       <span><span class="prompt">›</span><span class="placeholder">filter sessions</span></span>
       <span class="hint"><b>/</b> filter</span>
     </search>
-    <nav class="actions" aria-label="Session actions">
-      <span class="primary"><b>↵</b>open</span><span><b>n</b>new session</span><span><b>r</b>rename</span><span><b>d</b>delete</span><span><b>/</b>filter</span><span><b>esc</b>back</span><span class="more"><b>ctrl+p</b>all actions</span>
-    </nav>
     <div class="body">
       <section class="list" aria-label="Session list">
         <div class="group">
@@ -162,14 +174,39 @@
       </section>
     </div>
   </article>
-  <footer><span class="mode m-sessions">sessions</span><span><b>↑↓</b> move · <b>↵</b> open · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-sessions">sessions</span><span><b>↑↓</b> move · <b class="default">↵</b> open · <b>n</b> new session · <b>r</b> rename · <b>d</b> delete · <b>/</b> filter · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="Session feedback states">
   <div><h3>Filtering (/)</h3><search class="filter"><span><span class="prompt">›</span>remoto<span class="cursor"></span></span><span class="hint"><b>2</b> of 7 · <b>esc</b> clear</span></search></div>
   <div><h3>Rename (r)</h3><div class="rename"><span><span class="prompt">›</span>Backend remoto, Python<span class="cursor"></span></span><span class="opts"><b>↵</b> save · <b>esc</b> cancel</span></div></div>
-  <div><h3>On delete (d)</h3><div class="ask"><span class="q">Delete 'Backend remoto, 2 años'? It is encrypted and cannot be recovered.</span><span class="opts"><b class="danger">y</b> delete · <b>n</b> keep</span></div></div>
-  <div><h3>After delete</h3><div class="toast"><span>✓ Deleted 'Backend remoto, 2 años'</span><span class="t">4s</span></div></div>
+  <div>
+    <h3>On delete (d) · irreversible</h3>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2 4h12M6 4V2h4v2M3.5 4l1 10h7l1-10M6.5 7v4M9.5 7v4"/></symbol>
+      <symbol id="i-session" viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z"/></symbol>
+      <symbol id="i-offers" viewBox="0 0 16 16"><rect x="2" y="5" width="12" height="9"/><path d="M6 5V3h4v2M2 9h12"/></symbol>
+    </svg>
+    <section class="palette" role="alertdialog" aria-labelledby="d-title" aria-describedby="d-warn">
+      <div class="opt d-head"><span class="tile t-quit"><svg aria-hidden="true"><use href="#i-trash"/></svg></span><span class="label" id="d-title">Delete 'Backend remoto, 2 años'?</span><span></span><p class="lead">From Sessions · encrypted, removed for good</p></div>
+      <h3 class="box-group">Deleted</h3>
+      <ul aria-label="Deleted">
+        <li class="opt"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-session"/></svg></span><span class="label">Session and its messages</span><span class="k">24</span></li>
+      </ul>
+      <div class="stays">
+        <h3 class="box-group">Stays</h3>
+        <ul aria-label="Stays">
+          <li class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Offers it mentions</span><span class="k">3 · in your list</span></li>
+        </ul>
+      </div>
+      <p class="warn-line" id="d-warn">This cannot be undone. goop keeps no backup.</p>
+      <div class="confirm">
+        <div class="search"><span>dele</span><span class="cursor" aria-hidden="true"></span><span class="ask-word">type <b>delete</b> to confirm</span></div>
+      </div>
+    </section>
+    <p class="dim">status line: <b>confirm</b> with a pink dot · type delete · ↵ delete muted until the word matches · esc cancel</p>
+  </div>
+  <div><h3>After delete</h3><div class="toast"><span><span class="ok">✓</span> Deleted 'Backend remoto, 2 años'</span><span class="t">4s</span></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> ctrl+x l or /resume opens the session list like opencode's: a filter at the top in the composer style, sessions grouped by day with time, messages and how many offers they mention, the current one tagged ● current. The list has the focus, so the filter shows blurred and single keys act on the selected row; / moves the focus into the filter (lavender edge, live count), esc clears it. The preview on the right shows your first message and goop's last reply, truncated, plus the offers the session mentions, so you recognize a conversation without opening it. Rename edits the title in place; delete always asks with a pink edge and, because the session is encrypted and removed for good, the toast after it has no undo. Tradeoff: the preview takes 560px from the list, so long titles cut earlier; below ~120 columns the preview moves under the selected row.</p>
+<p class="notes"><strong>Full screen:</strong> ctrl+x l or /resume opens the session list like opencode's: a filter at the top in the composer style, sessions grouped by day with time, messages and how many offers they mention, the current one tagged ● current (muted). There is no key-hint line under the header: the status line carries the keys of the list (↑↓ move · ↵ open in green · n new session · r rename · d delete · / filter · esc back). The list has the focus, so the filter shows blurred and single keys act on the selected row; / moves the focus into the filter (lavender edge, live count), esc clears it. The preview on the right shows your first message and goop's last reply, truncated, plus the offers the session mentions, so you recognize a conversation without opening it. Rename turns the row into a composer (panel fill, lavender edge and cursor, ↵ save · esc cancel). Delete is irreversible, so it uses the M11 confirmation box: pink trash tile, what is deleted (the session and its 24 messages) and what stays (the 3 offers it mentions stay in your list), the warning line and type delete to confirm; esc cancels. Because the session is encrypted and removed for good, the toast after it only shows its timer (4s), with no ctrl+z undo. Tradeoff: the preview takes 560px from the list, so long titles cut earlier; below ~120 columns the preview moves under the selected row.</p>
 </body>
 </html>

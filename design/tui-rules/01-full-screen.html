@@ -27,12 +27,6 @@
   .score { font-weight: 700; text-align: right; }
   .maybe { color: var(--warning); } .check { color: var(--error); }
   .idle { color: var(--text-muted); }
-  /* Key hints: one plain line, key in yellow bold, action muted, no boxes; the primary is told apart only by green. */
-  .keys { display: flex; gap: 24px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
-  .keys b { color: var(--accent); font-weight: 700; margin-right: 6px; }
-  .keys .primary { color: var(--success); font-weight: 600; }
-  .keys .primary b { color: var(--success); }
-  .keys .more { margin-left: auto; }
   /* Decision card: a pending proposal weighs more than an active rule. Panel fill, 2px yellow edge (to review), square. */
   .card { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 14px 20px 14px 18px; display: flex; flex-direction: column; gap: 14px; }
   /* Focused card: keeps its yellow pending edge and takes the selected-row fill. */
@@ -68,6 +62,7 @@
   /* Status line in three zones: focus label | hints | background state + help. */
   footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
   footer b { color: var(--text); font-weight: 600; }
+  footer b.default { color: var(--success); }
   .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
   .mode::before { content: "● "; }
   .mode.m-rules::before { color: var(--secondary); }
@@ -82,7 +77,7 @@
   .notice b { color: var(--text); font-weight: 600; }
   .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
   .toast .ok { color: var(--success); }
-  .toast b { color: var(--accent); }
+  .toast b { color: var(--text); font-weight: 600; }
   /* Edit in place: the rule line becomes a composer (lavender edge = you are typing). */
   .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; }
   .line { display: flex; gap: 8px; }
@@ -91,9 +86,7 @@
   @keyframes blink { 50% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
   .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; white-space: nowrap; }
-  .below b { color: var(--accent); font-weight: 700; }
-  /* Keys of the pane without focus: same line, all muted, so no key looks live where it does nothing. */
-  .keys.unfocused b, .keys.unfocused .primary, .keys.unfocused .primary b { color: var(--text-muted); font-weight: 600; }
+  .below b { color: var(--text); font-weight: 600; }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
 </style>
@@ -101,7 +94,7 @@
 <body>
 <main>
   <article class="rules-view">
-    <div class="title">Rules › <b>what goop learned</b> · 7 rules · 1 to review · esc back to session 3</div>
+    <div class="title">Rules › <b>what goop learned</b> · 6 rules · 1 to review · esc back to session 3</div>
 
     <section class="card focused" aria-labelledby="proposal-1">
       <div class="card-top"><span>goop wants to learn a new rule</span><span><span class="badge">1 of 1</span> to review</span></div>
@@ -117,12 +110,10 @@
           <li><span class="score check">49</span><span>Senior Backend Engineer</span><span class="sub">Atlas · Remote US · asks Kubernetes and Helm as mandatory</span></li>
         </ul>
       </div>
-      <p class="keys"><span class="primary"><b>↵</b>accept</span><span><b>e</b>edit first</span><span><b>x</b>reject</span></p>
     </section>
 
     <section class="sec" aria-labelledby="active-head">
-      <div class="sec-head"><h2 id="active-head">Active rules · 6 · 1 paused</h2><span class="count">applied before ranking</span></div>
-      <p class="keys unfocused"><span><b>p</b>pause</span><span><b>e</b>edit</span><span><b>x</b>delete</span><span><b>esc</b>back</span><span class="more"><b>ctrl+p</b>all actions</span></p>
+      <div class="sec-head"><h2 id="active-head">Active rules</h2><span class="count">6 · 1 paused · applied before ranking</span></div>
       <ul>
         <li class="rule"><span class="dot">●</span><span>Prefer fully remote over hybrid</span><span class="effect">ranked 5 lower this week</span></li>
         <li class="rule"><span class="dot">●</span><span>Hide offers below €40K</span><span class="effect">hid 4 this week</span></li>
@@ -133,13 +124,13 @@
       </ul>
     </section>
   </article>
-  <footer><span class="mode m-rules">rules</span><span><b>↑↓</b> move · <b>tab</b> to active rules · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-rules">rules</span><span><b class="default">↵</b> accept · <b>e</b> edit first · <b>x</b> reject · <b>tab</b> to active rules · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="States around a rule">
   <div><h3>In the chat (leads here)</h3><p class="notice"><span class="tip">●</span> <b>goop learned a rule</b> · /rules to review</p></div>
-  <div><h3>After accept (↵)</h3><div class="toast"><span><span class="ok">✓</span> Rule active · hid 2 offers</span><span><b>u</b> undo · 4s</span></div></div>
+  <div><h3>After accept (↵)</h3><div class="toast"><span><span class="ok">✓</span> Rule active · hid 2 offers</span><span><b>ctrl+z</b> undo · 4s</span></div></div>
   <div><h3>Edit in place (e)</h3><div class="composer"><div class="line"><span class="prompt">›</span><span>Skip offers that require Kubernetes as mandatory, unless the rest scores 85+</span><span class="cursor"></span></div><div class="below"><span>editing · stays proposed until you accept</span><span><b>enter</b> save · <b>esc</b> cancel</span></div></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> /rules opens like M2 and M10 (title breadcrumb, plain key-hint lines, status line). A proposed rule is a decision card on top, not a row: panel fill with a yellow edge (to review), the rule in bold, goop's reason as a goop turn with the dismissed offers in one dim line, and the exact offers it would hide today, so you see the effect before you accept. Active rules are a plain one-line list like saved memories, effect muted on the right (6 rules, 1 paused); a selected rule opens a single source line. Focus starts on the card while a rule is waiting: it takes the selected fill (--background-element) and keeps its yellow edge, and its keys are live: ↵ accept (green), e edit first, x reject. The list has no focus here, so no row is selected and its keys (p pause, e edit, x delete) are muted. tab moves focus to the list: the selected row gets the orange edge, the list keys turn active and the card dims back to the panel fill with muted keys; ↵ accept never shows on an active rule. Costs a full screen that hides the chat, and with several proposals you review them one card at a time (1 of N). Below the screen: the chat notice that leads here, the toast with undo after accept, and edit in place.</p>
+<p class="notes"><strong>Full screen:</strong> /rules opens like M2 and M10 (title breadcrumb, one status line; no key-hint line under the header or inside the panes). A proposed rule is a decision card on top, not a row: panel fill with a yellow edge (to review), the rule in bold, goop's reason as a goop turn with the dismissed offers in one dim line, and the exact offers it would hide today, so you see the effect before you accept. Active rules are a plain one-line list like saved memories under an ACTIVE RULES head, effect muted on the right, with 6 · 1 paused as the muted count (6 rules · 1 to review in the breadcrumb). A selected rule opens a single source line. Focus starts on the card while a rule is waiting: it takes the selected fill (--background-element) and keeps its yellow edge, and the status line shows its keys: ↵ accept (green), e edit first, x reject, tab to active rules, esc back. The list has no focus here, so no row is selected. tab moves focus to the list: the selected row gets the orange edge, the status line switches to the list keys (↑↓ move · p pause · e edit · x delete · tab to proposal · esc back) and the card dims back to the panel fill; ↵ accept never shows on an active rule. Costs a full screen that hides the chat, and with several proposals you review them one card at a time (1 of N). Below the screen: the chat notice that leads here, the toast after accept (ctrl+z undo · 4s), and edit in place.</p>
 </body>
 </html>

@@ -16,10 +16,13 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: #000; font-family: var(--mono); }
-  /* Full screen like M2, M5 and M10: title, summary, two panes (sources | detail), one status line. */
-  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto; }
-  .title { padding: 20px 28px 6px; color: var(--text-muted); white-space: nowrap; }
+  /* Full screen like M2, M5 and M10: title, problem banner, summary, two panes (sources | detail), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; }
+  .title { padding: 20px 28px 10px; color: var(--text-muted); white-space: nowrap; }
   .title b { color: var(--text); }
+  /* Problems first (M8): one banner under the title, 2px --error left edge on --background-panel. */
+  .banner { display: flex; justify-content: space-between; gap: 24px; margin: 0 28px 14px; padding: 6px 14px; background: var(--background-panel); border-left: 2px solid var(--error); font-size: 14px; white-space: nowrap; }
+  .banner .hint { color: var(--text-muted); font-size: 13px; }
   /* Summary: one dim line with bold numbers, like the speed line. */
   .summary { margin: 0 28px 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; white-space: nowrap; }
   .summary b { color: var(--text); font-weight: 600; }
@@ -90,12 +93,15 @@
   .meter i { display: block; height: 100%; width: 51%; background: var(--warning); }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
+  /* Banner key, last so it wins over the generic b rules above. */
+  .banner .hint b { color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
 <main>
   <header class="title">Sources › <b>where goop finds offers</b> · 1 with errors · esc back to session 3</header>
-  <p class="summary"><b>5</b> sources · <b>1,240</b> companies followed · last search <b>09:00</b> · <b>312</b> new offers today</p>
+  <p class="banner" role="alert"><span><span class="err">⚠</span> Lever failing · 3 boards failed at 09:00, retry 10:15 · its other 245 boards and the 4 other sources still work</span><span class="hint"><b>r</b> run now</span></p>
+  <p class="summary"><b>5</b> sources · <b>1,240</b> companies followed · last search <b>09:00</b> · <b>312</b> found · <b>8</b> kept</p>
 
   <div class="panes">
     <nav class="list" aria-labelledby="list-head">
@@ -141,6 +147,6 @@
   <div><h3>Add a company (a)</h3><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">company name or careers URL</span><span class="cursor"></span></div><div class="below"><span>goop finds its board</span><span><b>enter</b> follow · <b>esc</b> cancel</span></div></div></div>
   <div><h3>Run now (r)</h3><p class="progress"><span class="busy">◐</span><span><b>Greenhouse</b> 312 / 612</span><span class="meter"><i></i></span><span><b>esc</b> stop</span></p></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> /sources opens like M2, M5 and M10 (title breadcrumb, a dim summary line, one status line; no key-hint line under the header). Two panes, like lazydocker: on the left all 5 sources, always fully visible and sorted problems first (Uptime Kuma), one line each: state glyph (⚠ pink failed, ◐ yellow slow, ● green ok, ○ muted weekly), name, a heartbeat of the last 14 runs (one cell per run: green ok, yellow slow, pink failed, --border not run yet, oldest left) and a short right-aligned note; new-offer counts are yellow like newsboat unread counts, things to look at. Lever is selected (fill + orange edge). On the right the selected source: its name, tabs on one line (Companies 248 · Errors 3 · History; the active one bold and underlined, [ ] switches), its facts (kind, companies, last run, schedule), then the tab content. The Errors tab quotes the last error lines as untrusted dim plain text behind a │ gutter, never parsed into UI, then what goop did about them and the privacy line. The status line hints follow the focus: on the list ↑↓ move · r run now · p pause · [ ] tabs · tab to detail · esc back; in the Companies tab f follow · x unfollow · / filter; in History ↑↓ scroll. Trades the single table for a side list plus one tabbed panel: health of every source is comparable at a glance through the heartbeats, but the detail shows one source and one tab at a time, the companies list needs its own tab, and the screen still hides the chat. Below the screen: the Companies tab (followed companies with − unfollow, one found by Common Crawl with + follow, / filter), the add-company composer and the run-now progress line.</p>
+<p class="notes"><strong>Full screen:</strong> /sources opens like M2, M5 and M10 (title breadcrumb, a dim summary line, one status line; no key-hint line under the header). Problems first, like M8: a banner right under the title says what failed and what still works (Lever failing · 3 boards failed at 09:00, retry 10:15 · its other 245 boards and the 4 other sources still work) with r run now on the right; 2px pink edge on the panel color. The summary counts today's search as 312 found · 8 kept (the 8 ranked offers). Two panes, like lazydocker: on the left all 5 sources, always fully visible and sorted problems first (Uptime Kuma), one line each: state glyph (⚠ pink failed, ◐ yellow slow, ● green ok, ○ muted weekly), name, a heartbeat of the last 14 runs (one cell per run: green ok, yellow slow, pink failed, --border not run yet, oldest left) and a short right-aligned note; new-offer counts are yellow like newsboat unread counts, things to look at. Lever is selected (fill + orange edge). On the right the selected source: its name, tabs on one line (Companies 248 · Errors 3 · History; the active one bold and underlined, [ ] switches), its facts (kind, companies, last run, schedule), then the tab content. The Errors tab quotes the last error lines as untrusted dim plain text behind a │ gutter, never parsed into UI, then what goop did about them and the privacy line. The status line hints follow the focus: on the list ↑↓ move · r run now · p pause · [ ] tabs · tab to detail · esc back; in the Companies tab f follow · x unfollow · / filter; in History ↑↓ scroll. Trades the single table for a side list plus one tabbed panel: health of every source is comparable at a glance through the heartbeats, but the detail shows one source and one tab at a time, the companies list needs its own tab, and the screen still hides the chat. Below the screen: the Companies tab (followed companies with − unfollow, one found by Common Crawl with + follow, / filter), the add-company composer and the run-now progress line.</p>
 </body>
 </html>

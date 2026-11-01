@@ -1,6 +1,6 @@
 {
   "title": "Sessions (M4)",
-  "brief": "Sessions screen of goop, opened with ctrl+x l or /resume: a filter input at the top in the composer style (placeholder 'filter sessions'); sessions grouped by day (Today, Yesterday, Last week) with title, time, message count and offers mentioned, the current one tagged ● current; a preview of the selected session (first user message, goop's last reply, offers mentioned); key hints ↵ open, n new session, r rename, d delete, / filter, esc back, ctrl+p all actions; status line with the sessions focus mode. Below the screen: filtering, inline rename, the delete confirmation (encrypted, cannot be recovered) and the toast after delete without undo.",
+  "brief": "Sessions screen of goop, opened with ctrl+x l or /resume: a filter input at the top in the composer style (placeholder 'filter sessions'); sessions grouped by day (Today, Yesterday, Last week) with title, time, message count and offers mentioned, the current one tagged ● current in muted text; a preview of the selected session (first user message, goop's last reply, offers mentioned); no key-hint line under the header: the status line with the sessions focus mode carries the list keys (↑↓ move, ↵ open, n new session, r rename, d delete, / filter, esc back) and ○ next search 09:00 │ ? help. Below the screen: filtering, rename in place as a composer (lavender edge), the irreversible delete as the M11 confirmation box (Deleted / Stays, type delete to confirm; encrypted, cannot be recovered) and the toast after delete without undo.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {
@@ -8,7 +8,7 @@
       "title": "Full screen",
       "tradeoff": "You recognize a session from its preview without opening it; the preview column shortens the list titles and the screen hides the chat while you choose",
       "width": 1440,
-      "height": 1100
+      "height": 1500
     }
   ]
 }
