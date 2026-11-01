@@ -32,11 +32,6 @@
   .head .facts, .head .inert { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
   .facts b { color: var(--text); font-weight: 600; }
   .tag-plain { color: var(--text-muted); font-size: 12px; font-weight: 700; }
-  /* Actions: one line of key hints, as in M2: key in yellow, action muted, no boxes. No primary here:
-     reading is the job, every key is a side action. */
-  .actions { display: flex; gap: 24px; padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
-  .actions b { color: var(--accent); font-weight: 700; margin-right: 6px; }
-  .actions .more { margin-left: auto; }
   /* Body: the reader takes most of the width; a narrow index on the right lists the marked lines. */
   .body { flex: 1; display: grid; grid-template-columns: 1fr 360px; column-gap: 40px; padding-top: 12px; min-height: 0; }
   .reader-col { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
@@ -54,10 +49,10 @@
   .bar.ok { background: var(--success); } .bar.busy { background: var(--warning); } .bar.check { background: var(--error); }
   .reader .ln { text-align: right; color: var(--text-muted); font-size: 13px; opacity: .8; }
   .reader .txt { border-left: 1px solid var(--border); padding-left: 12px; white-space: pre-wrap; min-height: 21px; }
-  /* Search matches are yours (lavender): the current one filled, the others underlined. */
-  .hit { color: var(--user); background: none; text-decoration: underline; text-underline-offset: 3px; }
-  .you { color: var(--user); font-weight: 700; }
-  .hit.cur { color: var(--background); background: var(--user); text-decoration: none; font-weight: 600; }
+  /* Search matches are goop results: --accent bold text; the current one filled --accent with --background text. */
+  .hit { color: var(--accent); background: none; font-weight: 700; }
+  .cur-row { color: var(--accent); font-weight: 700; }
+  .hit.cur { color: var(--background); background: var(--accent); }
   /* Scrollbar: one cell on the right edge, track + thumb, like the chat history. */
   .scroll { position: absolute; top: 0; bottom: 0; right: 0; width: 4px; background: var(--background-element); }
   .scroll span { position: absolute; left: 0; right: 0; background: var(--border-active); opacity: .55; }
@@ -78,6 +73,7 @@
   .count { color: var(--text-muted); font-size: 13px; }
   .req li { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
   .req .where { color: var(--text-muted); font-size: 13px; }
+  .req .hit-txt b { color: var(--accent); font-weight: 700; }
   .note { color: var(--text-muted); font-size: 13px; padding: 0 8px; }
   .note b { color: var(--text); font-weight: 600; }
   /* Status line in three zones: focus label | hints | background state + help. */
@@ -92,7 +88,7 @@
   .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
   .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
   .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; white-space: nowrap; }
-  .toast b { color: var(--accent); }
+  .toast b { color: var(--text); font-weight: 600; }
   .toast.miss { box-shadow: inset 2px 0 var(--text-muted); color: var(--text-muted); }
   .toast.miss .q { color: var(--user); }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
@@ -108,9 +104,6 @@
       <span class="facts"><b>Acme Labs</b> · from <b>boards.greenhouse.io</b> · fetched today 08:12 · 1,840 words · 96 lines</span>
       <span class="inert">Shown as plain text. Nothing in it is run or followed.</span>
     </header>
-    <nav class="actions" aria-label="Full text actions">
-      <span><b>/</b>search</span><span><b>n/N</b>next/prev match</span><span><b>y</b>copy text</span><span><b>o</b>open in browser</span><span><b>a</b>ask goop</span><span><b>esc</b>back to detail</span><span class="more"><b>ctrl+p</b>all actions</span>
-    </nav>
     <div class="body">
       <div class="reader-col">
         <p class="legend"><span><span class="bar ok"></span>match</span><span><span class="bar busy"></span>partial</span><span><span class="bar check"></span>missing</span><span>· lines with a requirement goop matched against your CV</span><span class="sep">lines 12–39 of 96</span></p>
@@ -169,8 +162,8 @@
         <section class="sec" aria-label="Search results">
           <div class="sec-head"><h2>Search</h2><span class="count">2 matches</span></div>
           <ul class="req">
-            <li><span class="you">›</span><span>Nice to have: … <b>Kubern</b>etes</span><span class="where">line 32</span></li>
-            <li><span class="idle">·</span><span>run on … <b>Kubern</b>etes (EKS)</span><span class="where">line 37</span></li>
+            <li><span class="cur-row">›</span><span class="hit-txt">Nice to have: … <b>Kubern</b>etes</span><span class="where">line 32</span></li>
+            <li><span class="idle">·</span><span class="hit-txt">run on … <b>Kubern</b>etes (EKS)</span><span class="where">line 37</span></li>
           </ul>
           <p class="note">case-insensitive · plain text, no patterns</p>
         </section>
@@ -181,13 +174,13 @@
       </aside>
     </div>
   </article>
-  <footer><span class="mode m-text">text</span><span><b>↑↓</b> scroll · <b>pgup/pgdn</b> page · <b>g/G</b> top/bottom · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-text">text</span><span><b>/</b> search · <b>n/N</b> next/prev match · <b>y</b> copy · <b>o</b> browser · <b>a</b> ask goop · <b>↑↓</b> scroll · <b>pgup/pgdn</b> page · <b>g/G</b> top/bottom · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="Feedback states">
   <div><h3>After copy (y)</h3><div class="toast"><span>✓ Copied 1,840 words as plain text</span><span><b>esc</b> close · 3s</span></div></div>
   <div><h3>After open (o)</h3><div class="toast"><span>✓ Opened boards.greenhouse.io in your browser</span><span><b>esc</b> close · 3s</span></div></div>
   <div><h3>Search with no match</h3><div class="toast miss"><span>No match for <span class="q">kubernets</span> · 96 lines</span><span><b>esc</b> clear</span></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> f on the offer detail (M2) opens the original text exactly as fetched, with the same title, header and key-hint line, so it reads as one more level of the same offer. The text is untrusted data: plain text only, behind the dim │ gutter with line numbers used for quotes on the security alert, with no flame and no goop voice, and nothing from the source can add colors, links or formatting. A 2px marker left of the line number flags the lines that state a requirement goop matched (green match, yellow partial, pink missing, as in M2) and the index on the right lists them with line numbers. Search is yours, so the / line is a lavender composer and the matches are lavender (current filled, others underlined). a ask goop returns to the chat with this offer attached. Costs a full screen and a fixed right column for the index, so the reader lines stay around 90 columns instead of using the whole width. Below the screen: the toasts after copy and open, and a search with no match.</p>
+<p class="notes"><strong>Full screen:</strong> f on the offer detail (M2) opens the original text exactly as fetched, with the same title, header and status line, so it reads as one more level of the same offer; no key-hint line under the header, the keys (/ search · n/N · y copy · o browser · a ask goop · scroll · esc back) live in the status line. The text is untrusted data: plain text only, behind the dim │ gutter with line numbers used for quotes on the security alert, with no flame and no goop voice, and nothing from the source can add colors, links or formatting. A 2px marker left of the line number flags the lines that state a requirement goop matched (green match, yellow partial, pink missing, as in M2) and the index on the right lists them with line numbers. You type the search, so the / line is a lavender composer; the matches are goop results, so they are yellow bold text (--accent) and the current one is filled yellow. a ask goop returns to the chat with this offer attached. Costs a full screen and a fixed right column for the index, so the reader lines stay around 90 columns instead of using the whole width. Below the screen: the toasts after copy and open, and a search with no match.</p>
 </body>
 </html>

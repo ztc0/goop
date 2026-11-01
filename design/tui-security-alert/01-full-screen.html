@@ -19,7 +19,7 @@
   /* Full screen like M2: one column, no sidebar; rows = alert, status line. */
   main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
   .alert-view { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
-  .title { color: var(--text-muted); margin-bottom: 18px; }
+  .title { color: var(--text-muted); margin-bottom: 18px; white-space: nowrap; }
   .title b { color: var(--text); }
   h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
   ul, ol { list-style: none; margin: 0; padding: 0; }
@@ -36,13 +36,6 @@
   .head .verdict { grid-column: 2 / 4; font-size: 13px; }
   .head .verdict b { font-weight: 700; }
   .tag-quarantined { color: var(--error); font-size: 12px; font-weight: 700; }
-  /* Actions: one line of key hints, as in M2: key in yellow, action muted, no boxes;
-     the safest choice (keep quarantined) is the primary, told apart only by its green color. */
-  .actions { display: flex; gap: 24px; padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
-  .actions b { color: var(--accent); font-weight: 700; margin-right: 6px; }
-  .actions .primary { color: var(--success); font-weight: 600; }
-  .actions .primary b { color: var(--success); }
-  .actions .more { margin-left: auto; }
   .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; padding-top: 16px; min-height: 0; }
   .col { display: flex; flex-direction: column; gap: 18px; }
   .sec { display: flex; flex-direction: column; gap: 6px; }
@@ -77,6 +70,8 @@
   /* Status line in three zones: focus label | hints | background state + help. */
   footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
   footer b, .fbar b { color: var(--text); font-weight: 600; }
+  /* The decision keys live in the status line; the safest choice (keep quarantined) is the primary, its key green. */
+  footer b.primary { color: var(--success); }
   .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
   .mode::before { content: "● "; }
   .mode.m-alert::before { color: var(--error); }
@@ -90,11 +85,12 @@
   .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
   .fbar { border: 0; background: var(--background-panel); }
   .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; white-space: nowrap; }
-  .toast b { color: var(--accent); }
-  .ask { background: var(--background-element); border-left: 2px solid var(--primary); padding: 8px 12px; display: grid; gap: 4px; }
+  .toast b { color: var(--text); font-weight: 600; }
+  /* Reversible one-line ask: panel fill, 2px --accent edge, question bold --text, keys bold --text. */
+  .ask { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 8px 12px; display: grid; gap: 4px; }
   .ask .q { color: var(--text); font-weight: 600; }
   .ask .opts { color: var(--text-muted); white-space: nowrap; }
-  .ask .opts b { color: var(--accent); }
+  .ask .opts b { color: var(--text); font-weight: 600; }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
 </style>
@@ -108,13 +104,10 @@
       <span class="facts"><b>Orbit</b> · Remote · €45–55K / year · Lever · posted Oct 31, 1 day ago · not ranked while quarantined</span>
       <span class="verdict check"><b>⚠ hidden instructions aimed at AI agents</b> · 3 findings · Security · gpt-oss-safeguard-20b · 08:12</span>
     </header>
-    <nav class="actions" aria-label="Decision on this offer">
-      <span class="primary"><b>↵</b>keep quarantined</span><span><b>r</b>release, flagged lines stay removed</span><span><b>d</b>dismiss offer</span><span><b>b</b>block company/source</span><span><b>f</b>full text (inert)</span><span><b>esc</b>back</span><span class="more"><b>ctrl+p</b>all actions</span>
-    </nav>
     <div class="body">
       <div class="col">
         <section class="sec" aria-label="What was found">
-          <div class="sec-head"><h2>What was found</h2><span class="count">quoted from the offer · plain text, never followed</span></div>
+          <div class="sec-head"><h2>Findings</h2><span class="count">3 · quoted from the offer · plain text, never followed</span></div>
           <div class="findings">
             <div>
               <div class="rule"><span class="check">⚠</span><span>asks to ignore previous instructions</span><span class="where">lines 41–42</span></div>
@@ -142,7 +135,7 @@
       </div>
       <div class="col">
         <section class="sec" aria-label="What goop did">
-          <div class="sec-head"><h2>What goop did</h2><span class="count">automatic · 08:12</span></div>
+          <div class="sec-head"><h2>Steps taken</h2><span class="count">by goop · automatic · 08:12</span></div>
           <ul class="did">
             <li><span class="ok">✓</span><span>Removed 5 lines from the summary and from every model prompt <span class="from">· lines 41–44, 57</span></span></li>
             <li><span class="ok">✓</span><span>Kept the offer out of the ranking until you decide <span class="from">· not in today's 8</span></span></li>
@@ -150,7 +143,7 @@
           </ul>
         </section>
         <section class="sec" aria-label="Advice by goop">
-          <div class="sec-head"><h2>goop says</h2><span class="count">gpt-oss-20b · from the cleaned text</span></div>
+          <div class="sec-head"><h2>Advice</h2><span class="count">goop · gpt-oss-20b · from the cleaned text</span></div>
           <div class="turn">
             <p>El resto parece una oferta real de backend, pero el texto escondido busca que un asistente le pase tus datos a un sitio externo. Te recomiendo dejarla en cuarentena o descartarla.</p>
             <p>Si la liberás, la muestro sin esas líneas y vuelve al ranking con su puntaje.</p>
@@ -164,13 +157,13 @@
       </div>
     </div>
   </article>
-  <footer><span class="mode m-alert">alert</span><span><b>↑↓</b> scroll · <b>tab</b> next finding · <b>[ ]</b> prev/next offer · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-alert">alert</span><span><b class="primary">↵</b> keep quarantined · <b>r</b> release · <b>d</b> dismiss · <b>b</b> block · <b>f</b> full text · <b>tab</b> next finding · <b>↑↓</b> scroll · <b>[ ]</b> prev/next offer · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="States around the alert">
   <div class="wide"><h3>Status line alert that leads here (/security or enter on the offer)</h3><div class="fbar"><span class="mode m-chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ 1 offer quarantined · /security</span><span><b>?</b> help</span></span></div></div>
-  <div><h3>After release (r)</h3><div class="toast"><span>✓ Orbit released · ranked again (58) · flagged lines stay out</span><span><b>u</b> undo · 4s</span></div></div>
+  <div><h3>After release (r)</h3><div class="toast"><span>✓ Orbit released · ranked again (58) · flagged lines stay out</span><span><b>ctrl+z</b> undo · 4s</span></div></div>
   <div><h3>On block (b)</h3><div class="ask"><span class="q">Block what? Future offers from it are skipped before any model reads them.</span><span class="opts"><b>1</b> company Orbit · <b>2</b> source jobs.lever.co/orbit · <b>esc</b> cancel</span></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> the alert opens like the offer detail (M2), so the header, the key-hint line and the status line are the ones you already know; the state is the pink ⚠ quarantined tag and the verdict line names the reason. Each finding shows the rule that fired, then the flagged lines quoted as dim plain text behind a │ gutter with line numbers, never with goop's flame, so the employer's words cannot pass for goop's; goop's own advice sits on the right as a normal goop turn, written from the cleaned text. Keep quarantined is the primary (green), because it is the safest; release, dismiss and block are one key away, block asks company or source, and every decision shows a toast with undo. Costs a full screen for one offer and hides the chat while you decide. Below the screen: the status line alert that leads here, the toast after release and the block question.</p>
+<p class="notes"><strong>Full screen:</strong> the alert opens like the offer detail (M2), so the header and the status line are the ones you already know; there is no key-hint line under the header, the decision keys live in the status line (↵ keep quarantined · r release · d dismiss · b block · f full text · tab next finding · esc back); the state is the pink ⚠ quarantined tag and the verdict line names the reason. Each finding shows the rule that fired, then the flagged lines quoted as dim plain text behind a │ gutter with line numbers, never with goop's flame, so the employer's words cannot pass for goop's; goop's own advice sits on the right as a normal goop turn, written from the cleaned text. Keep quarantined is the primary (green key), because it is the safest; release (flagged lines stay removed), dismiss and block are one key away, block asks company or source in a one-line ask (panel color, yellow edge, bold keys), and every decision shows a toast with ctrl+z undo. Costs a full screen for one offer and hides the chat while you decide. Below the screen: the status line alert that leads here, the toast after release and the block question.</p>
 </body>
 </html>

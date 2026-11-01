@@ -1,6 +1,6 @@
 {
   "title": "Offer detail (M2)",
-  "brief": "Offer detail screen of goop, opened with enter on an offer row: header with score, verdict, NEW, source and date; why it fits (matched requirements, gaps, seniority); goop's summary; a pointer to the untrusted original text (M3); actions s save, d dismiss, o open, a ask goop, f full text, esc back; status line with the detail focus mode.",
+  "brief": "Offer detail screen of goop, opened with enter on an offer row: header with score, verdict, NEW, source and date; why it fits (matched requirements, gaps, seniority); goop's summary; a pointer to the untrusted original text (M3); no key-hint line under the header: the status line (detail focus mode) carries the offer keys enter apply, s save, a ask goop, d dismiss, o open, f full text, [ ] prev/next, esc back. Below the screen: the toast with ctrl+z undo, the apply ask (y yes · n no) and the dismiss reason ask.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {
