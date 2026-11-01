@@ -23,6 +23,13 @@
       "tradeoff": "Identical in SVG, favicon and terminal blocks; can look retro on large surfaces",
       "width": 1440,
       "height": 900
+    },
+    {
+      "file": "04-pixel-mascot.html",
+      "title": "Pixel mascot",
+      "tradeoff": "Mascot warmth, terminal-native from one pixel grid; fixed palette turns the gradient into color bands",
+      "width": 1440,
+      "height": 900
     }
   ]
 }
