@@ -1,0 +1,14 @@
+{
+  "title": "Agents (M14)",
+  "brief": "Agents screen of goop (/agents), the full version of the sidebar Agents tree (enter there opens it). Title breadcrumb; no key-hint line under the header. Two panes like lazydocker: on the left a tree of runs (claude agents / agent-monitor), running pinned on top and expanded (◐ Daily search · 09:00 · 4m 12s with ├ └ children ✓ Explorer 1,240 companies 2m 40s, ◐ Reranker ranking 100 0m 31s selected, ○ Security queued · 12, ○ Analytic waiting), then finished runs folded and newest first (✓ search_offers · from chat 10:42 · 0.3s, ✓ Daily search · yesterday 09:00 · 9 new offers · 6m 02s, ⚠ Daily search · Oct 30 · failed at Lever · 3m 10s in pink); branches --border, state colors per system, durations right-aligned muted. On the right the selected subagent with tabs Progress · Log · Output: what it does, a mini meter ranking 34 / 100, model and device (bge-reranker · CPU), elapsed and ETA, in 312 offers → out 100, and a live log tail as dim plain text behind a │ gutter. One status line with the agents focus mode, hints ↑↓ move · ←→ fold · [ ] tabs · c cancel run · r rerun · esc back and ◐ 1 running │ ? help. Below the screen: the empty state (No jobs running · next search 09:00 · r run now), the one-line y/n cancel ask with a --primary edge, and the failed Oct 30 run unfolded with its retry info.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "A runs tree with the live run pinned on top next to one tabbed detail of the selected subagent; progress, timing and the pipeline are visible at a glance and finished runs stay one fold away, but only one subagent and one tab show at a time, the Running and Finished headers cost two rows and the screen hides the chat",
+      "width": 1440,
+      "height": 1400
+    }
+  ]
+}

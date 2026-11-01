@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M14 agents · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M8 and M9: title breadcrumb, two panes (runs tree | selected subagent), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-rows: auto 1fr auto; }
+  .title { padding: 20px 28px 14px; color: var(--text-muted); white-space: nowrap; }
+  .title b { color: var(--text); }
+  /* Bold numbers inside dim text (speed line style). */
+  .dim b, .facts b, .line b, .what b { color: var(--text); font-weight: 600; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  /* State colors: green done, yellow running, pink failed, muted queued or waiting. */
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .panes { display: grid; grid-template-columns: 640px 1fr; min-height: 0; padding: 0 28px 12px; }
+  /* Left pane: runs newest first, running pinned on top (claude agents / agent-monitor tree). */
+  .runs { display: flex; flex-direction: column; gap: 14px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .pane-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .group { display: flex; flex-direction: column; gap: 2px; }
+  .group h3 { padding: 0 8px 4px; }
+  /* Tree rows share one grid so the right-aligned durations line up: fold | branch | state | name | what | time. */
+  .tree li { display: grid; grid-template-columns: 2ch 2ch 2ch 10ch 1fr 8ch; column-gap: 6px; padding: 2px 8px; font-size: 14px; white-space: nowrap; }
+  .tree .fold { color: var(--text-muted); }
+  .tree .branch { color: var(--border); }
+  .tree .who { color: var(--text); }
+  .tree .what { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; }
+  .tree .time { color: var(--text-muted); text-align: right; }
+  /* A run line spans name and what; its name is bold. */
+  .tree .run .who { grid-column: 3 / 6; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+  .tree .run .who span { color: var(--text-muted); font-weight: 400; }
+  .tree .run .state { grid-column: 2; }
+  .tree .run.failed .who span.err { color: var(--error); }
+  /* Selection: inset 2px orange edge on --background-element. */
+  .tree .sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  /* Right pane: the selected subagent; tabs on one line, active one bold --text and underlined. */
+  .detail { display: flex; flex-direction: column; gap: 12px; padding-left: 24px; min-height: 0; }
+  .detail-name { font-weight: 600; white-space: nowrap; }
+  .detail-name span:last-child { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .tabs .on { color: var(--text); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+  .does { font-size: 14px; }
+  /* Progress: mini meter (system mini meter, wider here), running fill in --warning. */
+  .progress { display: grid; grid-template-columns: 40ch auto; column-gap: 14px; align-items: center; font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+  .progress b { color: var(--text); font-weight: 600; }
+  .mini { height: 6px; background: var(--background-element); }
+  .mini i { display: block; height: 100%; background: var(--warning); }
+  .facts { display: grid; grid-template-columns: 12ch 1fr; row-gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .facts dt { color: var(--text-muted); }
+  .facts dd { margin: 0; color: var(--text-muted); }
+  .facts .model { color: var(--primary); font-weight: 600; }
+  .dim { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  /* Live log tail: untrusted text, dim and plain behind a │ gutter, never colored or parsed into UI. */
+  .log { margin: 0; color: var(--text-muted); font: 13px/1.5 var(--mono); white-space: pre; overflow: hidden; }
+  .log .gutter { color: var(--border); }
+  /* One status line, three zones: focus label | hints for the focused pane | background state + help. */
+  footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  /* Key hints: key bold --accent, action muted; the primary action key is green. */
+  .k { color: var(--accent); font-weight: 600; }
+  .k.go { color: var(--success); }
+  footer .k, .fbar .k { color: var(--text); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-agents::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: empty state, cancel ask, failed run detail. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr); gap: 24px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin-bottom: 8px; }
+  .feedback .line { white-space: nowrap; font-size: 13px; color: var(--text-muted); }
+  .feedback .stack { display: flex; flex-direction: column; gap: 6px; }
+  .empty { padding: 4px 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  /* Cancel ask: one line, goop asking, 2px --primary edge on --background-panel; nothing happens until y. */
+  .ask { display: flex; justify-content: space-between; gap: 16px; padding: 4px 14px; background: var(--background-panel); border-left: 2px solid var(--primary); font-size: 14px; white-space: nowrap; }
+  .ask .act { color: var(--text-muted); font-size: 13px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop agents screen mockup">
+  <header class="title">Agents › <b>jobs and subagents</b> · 1 running · 3 finished · esc back to session 3</header>
+
+  <div class="panes">
+    <nav class="runs" aria-labelledby="runs-head">
+      <div class="pane-head"><h2 id="runs-head">Runs</h2><span class="count">newest first</span></div>
+      <section class="group" aria-labelledby="g-running">
+        <h3 id="g-running">Running</h3>
+        <ul class="tree">
+          <li class="run"><span class="fold">▾</span><span class="state busy">◐</span><span class="who">Daily search <span>· 09:00</span></span><span class="time">4m 12s</span></li>
+          <li><span></span><span class="branch">├</span><span class="ok">✓</span><span class="who">Explorer</span><span class="what"><b>1,240</b> companies</span><span class="time">2m 40s</span></li>
+          <li class="sel" aria-current="true"><span></span><span class="branch">├</span><span class="busy">◐</span><span class="who">Reranker</span><span class="what">ranking <b>100</b></span><span class="time">0m 31s</span></li>
+          <li><span></span><span class="branch">├</span><span class="idle">○</span><span class="who">Security</span><span class="what">waiting for ranking</span><span class="time"></span></li>
+          <li><span></span><span class="branch">└</span><span class="idle">○</span><span class="who">Analytic</span><span class="what">waiting</span><span class="time"></span></li>
+        </ul>
+      </section>
+      <section class="group" aria-labelledby="g-finished">
+        <h3 id="g-finished">Finished</h3>
+        <ul class="tree">
+          <li class="run"><span class="fold">▸</span><span class="state ok">✓</span><span class="who">search_offers <span>· from chat 10:42</span></span><span class="time">0.3s</span></li>
+          <li class="run"><span class="fold">▸</span><span class="state ok">✓</span><span class="who">Daily search <span>· yesterday 09:00 · 9 new offers</span></span><span class="time">6m 02s</span></li>
+          <li class="run failed"><span class="fold">▸</span><span class="state err">⚠</span><span class="who">Daily search <span>· Oct 30 ·</span> <span class="err">failed at Lever</span></span><span class="time">3m 10s</span></li>
+        </ul>
+      </section>
+    </nav>
+
+    <section class="detail" aria-labelledby="detail-name">
+      <p class="detail-name" id="detail-name"><span class="busy">◐</span> Reranker <span>· Daily search 09:00 · step 2 of 4</span></p>
+      <p class="tabs"><span class="on" aria-current="true">Progress</span><span aria-hidden="true">·</span><span>Log 48</span><span aria-hidden="true">·</span><span>Output 34</span></p>
+      <p class="does">Orders the offers Explorer found by how well they fit your profile and keeps the best 100.</p>
+      <div class="progress" role="img" aria-label="ranking 34 of 100"><span class="mini"><i style="width: 34%"></i></span><span>ranking <b>34</b> / <b>100</b> · 34%</span></div>
+      <dl class="facts">
+        <dt>model</dt><dd><span class="model">Qwen3-Reranker</span> · CPU · ~<b>1.1</b> offers/s</dd>
+        <dt>time</dt><dd>elapsed <b>0m 31s</b> · ETA ~<b>1m 00s</b></dd>
+        <dt>in → out</dt><dd>in <b>312</b> offers → out <b>100</b> · <b>34</b> done</dd>
+        <dt>next</dt><dd>Security reads the ranked 100 after Reranker finishes; then Analytic</dd>
+      </dl>
+      <h3>Live log</h3>
+<pre class="log"><span class="gutter">│</span> 09:04:21  rerank batch 3/10 · 10 pairs · 8.7s
+<span class="gutter">│</span> 09:04:21  top so far: 0.91 Backend Engineer (Python) · Cabify
+<span class="gutter">│</span> 09:04:24  offer 31 · text 4,812 chars · truncated to 512 tokens
+<span class="gutter">│</span> 09:04:27  offer 32 · duplicate of offer 18 (same URL) · skipped
+<span class="gutter">│</span> 09:04:29  offer 33 · score 0.44
+<span class="gutter">│</span> 09:04:31  offer 34 · score 0.78 · ranking continues</pre>
+    </section>
+  </div>
+
+  <footer><span class="mode m-agents">agents</span><span><span class="k">↑↓</span> move · <span class="k">←→</span> fold · <span class="k">[ ]</span> tabs · <span class="k">c</span> cancel run · <span class="k">r</span> rerun · <span class="k">esc</span> back</span><span class="zone-right"><span class="busy">◐ 1 running</span><span><span class="k">?</span> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around the agents screen">
+  <div>
+    <h3>Empty · nothing running</h3>
+    <p class="empty"><span class="idle">○</span> No jobs running · next search 09:00 · <span class="k go">r</span> run now</p>
+    <p class="line" style="padding-left: 8px">finished runs stay below, folded</p>
+  </div>
+  <div class="stack">
+    <h3>Cancel ask · c</h3>
+    <p class="ask"><span>Cancel Daily search 09:00? Explorer's 1,240 companies are kept</span><span class="act"><span class="k">y</span> cancel · <span class="k">n</span> keep</span></p>
+    <p class="line">only the running run · Reranker stops after offer 34 · Security and Analytic never start</p>
+  </div>
+  <div class="stack">
+    <h3>Failed run · Oct 30</h3>
+    <ul class="tree">
+      <li class="run failed sel"><span class="fold">▾</span><span class="state err">⚠</span><span class="who">Daily search <span>· Oct 30 ·</span> <span class="err">failed at Lever</span></span><span class="time">3m 10s</span></li>
+      <li><span></span><span class="branch">├</span><span class="err">⚠</span><span class="who">Explorer</span><span class="what">Lever · HTTP 429 · 812 of 1,240</span><span class="time">3m 10s</span></li>
+      <li><span></span><span class="branch">├</span><span class="idle">○</span><span class="who">Reranker</span><span class="what">not run</span><span class="time"></span></li>
+      <li><span></span><span class="branch">├</span><span class="idle">○</span><span class="who">Security</span><span class="what">not run</span><span class="time"></span></li>
+      <li><span></span><span class="branch">└</span><span class="idle">○</span><span class="who">Analytic</span><span class="what">not run</span><span class="time"></span></li>
+    </ul>
+    <p class="line">retried <b>3</b> times at 10s · 30s · 1m · gave up 09:03 · Lever skipped until next run</p>
+    <p class="line">yesterday's run went through · <span class="k">r</span> rerun · <span class="k">↵</span> log</p>
+  </div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /agents is the full version of the Agents tree at the bottom of the session sidebar (enter there opens it on the same run). It opens like M8 and M9: title breadcrumb, no key-hint line under the header, one status line. Two panes like lazydocker: on the left a tree of runs in the shape of claude agents and agent-monitor, the running run pinned on top under Running and expanded (◐ Daily search · 09:00 · 4m 12s with ├ └ children: ✓ Explorer 1,240 companies, ◐ Reranker ranking 100, ○ Security waiting for ranking, ○ Analytic waiting), then Finished runs folded with ▸, newest first: the chat-launched search_offers at 10:42 (it is newer than the 09:00 run, so it leads Finished instead of closing the list), yesterday's daily search with its 9 new offers, and the Oct 30 failure with "failed at Lever" in pink. Branches use --border, states use the system colors (green done, yellow running, pink failed, muted queued), durations sit right-aligned and muted in one column. The selected Reranker gets the fill and the orange edge. On the right the selected subagent with tabs Progress · Log · Output ([ ] switches): one line on what it does, a mini meter ranking 34 / 100, then model and device, elapsed and ETA, in 312 offers → out 100, and the sequential next steps, and a live log tail quoted as dim plain text behind a │ gutter, never parsed into UI (offer titles in the log are untrusted). The status line hints follow the tree (↑↓ move · ←→ fold · [ ] tabs · c cancel run · r rerun · esc back); its right zone keeps ◐ 1 running. Below the screen: the empty state (no jobs running, next search 09:00, r run now as the green primary key), the cancel ask as one y/n line with goop's orange edge that says what is kept, and the failed Oct 30 run unfolded (Explorer stopped at Lever on HTTP 429, the rest not run) with its retry history. Tradeoff: one subagent and one tab at a time, so comparing two runs means moving between them; grouping into Running and Finished costs two header rows but keeps the live run from moving while new runs finish; the screen hides the chat while it is open.</p>
+</body>
+</html>
