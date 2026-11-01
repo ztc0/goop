@@ -251,7 +251,7 @@ When an item comes from untrusted text shown beside it (the CV, an offer), the l
 
 ## Command palette
 
-The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px `--text-muted` border on all four sides, no radius and no shadow; it is the only bordered box in goop, so the border is palette-only. Inside there is only the search line (lavender cursor, muted placeholder) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches, a Nerd Font glyph in `--background`, two spaces, then the label:
+The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px `--text-muted` border on all four sides, no radius and no shadow; modal boxes (the palette and the M11 confirmations) are the only bordered boxes in goop. Inside there is only the search line (lavender cursor, muted placeholder) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches, a Nerd Font glyph in `--background`, two spaces, then the label:
 
 | Tile color     | Commands                         |
 | -------------- | -------------------------------- |
@@ -262,4 +262,4 @@ The ctrl+p palette is a centered box (~600px) on `--background-panel` with a 1px
 | `--text-muted` | Session, Settings, Privacy, Help |
 | `--error`      | Quit                             |
 
-Tiles are never lavender. Without a Nerd Font each tile shows the label's first letter, bold, in `--background`. The selected row has no fill and no edge: its label turns bold `--primary`, and only that row shows its keybind or slash command, right-aligned and muted. The palette has no hint row; its hints live in the status line (`commands` with a `--secondary` dot, `↵ run · ↑↓ move · esc close`). Source: `design/tui-command-palette/01-dialog.html`.
+Tiles are never lavender. Without a Nerd Font each tile shows the label's first letter, bold, in `--background`. The selected row has no fill and no edge: its label turns bold `--primary`, and only that row shows its keybind or slash command, right-aligned and muted. The palette has no hint row; its hints live in the status line (`commands` with a `--secondary` dot, `↵ run · ↑↓ move · esc close`). Source: `design/tui-command-palette/01-dialog.html`. Confirmation dialogs (M11, `design/tui-confirm/01-dialog.html`) reuse the same bordered box, tiles and rows, with an `--error` tile for irreversible actions and an `--accent` tile for costly ones.
