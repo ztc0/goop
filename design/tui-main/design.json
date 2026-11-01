@@ -8,7 +8,7 @@
       "title": "opencode-style session",
       "tradeoff": "Familiar agent layout: chat + composer, collapsed tool calls, offers sidebar; smaller list, detail opens full view",
       "width": 1440,
-      "height": 900
+      "height": 1180
     },
     {
       "file": "05-home.html",

@@ -35,10 +35,28 @@
   .tool::before { content: "◦ "; }
   .tool .ok { color: var(--success); }
   .tool kbd { color: var(--text-muted); font-family: inherit; }
-  .composer { background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 12px 16px; }
-  .composer .hint { color: var(--text-muted); }
-  .composer .model { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
-  .composer .model b { color: var(--primary); }
+  /* Composer: no box, panel background + a left edge in the focus color; grows from 1 to ~6 lines. */
+  .composer-wrap { position: relative; }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--border-active); padding: 10px 16px; }
+  .composer.blur { border-left-color: var(--border); }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--primary); font-weight: 700; }
+  .composer.blur .prompt { color: var(--text-muted); }
+  .typed { color: var(--text); }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--secondary); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .placeholder { color: var(--text-muted); }
+  .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  .below b { color: var(--primary); font-weight: 600; }
+  .chip { padding: 0 6px; }
+  .chip.warn { color: var(--background); background: var(--warning); }
+  .chip.busy { color: var(--warning); }
+  .popup { position: absolute; bottom: calc(100% + 4px); left: 0; width: 460px; background: var(--background-element); border-left: 2px solid var(--primary); padding: 6px 0; font-size: 14px; }
+  .popup div { display: grid; grid-template-columns: 14ch 1fr; padding: 2px 14px; }
+  .popup .on { background: var(--background-panel); }
+  .popup .on span:first-child { color: var(--primary); }
+  .popup span:last-child { color: var(--text-muted); }
   aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
   h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
   ul { list-style: none; margin: 0; padding: 0; }
@@ -68,6 +86,7 @@
   .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
   footer { grid-column: 1 / -1; display: flex; justify-content: space-between; padding: 6px 28px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; }
   footer b { color: var(--text); font-weight: 600; }
+  .states { width: 1440px; padding: 18px 24px; background: var(--background); display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font: 15px/1.5 var(--mono); color: var(--text); }
   .notes { width: 1440px; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
 </style>
@@ -84,7 +103,17 @@
       <div class="tool"><span class="ok">✓</span> explain_score · Kraft Python Developer <kbd>ctrl+o</kbd></div>
       <div class="assistant"><p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja.</p><div class="meta">goop · gpt-oss-20b · 2.7s</div></div>
     </div>
-    <div class="composer"><div class="hint">Preguntá o pedí algo… <span style="color:var(--text-muted)">/ for commands</span></div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
+    <div class="composer-wrap">
+      <div class="popup">
+        <div class="on"><span>/rules</span><span>review rules goop learned</span></div>
+        <div><span>/resume</span><span>open a previous session</span></div>
+        <div><span>/reload-cv</span><span>load a new CV</span></div>
+      </div>
+      <div class="composer">
+        <div class="line"><span class="prompt">›</span><span class="typed">/r</span><span class="cursor"></span></div>
+        <div class="below"><span><b>gpt-oss-20b</b> · CPU · ready</span><span>enter send · shift+enter new line · esc close</span></div>
+      </div>
+    </div>
   </section>
   <aside aria-label="Sidebar with offers and status">
     <div class="sec">
@@ -122,6 +151,13 @@
   </aside>
   <footer><span><b>tab</b> offers · <b>enter</b> send · <b>ctrl+o</b> expand tool · <b>ctrl+x</b> leader</span><span><span class="busy">◐ searching 25%</span> · <b>ctrl+p</b> commands · <b>ctrl+x b</b> sidebar · <b>?</b> help</span></footer>
 </main>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded models and chat context) with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<section class="states" aria-label="Other composer states">
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><b>gpt-oss-20b</b> · CPU · ready</span><span>empty</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">goop is answering…</span></div><div class="below"><span><b>gpt-oss-20b</b> · CPU · answering</span><span>esc stop</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">mi token es [SECRET_1] ¿lo uso?</span></div><div class="below"><span><span class="chip warn">⚠ 1 secret removed</span></span><span>never sent to a model</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
+  <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
+</section>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded models and chat context) with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
