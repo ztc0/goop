@@ -54,7 +54,7 @@
   <section aria-labelledby="hero-title">
     <h2 id="hero-title">Primary lockup</h2>
     <div class="hero">
-      <canvas id="hero" width="200" height="240" role="img" aria-label="goop logo: a pixel-art round flame with two wide rectangular eyes looking sideways"></canvas>
+      <canvas id="hero" width="200" height="240" role="img" aria-label="goop logo: a pixel-art round flame with two square eyes looking sideways"></canvas>
       <div>
         <div class="wordmark">goop</div>
         <p class="tagline">&gt; your local job search buddy_</p>
@@ -102,7 +102,7 @@
 <span class="m">loading models… qwen ✔  gpt-oss ◌</span></span></pre>
   </section>
 
-  <p class="notes"><strong>Tradeoff:</strong> keeps the mascot's warmth and makes it terminal-native: one pixel grid drives the logo, the favicon and the TUI splash. A fixed palette replaces the smooth gradient, so the flame reads as bands of color. The eyes are stamped on the pixel grid, so they stay sharp at every size, but they look sideways and give goop a mischievous rather than innocent expression.</p>
+  <p class="notes"><strong>Tradeoff:</strong> keeps the mascot's warmth and makes it terminal-native: one pixel grid drives the logo, the favicon and the TUI splash. A fixed palette replaces the smooth gradient, so the flame reads as bands of color. The eyes are stamped on the pixel grid, so they stay sharp at every size, and they match the pixel flame (03), so both marks share the same face.</p>
 </main>
 <script>
   // Source vector: the friendly mascot from 02, with explicit colors.
@@ -117,17 +117,18 @@
   const BLACK = [26, 20, 18];
 
   // Eyes are drawn on the pixel grid, not in the vector, so they stay sharp at any size:
-  // wide white rectangles with a square pupil in the bottom-right corner, looking sideways.
+  // the proportions of the pixel flame (03): square white eyes, a pupil half their size
+  // in the bottom-right corner, and a gap of one eye between them.
   function stampEyes(grid) {
     const { width, height, pixels } = grid;
-    const eyeWidth = Math.max(3, Math.round(width * 0.2));
-    const eyeHeight = Math.max(2, Math.round(eyeWidth * 0.6));
-    const pupil = Math.max(1, Math.round(eyeHeight * 0.65));
-    const top = Math.round(height * 0.62);
-    for (const left of [Math.round(width * 0.2), Math.round(width * 0.58)]) {
-      for (let y = 0; y < eyeHeight; y++) {
-        for (let x = 0; x < eyeWidth; x++) {
-          const isPupil = x >= eyeWidth - pupil && y >= eyeHeight - pupil;
+    const eye = Math.max(2, Math.round(width / 6));
+    const pupil = Math.max(1, Math.round(eye / 2));
+    const top = Math.round(height * 0.6);
+    const first = Math.round(width / 2 - eye * 1.5);
+    for (const left of [first, first + eye * 2]) {
+      for (let y = 0; y < eye; y++) {
+        for (let x = 0; x < eye; x++) {
+          const isPupil = x >= eye - pupil && y >= eye - pupil;
           pixels[(top + y) * width + left + x] = isPupil ? BLACK : WHITE;
         }
       }
