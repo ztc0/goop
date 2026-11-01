@@ -9,13 +9,6 @@
       "tradeoff": "Consistent with M2 and room for full quotes and goop's advice; hides the chat and the list while you decide",
       "width": 1440,
       "height": 1240
-    },
-    {
-      "file": "02-modal.html",
-      "title": "Modal over the session",
-      "tradeoff": "Quick decision without losing your place in the session; quotes are cut to one line and goop's advice does not fit",
-      "width": 1440,
-      "height": 1190
     }
   ]
 }

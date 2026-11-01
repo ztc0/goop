@@ -25,6 +25,8 @@
   ul, ol { list-style: none; margin: 0; padding: 0; }
   .score { font-weight: 700; text-align: right; }
   .check { color: var(--error); }
+  /* A quarantined offer has no score on screen: it stays out of the ranking until you decide. */
+  .score.held { color: var(--text-muted); }
   .ok { color: var(--success); } .idle { color: var(--text-muted); }
   /* Offer head: same as M2. The state is a header tag (⚠ quarantined), the verdict line names the reason. */
   .head { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; row-gap: 2px; padding: 6px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
@@ -100,10 +102,10 @@
 <body>
 <main aria-label="goop security alert, full screen">
   <article class="alert-view" aria-label="Security alert for one offer">
-    <div class="title">Offers › <b>Backend Engineer</b> · 4 of 8 · esc back to session 3</div>
+    <div class="title">Quarantine › <b>Backend Engineer</b> · 1 held · not in today's 8 · esc back to session 3</div>
     <header class="head">
-      <span class="score check">58</span><span class="name">Backend Engineer</span><span class="tag-quarantined">⚠ quarantined</span>
-      <span class="facts"><b>Orbit</b> · Remote · €45–55K / year · Lever · posted Oct 31, 1 day ago</span>
+      <span class="score held">—</span><span class="name">Backend Engineer</span><span class="tag-quarantined">⚠ quarantined</span>
+      <span class="facts"><b>Orbit</b> · Remote · €45–55K / year · Lever · posted Oct 31, 1 day ago · not ranked while quarantined</span>
       <span class="verdict check"><b>⚠ hidden instructions aimed at AI agents</b> · 3 findings · Security · gpt-oss-safeguard-20b · 08:12</span>
     </header>
     <nav class="actions" aria-label="Decision on this offer">
@@ -166,7 +168,7 @@
 </main>
 <section class="feedback" aria-label="States around the alert">
   <div class="wide"><h3>Status line alert that leads here (/security or enter on the offer)</h3><div class="fbar"><span class="mode m-chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ 1 offer quarantined · /security</span><span><b>?</b> help</span></span></div></div>
-  <div><h3>After release (r)</h3><div class="toast"><span>✓ Orbit released · back in the ranking · flagged lines stay out</span><span><b>u</b> undo · 4s</span></div></div>
+  <div><h3>After release (r)</h3><div class="toast"><span>✓ Orbit released · ranked again (58) · flagged lines stay out</span><span><b>u</b> undo · 4s</span></div></div>
   <div><h3>On block (b)</h3><div class="ask"><span class="q">Block what? Future offers from it are skipped before any model reads them.</span><span class="opts"><b>1</b> company Orbit · <b>2</b> source jobs.lever.co/orbit · <b>esc</b> cancel</span></div></div>
 </section>
 <p class="notes"><strong>Full screen:</strong> the alert opens like the offer detail (M2), so the header, the key-hint line and the status line are the ones you already know; the state is the pink ⚠ quarantined tag and the verdict line names the reason. Each finding shows the rule that fired, then the flagged lines quoted as dim plain text behind a │ gutter with line numbers, never with goop's flame, so the employer's words cannot pass for goop's; goop's own advice sits on the right as a normal goop turn, written from the cleaned text. Keep quarantined is the primary (green), because it is the safest; release, dismiss and block are one key away, block asks company or source, and every decision shows a toast with undo. Costs a full screen for one offer and hides the chat while you decide. Below the screen: the status line alert that leads here, the toast after release and the block question.</p>

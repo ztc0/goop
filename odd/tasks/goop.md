@@ -119,4 +119,5 @@ Route `inline` is the default; a task moves to a worker only when it qualifies u
 - **L22.** T9 slice 1 closed on `feat/tui-design` (PR into `dev`): session 04/06, home 05 and `design/system.md` + `system.html`. Remaining T9 screens (M2-M14, W0-W9) continue on `feat/tui-screens`; OpenTUI cannot set the body font (the terminal owns it), so brand identity stays in the pixel logo.
 - **L23.** M2 offer detail: the user chose the full-screen direction (`design/tui-offer-detail/01-full-screen.html`); the split direction was dropped (it stays in git history).
 - **L24.** User decision: all T9 UI design goes in one pull request (PR #8 on `feat/tui-design`) to keep the GitHub PR history short; `feat/tui-screens` was folded back into `feat/tui-design`.
+- **L25.** M10 security alert: the user chose the full-screen direction (`design/tui-security-alert/01-full-screen.html`); the modal was dropped (in git history). A quarantined offer shows no score and is not counted in the day's list until released.
 - **L5.** User PC: Ryzen 9 7940HS, 30 GB RAM, RX 7700S 8 GB (Vulkan RADV) + 780M iGPU listed first, TPM2 present, no secret-service keyring running.
