@@ -65,6 +65,9 @@
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
   .placeholder { color: var(--text-muted); }
   .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  /* Reasoning level of the thinking model: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (qwen); ctrl+r cycles it. */
+  .reason { color: var(--accent); }
+  .reason.off { color: var(--text-muted); }
   .below b { color: var(--primary); font-weight: 600; }
   .chip { padding: 0 6px; }
   .chip.warn { color: var(--background); background: var(--warning); }
@@ -141,7 +144,7 @@
       <div class="scroll" aria-hidden="true"><span style="top: 58%; height: 42%"></span></div>
       <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
       <div class="turn">
-        <div class="think-head">▾ <b>Thought</b> for 2.4s · ctrl+t</div>
+        <div class="think-head">▾ <b>Thought</b> for 2.4s · <span class="reason">◆ high</span> · ctrl+t</div>
         <div class="think">The user wants remote backend roles open to 2 years… I should search, then filter by seniority and modality.<br><span class="hidden">… 6 lines hidden</span></div>
         <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">search_offers</span> · 0.3s <kbd>ctrl+o</kbd></div><div class="args">query "backend remote" · max years 2</div><div class="res">→ <b>8 matches</b> · 3 new</div></div>
         <p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p>
@@ -149,7 +152,7 @@
       </div>
       <div class="user"><p>¿Por qué la de Kraft tiene menos?</p><div class="meta">you · 10:43</div></div>
       <div class="turn">
-        <div class="think-head">▸ <b>Thought</b> for 0.9s</div>
+        <div class="think-head">▸ <b>Thought</b> for 0.9s · <span class="reason">◆ high</span></div>
         <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">explain_score</span> · Kraft · Python Developer · 0.1s <kbd>ctrl+o</kbd></div></div>
         <p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja.</p>
         <div class="speed"><span>gpt-oss-20b</span><span>prefill <b>398</b> tok/s</span><span>output <b>17.9</b> tok/s</span><span>310 → 42 tok</span><span>2.4s</span></div>
@@ -158,7 +161,7 @@
     <div class="composer-wrap">
       <div class="composer">
         <div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div>
-        <div class="below"><span><b>gpt-oss-20b</b> · CPU · ready</span><span>enter send · shift+enter new line · esc close</span></div>
+        <div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · ready</span><span>ctrl+r reasoning · enter send · esc close</span></div>
       </div>
     </div>
   </section>

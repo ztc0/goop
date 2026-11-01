@@ -65,6 +65,9 @@
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
   .placeholder { color: var(--text-muted); }
   .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  /* Reasoning level of the thinking model: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (qwen); ctrl+r cycles it. */
+  .reason { color: var(--accent); }
+  .reason.off { color: var(--text-muted); }
   .below b { color: var(--primary); font-weight: 600; }
   .chip { padding: 0 6px; }
   .chip.warn { color: var(--background); background: var(--warning); }
@@ -154,7 +157,7 @@
       <div class="scroll" aria-hidden="true"><span style="top: 58%; height: 42%"></span></div>
       <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
       <div class="turn">
-        <div class="think-head">▾ <b>Thought</b> for 2.4s · ctrl+t</div>
+        <div class="think-head">▾ <b>Thought</b> for 2.4s · <span class="reason">◆ high</span> · ctrl+t</div>
         <div class="think">The user wants remote backend roles open to 2 years… I should search, then filter by seniority and modality.<br><span class="hidden">… 6 lines hidden</span></div>
         <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">search_offers</span> · 0.3s <kbd>ctrl+o</kbd></div><div class="args">query "backend remote" · max years 2</div><div class="res">→ <b>8 matches</b> · 3 new</div></div>
         <p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p>
@@ -162,7 +165,7 @@
       </div>
       <div class="user"><p>¿Por qué la de Kraft tiene menos?</p><div class="meta">you · 10:43</div></div>
       <div class="turn">
-        <div class="think-head">▸ <b>Thought</b> for 0.9s</div>
+        <div class="think-head">▸ <b>Thought</b> for 0.9s · <span class="reason">◆ high</span></div>
         <div class="tool-card"><div class="tool-head"><span class="ok">✓</span> <span class="name">explain_score</span> · Kraft · Python Developer · 0.1s <kbd>ctrl+o</kbd></div></div>
         <p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja<span class="caret"></span></p>
         <div class="speed"><span class="live">◐ writing</span><span>prefill <b>398</b> tok/s</span><span>output <b class="live">17.9</b> tok/s</span><span>esc stop</span></div>
@@ -176,7 +179,7 @@
       </div>
       <div class="composer">
         <div class="line"><span class="prompt">›</span><span class="typed">/r</span><span class="cursor"></span></div>
-        <div class="below"><span><b>gpt-oss-20b</b> · CPU · ready</span><span>enter send · shift+enter new line · esc close</span></div>
+        <div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · ready</span><span>ctrl+r reasoning · enter send · esc close</span></div>
       </div>
     </div>
   </section>
@@ -228,13 +231,13 @@
   <div class="fbar"><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ qwen not responding · /models</span><span><b>?</b> help</span></span></div>
 </section>
 <section class="states" aria-label="Other composer states">
-  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><b>gpt-oss-20b</b> · CPU · ready</span><span>empty</span></div></div></div>
-  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">goop is answering…</span></div><div class="below"><span><b>gpt-oss-20b</b> · CPU · answering</span><span>esc stop</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◈ medium</span> · CPU · ready</span><span>empty</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">goop is answering…</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · answering</span><span>esc stop</span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">mi token es [SECRET_1] ¿lo uso?</span></div><div class="below"><span><span class="chip warn">⚠ 1 secret removed</span></span><span>never sent to a model</span></div></div></div>
-  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · <span class="reason off">think off</span> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
   <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ qwen not responding · /models</span></span><span>chat still on gpt-oss</span></div></div></div>
 </section>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns (lavender, the same color as the composer where you type them) as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded search); a top strip shows chat context and search progress, and an agents tree at the bottom shows the running job with each subagent's state and time (enter opens /agents); the agents section only exists while something runs, and the offer list takes only the rows it needs (up to the free height), so sections stay together and spare rows fall to the bottom; the chat history has a scrollbar (track and thumb) and the sidebar shows only a thumb while its content overflows; models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns (lavender, the same color as the composer where you type them) as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded search); a top strip shows chat context and search progress, and an agents tree at the bottom shows the running job with each subagent's state and time (enter opens /agents); the agents section only exists while something runs, and the offer list takes only the rows it needs (up to the free height), so sections stay together and spare rows fall to the bottom; the composer line shows the reasoning level of the thinking model (◇ low, ◈ medium, ◆ high, or think off; ctrl+r cycles it) and each Thought block says which level it used; the chat history has a scrollbar (track and thumb) and the sidebar shows only a thumb while its content overflows; models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>

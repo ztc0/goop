@@ -24,6 +24,10 @@
   .composer .cursor { display: inline-block; width: 9px; height: 1.1em; background: var(--user); vertical-align: -3px; margin-right: 6px; }
   .composer .hint { color: var(--text-muted); }
   .composer .model { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  /* Reasoning level of the thinking model; ctrl+r cycles it (same as the session). */
+  .composer .model { display: flex; justify-content: space-between; }
+  .reason { color: var(--accent); }
+  .reason.off { color: var(--text-muted); }
   .composer .model b { color: var(--primary); }
   /* Recent activity: a short list you move through with the arrows (like Claude Code's welcome box). */
   .recent { width: 720px; display: grid; gap: 2px; font-size: 14px; }
@@ -67,7 +71,7 @@
     <div id="logo" role="img" aria-label="goop logo: a pixel-art flame with two square eyes"></div>
     <div class="name">goop</div>
     <div class="tagline">your local job search agent</div>
-    <div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="hint">¿por qué Kraft tiene menos puntaje?</span></div><div class="model"><b>gpt-oss-20b</b> · CPU · ready</div></div>
+    <div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="hint">¿por qué Kraft tiene menos puntaje?</span></div><div class="model"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · ready</span><span>ctrl+r reasoning · enter send</span></div></div>
     <nav class="recent" aria-label="Recent activity">
       <div class="sel"><span>▸</span><span><b class="new">3 new offers</b> today · best 92 at Acme Labs</span><kbd>enter</kbd></div>
       <div><span>▸</span><span><b>1 rule</b> to review</span><kbd>enter</kbd></div>
