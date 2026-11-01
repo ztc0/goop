@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · command palette (ctrl+p) · 01 dialog</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  p { margin: 0; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  main { position: relative; width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr 420px; grid-template-rows: 1fr auto; }
+
+  /* Session behind (04 layout), inert while the palette is open. */
+  .session { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; white-space: nowrap; }
+  .title b { color: var(--text); }
+  .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; padding-right: 14px; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  /* goop marker: Nerd Font flame (U+F06D) drawn with an SVG mask; "●" fallback without a Nerd Font. */
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .meta, .speed { color: var(--text-muted); font-size: 13px; }
+  .speed { display: flex; gap: 14px; white-space: nowrap; }
+  .speed b { color: var(--text); font-weight: 600; }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--border); padding: 10px 16px; }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--text-muted); font-weight: 700; }
+  .placeholder { color: var(--text-muted); }
+  .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; white-space: nowrap; }
+  .below .model { color: var(--primary); font-weight: 600; }
+  .reason { color: var(--accent); }
+  aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .ts-line { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); white-space: nowrap; }
+  .ts-line b { color: var(--text); font-weight: 600; }
+  .mini { width: 70px; height: 6px; background: var(--background-element); }
+  .mini span { display: block; height: 100%; width: 35%; background: var(--success); }
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; white-space: nowrap; }
+  .sec-head h2::before { content: "▾ "; }
+  .sec.folded .sec-head h2::before { content: "▸ "; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .offers li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 6px 8px; }
+  .offers li.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .sub { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
+  .new { color: var(--accent); font-size: 12px; font-weight: 700; }
+  .act { color: var(--accent); }
+  .ok { color: var(--success); } .idle { color: var(--text-muted); }
+  .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
+
+  /* Backdrop: the session dims behind the dialog; the status line stays lit. */
+  .backdrop { position: absolute; left: 0; right: 0; top: 0; bottom: 29px; background: var(--background); opacity: .62; }
+
+  /* Command palette (opencode DialogSelect): centered, --background-panel, no border, no radius.
+     Cell = 1ch: header inset 4 cells, list padding 1 cell, category headers indented 3 cells. */
+  .palette { background: var(--background-panel); color: var(--text); font-size: 14px; line-height: 1.5; padding: 21px 0; }
+  .screen-palette { position: absolute; top: 190px; left: 360px; width: 720px; }
+  .p-head { display: flex; justify-content: space-between; padding: 0 4ch; white-space: nowrap; }
+  .p-head h2 { color: var(--text); font-size: 14px; letter-spacing: 0; text-transform: none; font-weight: 700; }
+  .p-head .esc { color: var(--text-muted); }
+  .search { padding: 21px 4ch 0; display: flex; white-space: nowrap; }
+  .search .typed { color: var(--text); }
+  .search .placeholder { color: var(--text-muted); }
+  .cursor { display: inline-block; width: 1ch; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .list { position: relative; padding: 21px 1ch 0; }
+  .cat { padding-left: 3ch; color: var(--accent); font-weight: 700; white-space: nowrap; }
+  .cat + .rows { margin-top: 0; }
+  .rows + .cat { margin-top: 21px; }
+  /* Row: 3-cell gutter (● marks the current or active item), title with an optional muted inline
+     description, keybind (or category while searching) right-aligned and muted. */
+  .opt { display: grid; grid-template-columns: 3ch 1fr auto; padding-right: 2ch; white-space: nowrap; }
+  .opt .g { color: var(--primary); }
+  .opt .d { color: var(--text-muted); }
+  .opt .k { color: var(--text-muted); text-align: right; }
+  .opt .m { font-weight: 700; }
+  .opt.sel { background: var(--primary); color: var(--background); font-weight: 700; }
+  .opt.sel .g, .opt.sel .d, .opt.sel .k { color: var(--background); }
+  .empty { padding: 0 3ch; color: var(--text-muted); }
+  /* Scroll thumb: one cell on the right edge, only while the list overflows. */
+  .thumb { position: absolute; right: 3px; width: 4px; background: var(--text-muted); opacity: .4; }
+  /* Bottom hint row: bold title, muted key (opencode DialogSelect keybind footer). */
+  .p-foot { display: flex; justify-content: space-between; padding: 21px 4ch 0; white-space: nowrap; color: var(--text-muted); }
+  .p-foot .grp { display: flex; gap: 2ch; }
+  .p-foot b { color: var(--text); font-weight: 700; }
+
+  /* One status line, three zones: focus label | hints for the palette | background state + help. */
+  footer { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-commands::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+
+  /* Below the screen: two smaller copies of the dialog. */
+  .strip { width: 1440px; background: var(--background); color: var(--text); padding: 18px 28px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; border-top: 1px solid var(--border); font-family: var(--mono); }
+  .strip h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .strip .list.clip { height: 357px; overflow: hidden; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop session with the command palette open">
+  <section class="session" aria-label="Session" inert>
+    <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
+    <div class="msgs">
+      <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
+      <div class="turn">
+        <p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p>
+        <div class="speed"><span>gpt-oss-20b</span><span>prefill <b>412</b> tok/s</span><span>output <b>18.4</b> tok/s</span><span>1,240 → 186 tok</span><span>4.1s</span></div>
+      </div>
+      <div class="user"><p>¿Por qué la de Kraft tiene menos?</p><div class="meta">you · 10:43</div></div>
+      <div class="turn">
+        <p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja: Python, APIs REST y trabajo remoto.</p>
+        <div class="speed"><span>gpt-oss-20b</span><span>prefill <b>398</b> tok/s</span><span>output <b>17.9</b> tok/s</span><span>980 → 64 tok</span><span>1.8s</span></div>
+      </div>
+    </div>
+    <div class="composer">
+      <div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div>
+      <div class="below"><span><span class="model">gpt-oss-20b</span> · <span class="reason">◆ high</span> · CPU · ready</span><span>focus is on the commands</span></div>
+    </div>
+  </section>
+  <aside aria-label="Sidebar with offers and status" inert>
+    <div class="ts-line"><span>ctx <b>2.4K</b>/6K</span><span class="mini"><span></span></span><span class="idle">○ next search 09:00</span><span class="ok">● 5 sources</span></div>
+    <div class="sec">
+      <div class="sec-head"><h2>Offers</h2><span class="count">7 ranked · <span class="new">3 new</span></span></div>
+      <ul class="offers">
+        <li class="sel"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">NEW</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
+        <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
+        <li><span class="score maybe">71</span><span>Python Developer</span><span></span><span class="sub">Kraft · Remote · ~ maybe</span></li>
+        <li><span class="score check">—</span><span>Backend Engineer</span><span></span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+        <li><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">NEW</span><span class="sub">Lumen · Hybrid Madrid · ~ maybe</span></li>
+      </ul>
+    </div>
+    <div class="sec folded"><div class="sec-head"><h2>Rules</h2><span class="count act">1 to review · /rules</span></div></div>
+    <div class="sec folded"><div class="sec-head"><h2>Search</h2><span class="count">5 sources ok · next 09:00</span></div></div>
+    <div class="sec folded"><div class="sec-head"><h2>Profile</h2><span class="count">Backend · mid · 3 yrs</span></div></div>
+    <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
+  </aside>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <section class="palette screen-palette" role="dialog" aria-modal="true" aria-labelledby="p-title" tabindex="-1">
+    <div class="p-head"><h2 id="p-title">Commands</h2><span class="esc">esc</span></div>
+    <div class="search"><span class="typed">of</span><span class="cursor" aria-hidden="true"></span></div>
+    <div class="list" role="listbox" aria-label="Matching commands">
+      <div class="rows">
+        <div class="opt sel" role="option" aria-selected="true" tabindex="0"><span class="g"></span><span>Open <span class="m">of</span>fers list <span class="d">· 3 new today</span></span><span class="k">Offers</span></div>
+        <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="g">●</span><span>Show only new <span class="m">of</span>fers <span class="d">· on</span></span><span class="k">Offers</span></div>
+        <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="g"></span><span>Saved <span class="m">of</span>fers <span class="d">· 2</span></span><span class="k">Offers</span></div>
+        <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="g"></span><span>Pr<span class="m">of</span>ile <span class="d">· Backend · mid · 3 yrs</span></span><span class="k">System</span></div>
+      </div>
+    </div>
+    <div class="p-foot"><span class="grp"><span><b>select</b> ↵</span><span><b>move</b> ↑↓</span><span><b>close</b> esc</span></span><span>ctrl+p</span></div>
+  </section>
+
+  <footer><span class="mode m-commands">commands</span><span>command palette open</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+
+<section class="strip" aria-label="Other palette states">
+  <div>
+    <h3>Opened · grouped list</h3>
+    <section class="palette" aria-label="Command palette, nothing typed">
+      <div class="p-head"><h2>Commands</h2><span class="esc">esc</span></div>
+      <div class="search"><span class="cursor" aria-hidden="true"></span><span class="placeholder">Search</span></div>
+      <div class="list clip">
+        <div class="thumb" aria-hidden="true" style="top: 21px; height: 150px"></div>
+        <p class="cat">Suggested</p>
+        <div class="rows">
+          <div class="opt sel"><span class="g"></span><span>Search now <span class="d">· last 07:00</span></span><span class="k">/search</span></div>
+          <div class="opt"><span class="g"></span><span>Open offers list <span class="d">· 3 new today</span></span><span class="k">/offers</span></div>
+          <div class="opt"><span class="g"></span><span>Rules goop learned <span class="d">· 1 to review</span></span><span class="k">/rules</span></div>
+        </div>
+        <p class="cat">Offers</p>
+        <div class="rows">
+          <div class="opt"><span class="g"></span><span>Open offers list</span><span class="k">/offers</span></div>
+          <div class="opt"><span class="g">●</span><span>Show only new offers <span class="d">· on</span></span><span class="k">n</span></div>
+          <div class="opt"><span class="g"></span><span>Saved offers <span class="d">· 2</span></span><span class="k">/saved</span></div>
+        </div>
+        <p class="cat">Search</p>
+        <div class="rows">
+          <div class="opt"><span class="g"></span><span>Search now</span><span class="k">/search</span></div>
+          <div class="opt"><span class="g"></span><span>Sources <span class="d">· 5 ok</span></span><span class="k">/sources</span></div>
+          <div class="opt"><span class="g"></span><span>Rules goop learned</span><span class="k">/rules</span></div>
+        </div>
+        <p class="cat">Session</p>
+        <div class="rows">
+          <div class="opt"><span class="g"></span><span>New session</span><span class="k">ctrl+x n</span></div>
+          <div class="opt"><span class="g"></span><span>Resume session</span><span class="k">ctrl+x l</span></div>
+        </div>
+      </div>
+      <div class="p-foot"><span class="grp"><span><b>select</b> ↵</span><span><b>move</b> ↑↓</span><span><b>close</b> esc</span></span><span>ctrl+p</span></div>
+    </section>
+    <p class="count" style="margin-top: 8px">scrolls on: Agents &amp; models (Agents /agents · Models /models) · System (Settings /settings · Profile /profile · Privacy &amp; data /privacy · Help ? · Quit ctrl+c)</p>
+  </div>
+  <div>
+    <h3>No match</h3>
+    <section class="palette" aria-label="Command palette with no results">
+      <div class="p-head"><h2>Commands</h2><span class="esc">esc</span></div>
+      <div class="search"><span class="typed">kubernetes</span><span class="cursor" aria-hidden="true"></span></div>
+      <div class="list">
+        <p class="empty">No results found</p>
+      </div>
+      <div class="p-foot"><span class="grp"><span><b>select</b> ↵</span><span><b>move</b> ↑↓</span><span><b>close</b> esc</span></span><span>ctrl+p</span></div>
+    </section>
+  </div>
+</section>
+
+<p class="notes"><strong>Dialog:</strong> ctrl+p opens opencode's DialogSelect over the session: the 04 layout stays behind, dimmed and inert, and keeps its status line, whose focus word becomes commands (blue dot) with a brief open-state label; the composer edge turns --border because focus left it. The dialog is about 720px (≈ 80 cells) on the panel color with no border and no radius: bold Commands and a muted esc on one line inset 4 cells, then the search line (placeholder Search, auto-focused, lavender cursor because typing is you), then the list. With nothing typed the list is grouped by category headers in bold yellow indented 3 cells, one blank line between groups, in a fixed order: Suggested (recent), Offers, Search, Session, Agents &amp; models, System; each row is a title, an optional muted inline description (· 3 new today, · 1 to review) and its keybind or slash command right-aligned and muted, and the list is clipped to about half the screen with a thumb, like opencode. Typing flattens the list into fuzzy matches ranked by score, matched letters in bold, and the right column switches from the keybind to the category so you still know where each row lives. The selected row is a full orange row with bold dark text, opencode's selectedForeground; it breaks goop's usual selection (inset orange edge on --background-element) because a dialog list has no other focus cue and one filled row reads at a glance. ● in the gutter marks an item that is on right now (Show only new offers). The hint row at the bottom follows opencode too: bold action, muted key (select ↵ · move ↑↓ · close esc) with ctrl+p on the right. Tradeoff: one keystroke reaches every action without learning the slash commands, and the categories teach them, but the dialog hides the conversation while open, a long unfiltered list needs scrolling at 900px, and the filled orange selection and bold-action hint row are palette-only exceptions to the system rules.</p>
+</body>
+</html>
