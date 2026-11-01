@@ -21,11 +21,18 @@
   .title { color: var(--text-muted); margin-bottom: 18px; }
   .title b { color: var(--text); }
   .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; }
-  .user { border-left: 2px solid var(--secondary); padding-left: 14px; }
-  .assistant { padding-left: 16px; }
+  /* User turn: a filled block with a colored left edge and a prompt marker (opencode + Claude Code).
+     Assistant turn: plain text on the session background, opened by a bullet in the brand color.
+     Tool calls: one muted line before the reply they fed. */
+  .user { background: var(--background-element); border-left: 3px solid var(--secondary); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--secondary); font-weight: 700; }
+  .assistant { display: grid; grid-template-columns: 2ch 1fr; }
+  .assistant::before { content: "●"; color: var(--primary); }
   .assistant p, .user p { margin: 0; }
   .meta { color: var(--text-muted); font-size: 13px; }
-  .tool { color: var(--text-muted); padding-left: 16px; }
+  .assistant .meta { grid-column: 2; }
+  .tool { color: var(--text-muted); padding-left: 2ch; }
+  .tool::before { content: "◦ "; }
   .tool .ok { color: var(--success); }
   .tool kbd { color: var(--text-muted); font-family: inherit; }
   .progress { color: var(--text-muted); margin: 8px 0; padding-left: 2px; }
@@ -81,6 +88,6 @@
   </aside>
   <footer><span><b>tab</b> offers · <b>enter</b> send · <b>ctrl+o</b> expand tool · <b>ctrl+x</b> leader</span><span><b>ctrl+p</b> commands · <b>ctrl+x b</b> sidebar · <b>?</b> help</span></footer>
 </main>
-<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, tool calls collapsed into one line, and a 42-column-style sidebar with the offers and status (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
+<p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom, your turns as filled blocks with a › marker and goop's turns as plain text after a ● bullet, tool calls collapsed into one muted line before the reply, and a 42-column-style sidebar with the offers and status (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>
 </html>
