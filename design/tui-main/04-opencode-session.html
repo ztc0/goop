@@ -65,7 +65,7 @@
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
   .placeholder { color: var(--text-muted); }
   .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; }
-  /* Reasoning level of the thinking model: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (qwen); ctrl+r cycles it. */
+  /* Reasoning level of the thinking model: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (Qwen3.5-9B); ctrl+r cycles it. */
   .reason { color: var(--accent); }
   .reason.off { color: var(--text-muted); }
   .below b { color: var(--primary); font-weight: 600; }
@@ -131,7 +131,7 @@
   aside .scroll span { background: var(--text-muted); opacity: .4; }
   .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
   /* Status line in three zones (opencode, Helix, lazygit): focus label | hints for the focused pane | background state + help. */
-  footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
+  footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
   footer b, .fbar b { color: var(--text); font-weight: 600; }
   /* Focus label: a quiet colored dot and a lowercase word, no filled block. */
   .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
@@ -202,7 +202,7 @@
       <div class="more">8 of 8 · enter to open the list</div>
     </div>
     <div class="sec folded">
-      <div class="sec-head"><h2>Rules</h2><span class="count act">1 to review · /rules</span></div>
+      <div class="sec-head"><h2>Rules</h2><span class="count">6 rules · <span class="act">1 to review</span></span></div>
     </div>
     <div class="sec folded">
       <div class="sec-head"><h2>Search</h2><span class="count">5 sources ok · next 09:00</span></div>
@@ -227,16 +227,16 @@
 </main>
 <section class="fbars" aria-label="Status line in other contexts">
   <div class="fbar"><span class="mode offers">offers</span><span><b>enter</b> open · <b>s</b> save · <b>d</b> dismiss · <b>tab</b> chat</span><span class="zone-right"><span class="busy">◐ searching 25%</span><span><b>?</b> help</span></span></div>
-  <div class="fbar"><span class="mode busy">answering</span><span><b>esc</b> stop</span><span class="zone-right"><span>gpt-oss · 17.9 tok/s</span><span><b>?</b> help</span></span></div>
-  <div class="fbar"><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ qwen not responding · /models</span><span><b>?</b> help</span></span></div>
+  <div class="fbar"><span class="mode busy">answering</span><span><b>esc</b> stop</span><span class="zone-right"><span>gpt-oss-20b · 17.9 tok/s</span><span><b>?</b> help</span></span></div>
+  <div class="fbar"><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="alert">⚠ Qwen3.5-9B not responding · /models</span><span><b>?</b> help</span></span></div>
 </section>
 <section class="states" aria-label="Other composer states">
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="cursor"></span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◈ medium</span> · CPU · ready</span><span>empty</span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">goop is answering…</span></div><div class="below"><span><b>gpt-oss-20b</b> · <span class="reason">◆ high</span> · CPU · answering</span><span>esc stop</span></div></div></div>
   <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">mi token es [SECRET_1] ¿lo uso?</span></div><div class="below"><span><span class="chip warn">⚠ 1 secret removed</span></span><span>never sent to a model</span></div></div></div>
-  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>qwen</b> · <span class="reason off">think off</span> · GPU · <span class="chip busy">CPU busy, using qwen</span></span><span>enter send</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="typed">¿cuál conviene más?</span></div><div class="below"><span><b>Qwen3.5</b> · <span class="reason off">think off</span> · GPU · <span class="chip busy">CPU busy, using Qwen3.5</span></span><span>enter send</span></div></div></div>
   <div class="st"><div class="composer blur"><div class="line"><span class="prompt">›</span><span class="placeholder">tab to write</span></div><div class="below"><span>focus is on the offers</span><span></span></div></div></div>
-  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ qwen not responding · /models</span></span><span>chat still on gpt-oss</span></div></div></div>
+  <div class="st"><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div><div class="below"><span><span class="chip err">⚠ Qwen3.5 not responding · /models</span></span><span>chat still on gpt-oss-20b</span></div></div></div>
 </section>
 <p class="notes"><strong>Tradeoff:</strong> opencode's session layout: conversation on the left with the composer at the bottom (no box, focus-colored edge, inline hint, live model and state under it, / and @ suggestions above it; the other composer states are shown below the screen), your turns (lavender, the same color as the composer where you type them) as filled blocks with a › marker and goop's turns as plain text after a flame marker (the Nerd Font fire glyph, falling back to a ● bullet when the terminal has no Nerd Font), goop's thinking as a foldable block (last lines while streaming, 'Thought for Ns' when done), tool calls as small cards with arguments, result and time, and a speed line per reply with prefill and output tokens per second (live while writing), and a sidebar of collapsible sections ordered from your job search to goop's internals (offers, rules to review, search progress, profile, then folded search); a top strip shows chat context and search progress, and an agents tree at the bottom shows the running job with each subagent's state and time (enter opens /agents); the agents section only exists while something runs, and the offer list takes only the rows it needs (up to the free height), so sections stay together and spare rows fall to the bottom; the composer line shows the reasoning level of the thinking model (◇ low, ◈ medium, ◆ high, or think off; ctrl+r cycles it) and each Thought block says which level it used; the chat history has a scrollbar (track and thumb) and the sidebar shows only a thumb while its content overflows; models live on the /models screen, and the sidebar only warns when one fails with colored status dots; background search shows its full progress in the sidebar and a short indicator in the footer, never above the composer (an overlay below ~120 columns). Feels like the agent tools developers already use; the offer list is smaller than in a list-first layout, so the detail opens as a full view (enter).</p>
 </body>

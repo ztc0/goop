@@ -83,7 +83,8 @@
      its keybind or slash command, right-aligned and muted. */
   .opt { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 2ch; align-items: center; padding: 11px 3ch; white-space: nowrap; }
   .opt .k { display: none; color: var(--text-muted); text-align: right; }
-  .opt .m { font-weight: 700; }
+  /* Matched letters are a goop search result: bold --accent. */
+  .opt .m { color: var(--accent); font-weight: 700; }
   .opt.sel .label { color: var(--primary); font-weight: 700; }
   .opt.sel .k { display: block; }
   /* Icon tile: one Nerd Font glyph in --background on a filled cell pair; the color follows the
@@ -138,7 +139,7 @@
   <aside aria-label="Sidebar with offers and status" inert>
     <div class="ts-line"><span>ctx <b>2.4K</b>/6K</span><span class="mini"><span></span></span><span class="idle">○ next search 09:00</span><span class="ok">● 5 sources</span></div>
     <div class="sec">
-      <div class="sec-head"><h2>Offers</h2><span class="count">7 ranked · <span class="new">3 new</span></span></div>
+      <div class="sec-head"><h2>Offers</h2><span class="count">8 ranked · <span class="new">3 new</span></span></div>
       <ul class="offers">
         <li class="sel"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">NEW</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
         <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
@@ -147,7 +148,7 @@
         <li><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">NEW</span><span class="sub">Lumen · Hybrid Madrid · ~ maybe</span></li>
       </ul>
     </div>
-    <div class="sec folded"><div class="sec-head"><h2>Rules</h2><span class="count act">1 to review · /rules</span></div></div>
+    <div class="sec folded"><div class="sec-head"><h2>Rules</h2><span class="count">6 rules · <span class="act">1 to review</span></span></div></div>
     <div class="sec folded"><div class="sec-head"><h2>Search</h2><span class="count">5 sources ok · next 09:00</span></div></div>
     <div class="sec folded"><div class="sec-head"><h2>Profile</h2><span class="count">Backend · mid · 3 yrs</span></div></div>
     <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
@@ -229,6 +230,6 @@
   </div>
 </section>
 
-<p class="notes"><strong>Dialog, launcher style:</strong> ctrl+p opens a launcher-like box over the session: the 04 layout stays behind, dimmed and inert, the composer edge turns --border because focus left it, and the status line switches to the commands focus (blue dot). The box is about 600px (≈ 66 cells), centered, on the panel color with a 1px muted border on all four sides, no radius and no shadow; modal boxes (this palette and M11 confirmations) are the only bordered boxes in goop. Inside there is no title, no esc label and no hint row: just the search line (muted placeholder search commands, lavender cursor because typing is you) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches (green offers, blue search and sources, yellow rules and profile, orange agents and models, gray session, settings, privacy and help, pink quit; never lavender), a dark Nerd Font glyph inside, two spaces, then the label. The selected row's label turns bold orange, and only that row shows its keybind or slash command, right-aligned and muted. All hints live in the status line: ↵ run · ↑↓ move · esc close. Typing flattens the list to fuzzy matches with matched letters in bold (a); no match shows a muted No results (b); a terminal without a Nerd Font gets the label's first letter in each tile (c). <strong>Tradeoff:</strong> calmer and closer to a launcher, and the tiles let you find a command by color and shape; but the icon tiles need a Nerd Font (the letter fallback is plainer), categories are gone so the list relies on its order (suggested and recent first), and keybinds show only on the selected row, so they are less discoverable (? help lists every key).</p>
+<p class="notes"><strong>Dialog, launcher style:</strong> ctrl+p opens a launcher-like box over the session: the 04 layout stays behind, dimmed and inert, the composer edge turns --border because focus left it, and the status line switches to the commands focus (blue dot). The box is about 600px (≈ 66 cells), centered, on the panel color with a 1px muted border on all four sides, no radius and no shadow; modal boxes (this palette and M11 confirmations) are the only bordered boxes in goop. Inside there is no title, no esc label and no hint row: just the search line (muted placeholder search commands, lavender cursor because typing is you) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches (green offers, blue search and sources, yellow rules and profile, orange agents and models, gray session, settings, privacy and help, pink quit; never lavender), a dark Nerd Font glyph inside, two spaces, then the label. The selected row's label turns bold orange, and only that row shows its keybind or slash command, right-aligned and muted. All hints live in the status line: ↵ run · ↑↓ move · esc close. Typing flattens the list to fuzzy matches with matched letters in bold yellow, like every goop search match (a); no match shows a muted No results (b); a terminal without a Nerd Font gets the label's first letter in each tile (c). <strong>Tradeoff:</strong> calmer and closer to a launcher, and the tiles let you find a command by color and shape; but the icon tiles need a Nerd Font (the letter fallback is plainer), categories are gone so the list relies on its order (suggested and recent first), and keybinds show only on the selected row, so they are less discoverable (? help lists every key).</p>
 </body>
 </html>

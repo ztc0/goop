@@ -70,8 +70,8 @@
   .log .gutter { color: var(--border); }
   /* One status line, three zones: focus label | hints for the focused pane | background state + help. */
   footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
-  /* Key hints: key bold --accent, action muted; the primary action key is green. */
-  .k { color: var(--accent); font-weight: 600; }
+  /* Key hints: key bold --text, action muted; the primary action key is green. */
+  .k { color: var(--text); font-weight: 600; }
   .k.go { color: var(--success); }
   footer .k, .fbar .k { color: var(--text); }
   .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
@@ -85,8 +85,10 @@
   .feedback .line { white-space: nowrap; font-size: 13px; color: var(--text-muted); }
   .feedback .stack { display: flex; flex-direction: column; gap: 6px; }
   .empty { padding: 4px 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
-  /* Cancel ask: one line, goop asking, 2px --primary edge on --background-panel; nothing happens until y. */
-  .ask { display: flex; justify-content: space-between; gap: 16px; padding: 4px 14px; background: var(--background-panel); border-left: 2px solid var(--primary); font-size: 14px; white-space: nowrap; }
+  /* Cancel ask: one inline line (reversible: the run can be rerun), 2px --accent edge on --background-panel,
+     question bold --text; nothing happens until y. */
+  .ask { display: flex; justify-content: space-between; gap: 16px; padding: 4px 14px; background: var(--background-panel); border-left: 2px solid var(--accent); font-size: 14px; white-space: nowrap; }
+  .ask .q { color: var(--text); font-weight: 600; }
   .ask .act { color: var(--text-muted); font-size: 13px; }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
@@ -150,7 +152,7 @@
   </div>
   <div class="stack">
     <h3>Cancel ask · c</h3>
-    <p class="ask"><span>Cancel Daily search 09:00? Explorer's 1,240 companies are kept</span><span class="act"><span class="k">y</span> cancel · <span class="k">n</span> keep</span></p>
+    <p class="ask"><span class="q">Cancel Daily search 09:00? Explorer's 1,240 companies are kept</span><span class="act"><span class="k">y</span> cancel · <span class="k">n</span> keep</span></p>
     <p class="line">only the running run · Reranker stops after offer 34 · Security and Analytic never start</p>
   </div>
   <div class="stack">
@@ -166,6 +168,6 @@
     <p class="line">yesterday's run went through · <span class="k">r</span> rerun · <span class="k">↵</span> log</p>
   </div>
 </section>
-<p class="notes"><strong>Full screen:</strong> /agents is the full version of the Agents tree at the bottom of the session sidebar (enter there opens it on the same run). It opens like M8 and M9: title breadcrumb, no key-hint line under the header, one status line. Two panes like lazydocker: on the left a tree of runs in the shape of claude agents and agent-monitor, the running run pinned on top under Running and expanded (◐ Daily search · 09:00 · 4m 12s with ├ └ children: ✓ Explorer 1,240 companies, ◐ Reranker ranking 100, ○ Security waiting for ranking, ○ Analytic waiting), then Finished runs folded with ▸, newest first: the chat-launched search_offers at 10:42 (it is newer than the 09:00 run, so it leads Finished instead of closing the list), yesterday's daily search with its 9 new offers, and the Oct 30 failure with "failed at Lever" in pink. Branches use --border, states use the system colors (green done, yellow running, pink failed, muted queued), durations sit right-aligned and muted in one column. The selected Reranker gets the fill and the orange edge. On the right the selected subagent with tabs Progress · Log · Output ([ ] switches): one line on what it does, a mini meter ranking 34 / 100, then model and device, elapsed and ETA, in 312 offers → out 100, and the sequential next steps, and a live log tail quoted as dim plain text behind a │ gutter, never parsed into UI (offer titles in the log are untrusted). The status line hints follow the tree (↑↓ move · ←→ fold · [ ] tabs · c cancel run · r rerun · esc back); its right zone keeps ◐ 1 running. Below the screen: the empty state (no jobs running, next search 09:00, r run now as the green primary key), the cancel ask as one y/n line with goop's orange edge that says what is kept, and the failed Oct 30 run unfolded (Explorer stopped at Lever on HTTP 429, the rest not run) with its retry history. Tradeoff: one subagent and one tab at a time, so comparing two runs means moving between them; grouping into Running and Finished costs two header rows but keeps the live run from moving while new runs finish; the screen hides the chat while it is open.</p>
+<p class="notes"><strong>Full screen:</strong> /agents is the full version of the Agents tree at the bottom of the session sidebar (enter there opens it on the same run). It opens like M8 and M9: title breadcrumb, no key-hint line under the header, one status line. Two panes like lazydocker: on the left a tree of runs in the shape of claude agents and agent-monitor, the running run pinned on top under Running and expanded (◐ Daily search · 09:00 · 4m 12s with ├ └ children: ✓ Explorer 1,240 companies, ◐ Reranker ranking 100, ○ Security waiting for ranking, ○ Analytic waiting), then Finished runs folded with ▸, newest first: the chat-launched search_offers at 10:42 (it is newer than the 09:00 run, so it leads Finished instead of closing the list), yesterday's daily search with its 9 new offers, and the Oct 30 failure with "failed at Lever" in pink. Branches use --border, states use the system colors (green done, yellow running, pink failed, muted queued), durations sit right-aligned and muted in one column. The selected Reranker gets the fill and the orange edge. On the right the selected subagent with tabs Progress · Log · Output ([ ] switches): one line on what it does, a mini meter ranking 34 / 100, then model and device, elapsed and ETA, in 312 offers → out 100, and the sequential next steps, and a live log tail quoted as dim plain text behind a │ gutter, never parsed into UI (offer titles in the log are untrusted). The status line hints follow the tree (↑↓ move · ←→ fold · [ ] tabs · c cancel run · r rerun · esc back); its right zone keeps ◐ 1 running. Below the screen: the empty state (no jobs running, next search 09:00, r run now as the green primary key), the cancel ask as one inline y cancel · n keep line (cancelling is reversible, the run can be rerun) on the panel color with the 2px yellow ask edge and the question in bold, saying what is kept, and the failed Oct 30 run unfolded (Explorer stopped at Lever on HTTP 429, the rest not run) with its retry history. Tradeoff: one subagent and one tab at a time, so comparing two runs means moving between them; grouping into Running and Finished costs two header rows but keeps the live run from moving while new runs finish; the screen hides the chat while it is open.</p>
 </body>
 </html>

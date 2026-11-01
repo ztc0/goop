@@ -65,7 +65,7 @@
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
   .placeholder { color: var(--text-muted); }
   .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; }
-  /* Reasoning level of the thinking model: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (qwen); ctrl+r cycles it. */
+  /* Reasoning level of the thinking model: ◇ low, ◈ medium, ◆ high (gpt-oss); think on/off (Qwen3.5-9B); ctrl+r cycles it. */
   .reason { color: var(--accent); }
   .reason.off { color: var(--text-muted); }
   .below b { color: var(--primary); font-weight: 600; }
@@ -118,7 +118,7 @@
   aside .scroll span { background: var(--text-muted); opacity: .4; }
   .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
   /* Status line in three zones (opencode, Helix, lazygit): focus label | hints for the focused pane | background state + help. */
-  footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; }
+  footer, .fbar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
   footer b, .fbar b { color: var(--text); font-weight: 600; }
   /* Focus label: a quiet colored dot and a lowercase word, no filled block. */
   .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
@@ -184,7 +184,7 @@
       <div class="more">8 of 8 · enter to open the list</div>
     </div>
     <div class="sec folded">
-      <div class="sec-head"><h2>Rules</h2><span class="count act">1 to review · /rules</span></div>
+      <div class="sec-head"><h2>Rules</h2><span class="count">6 rules · <span class="act">1 to review</span></span></div>
     </div>
     <div class="sec folded">
       <div class="sec-head"><h2>Search</h2><span class="count">5 sources ok · next 09:00</span></div>
@@ -194,7 +194,7 @@
     </div>
     <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
   </aside>
-  <footer><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode chat">chat</span><span><b>enter</b> send · <b>/</b> commands · <b>ctrl+o</b> tool details</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <p class="notes"><strong>Idle state:</strong> the same session when no job or subagent is running. The agents section is gone entirely (no title, no separator), the top strip and the status line show when the next search starts, and the offer list keeps the free height. The section comes back as soon as a job starts, as in 04.</p>
 </body>

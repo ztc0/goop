@@ -26,8 +26,8 @@
   .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
   .you { color: var(--user); } .goop { color: var(--primary); } .new { color: var(--accent); } .focus { color: var(--secondary); }
   .off { color: var(--border); }
-  /* Key hints: key bold --accent, action muted; the primary action key is green. */
-  .k { color: var(--accent); font-weight: 600; }
+  /* Key hints: key bold --text, action muted; the primary action key is green. */
+  .k { color: var(--text); font-weight: 600; }
   .k.primary { color: var(--success); }
   /* Search line: composer look without focus (--border edge); / focuses it and the edge turns lavender. */
   .search { display: flex; justify-content: space-between; gap: 24px; margin: 0 28px 16px; padding: 6px 14px; background: var(--background-panel); border-left: 2px solid var(--border); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
@@ -55,7 +55,6 @@
   .keys dt.primary { color: var(--success); }
   .keys dd { color: var(--text-muted); }
   .keys dd b { color: var(--text); font-weight: 600; }
-  /* Symbols seen on the screen you came from: a pointer to the full legend. */
   /* One status line, three zones: focus label | hints for the focused pane | background state. */
   footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
   footer b { color: var(--text); font-weight: 600; }
@@ -138,7 +137,7 @@
           <dt>s</dt><dd>save or unsave</dd>
           <dt>d</dt><dd>dismiss · asks for a reason the Learner uses</dd>
           <dt>1-5</dt><dd>dismiss reason · salary · stack · location · seniority · other</dd>
-          <dt>u</dt><dd>undo the last action</dd>
+          <dt>ctrl+z</dt><dd>undo the last action</dd>
         </dl>
       </section>
 

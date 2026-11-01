@@ -73,8 +73,8 @@
   .item { display: grid; grid-template-columns: 12ch 1fr auto; column-gap: 16px; align-items: baseline; padding: 17px 8px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; white-space: nowrap; }
   .item .when, .item .amount { color: var(--text-muted); font-size: 13px; }
   .item .amount { text-align: right; }
-  /* Current session tag, as in M4 (12px bold). */
-  .tag-current { color: var(--success); font-size: 12px; font-weight: 700; margin-left: 10px; }
+  /* Current session tag, as in M4 (12px bold, muted). */
+  .tag-current { color: var(--text-muted); font-size: 12px; font-weight: 700; margin-left: 10px; }
   .inside .dim { padding: 0 8px; }
   /* Action word inside a value (yellow = something to act on); not a button. */
   .act { color: var(--accent); font-weight: 600; }
@@ -105,8 +105,10 @@
   .feedback > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
   .feedback .wide { grid-column: 1 / -1; }
   .feedback h3 { white-space: nowrap; }
-  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; white-space: nowrap; overflow: hidden; font-size: 13px; }
+  /* Toast: done text on the left, undo key and timer on the right. */
+  .toast { display: flex; justify-content: space-between; gap: 12px; background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; white-space: nowrap; overflow: hidden; font-size: 13px; }
   .toast b { color: var(--text); font-weight: 600; }
+  .toast .undo { color: var(--text-muted); }
   /* Frame excerpt: the top of this screen when the check fails; the M8 banner replaces the trust line. */
   .excerpt { margin: 0; background: var(--background); border: 1px dashed var(--border); padding: 12px 0 2px; font-size: 15px; }
   .excerpt .title { padding: 0 28px 10px; }
@@ -162,7 +164,7 @@
 
 <main aria-label="goop privacy and data screen">
   <header class="head">
-    <p class="title">Settings › <b>Privacy &amp; data</b> · goop.db on this machine</p>
+    <p class="title">Settings › <b>Privacy &amp; data</b> · goop.db on this machine · esc back to settings</p>
     <p class="trust"><span class="ok">●</span> <b>all local</b> · <b>encrypted</b> · <b>no telemetry</b> · <b>0 personal data</b> sent</p>
   </header>
 
@@ -225,14 +227,14 @@
     </section>
   </div>
 
-  <footer class="status"><span class="mode m-privacy">privacy</span><span><b>↑↓</b> move · <b>x</b> clear · <b>e</b> export · <b>[ ]</b> tabs · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer class="status"><span class="mode m-privacy">privacy</span><span><b>↑↓</b> move · <b>x</b> clear · <b>e</b> export · <b>[ ]</b> tabs · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 
 <section class="feedback" aria-label="States around privacy and data">
   <div class="wide">
     <h3>Integrity check failed · top of this screen</h3>
     <figure class="excerpt" aria-label="Frame excerpt: title and problem banner">
-      <p class="title">Settings › <b>Privacy &amp; data</b> · goop.db on this machine</p>
+      <p class="title">Settings › <b>Privacy &amp; data</b> · goop.db on this machine · esc back to settings</p>
       <p class="banner"><span><span class="err">⚠</span> goop.db changed outside goop · opened read-only · searches paused, chat and export still work</span><span class="hint"><b>↵</b> review</span></p>
     </figure>
   </div>
@@ -273,15 +275,15 @@
       </div>
     </div>
     <h3>After export (e)</h3>
-    <p class="toast"><span class="ok">✓</span> Exported to <b>.local/exports/goop-export-2026-11-01.zip</b> · encrypted with your passphrase</p>
+    <p class="toast"><span><span class="ok">✓</span> Exported to <b>.local/exports/goop-export-2026-11-01.zip</b> · encrypted</span><span class="undo">4s</span></p>
   </div>
 </section>
 
 <section class="notes" aria-label="Notes">
-  <p><strong>Full screen:</strong> /privacy opens from Settings like M8 and M9: a plain title breadcrumb (no keys in it), a calm trust line (green ● all local · encrypted · no telemetry · 0 personal data sent), two panes and one status line; no backdrop, nothing dimmed. <strong>Problems first:</strong> when the integrity check fails, the M8 banner takes the trust line's place (2px pink edge on the panel color): what broke, what goop did (opened read-only, searches paused), what still works (chat and export), and ↵ review on the right. Other screens point here with the pink status line chip.</p>
+  <p><strong>Full screen:</strong> /privacy opens from Settings like M8 and M9: a title breadcrumb ending in esc back to settings (no other keys in it), a calm trust line (green ● all local · encrypted · no telemetry · 0 personal data sent), two panes and one status line; no backdrop, nothing dimmed. <strong>Problems first:</strong> when the integrity check fails, the M8 banner takes the trust line's place (2px pink edge on the panel color): what broke, what goop did (opened read-only, searches paused), what still works (chat and export), and ↵ review on the right. Other screens point here with the pink status line chip.</p>
   <p><strong>Left pane:</strong> what goop keeps, as palette-style rows (ctrl+p, M11): a 2-cell icon tile in the palette colors (green offers, gray sessions and logs, yellow rules and profile, blue search index, orange models; never lavender), then two lines: the name with its size on the right, and a muted sub with count · age. Logs is empty here: its tile is dimmed and its sub says empty. Your data is grouped apart from Not personal data, so the 31 GB of models does not look like a privacy problem; Models cannot be cleared here, the row only points to /models. Sessions is selected (fill + orange edge). The pane foot is pinned to the bottom like the M8 estimate: under a subtle line, Delete all data in pink with a pink trash tile (↵ opens the M11 type-to-confirm dialog over this screen; type delete; models stay; there is no D key), then Space used, an M8-style segmented bar with one segment per personal store sized by bytes in its tile color (2px gaps; tiny stores such as Rules keep a 2px sliver; empty Logs has none) and the legend your data 29.4 MB · models 31 GB not counted. The taller rows, the tiles and the bar take the height the one-line list left empty, so the list and the bar fill the pane down to the status line.</p>
-  <p><strong>Right pane:</strong> the selected store, then M7 tabs (Details · Protection · Retention; active bold and underlined, [ ] switch). Details says what the store holds, where it is stored, how long it is kept, the oldest and last session and the largest one (412 KB). Under the facts, What's inside previews exactly what clear would remove, the way M9 shows evidence beside the item: for Sessions all 7, one line each with the muted day and time, the title (M4 titles), and the muted message count and size (they add up to 2.1 MB; the largest is 412 KB), the current one tagged ● current in orange. It is read only: no fill and no selection edge, the keys still act on the store list. Every store shows its own preview: Offers by company, Rules by name, Profile and CV by file and section, Search index by source, Logs by day (empty here), Models by role. Protection (drawn below) lists the encryption library (no cipher name is claimed), where the key is sealed, the recovery key with the yellow action word create, which files are encrypted, the integrity check at start, the allowlist count and the secrets removed. Retention, not drawn, holds M6 form rows: Offers kept 90 days (older ones deleted at start; saved and applied stay) and Logs kept 14 days.</p>
-  <p><strong>Keys:</strong> only in the status line, and only for the focused pane. On the store list: ↑↓ move · x clear · e export · [ ] tabs · esc back, with ○ next 09:00 │ ? help on the right. On the Retention tab they become ↵ edit · esc back. x opens the smaller M11 box drawn below (pink tile, Sessions deleted, Offers · Rules · Profile stay dimmed, This cannot be undone., type clear to confirm); e writes a passphrase-encrypted zip and shows the toast.</p>
+  <p><strong>Right pane:</strong> the selected store, then M7 tabs (Details · Protection · Retention; active bold and underlined, [ ] switch). Details says what the store holds, where it is stored, how long it is kept, the oldest and last session and the largest one (412 KB). Under the facts, What's inside previews exactly what clear would remove, the way M9 shows evidence beside the item: for Sessions all 7, one line each with the muted day and time, the title (M4 titles), and the muted message count and size (they add up to 2.1 MB; the largest is 412 KB), the current one tagged ● current in muted gray. It is read only: no fill and no selection edge, the keys still act on the store list. Every store shows its own preview: Offers by company, Rules by name, Profile and CV by file and section, Search index by source, Logs by day (empty here), Models by role. Protection (drawn below) lists the encryption library (no cipher name is claimed), where the key is sealed, the recovery key with the yellow action word create, which files are encrypted, the integrity check at start, the allowlist count and the secrets removed. Retention, not drawn, holds M6 form rows: Offers kept 90 days (older ones deleted at start; saved and applied stay) and Logs kept 14 days.</p>
+  <p><strong>Keys:</strong> only in the status line, and only for the focused pane. On the store list: ↑↓ move · x clear · e export · [ ] tabs · esc back, with ○ next search 09:00 │ ? help on the right. On the Retention tab they become ↵ edit · esc back. x opens the smaller M11 box drawn below (pink tile, Sessions deleted, Offers · Rules · Profile stay dimmed, This cannot be undone., type clear to confirm); e writes a passphrase-encrypted zip and shows the toast (✓ text on the left, 4s on the right; exporting has nothing to undo).</p>
   <p><strong>Tradeoff:</strong> every store, its size and its state are visible at once, the tiles let you find a store by color as in the palette, the space bar shows at a glance where the bytes are, and each key is shown in one place only. Costs: two-line rows and the bar fill this 1440 × 900 frame but leave no spare rows, so on a shorter terminal the list scrolls; the bar repeats the sizes already in the rows and adjacent same-color segments (Rules, Profile) need the rows to tell apart; protection facts sit behind a tab, so the user sees them only after [ ]; destructive actions get a full dialog even for one store, which is slower than a one-line ask on purpose; and the screen still hides the chat.</p>
 </section>
 </body>
