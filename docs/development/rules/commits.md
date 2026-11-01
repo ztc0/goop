@@ -25,12 +25,12 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`
 
 ```mermaid
 flowchart LR
-    Feature[feat/... fix/... docs/...] -->|PR, CI green,<br/>any merge method| Dev[dev]
+    Feature[feat/... fix/... docs/...] -->|PR, CI green,<br/>merge commit| Dev[dev]
     Dev -->|PR from dev only,<br/>squash, merged by<br/>the maintainer by hand| Main[main]
     Main -->|sync PR after<br/>each release| Dev
 ```
 
-- **`dev`** is the integration branch and the default branch. Feature pull requests target it; any merge method is allowed (merge commit, squash or rebase).
+- **`dev`** is the integration branch and the default branch. Feature pull requests target it and are merged with a **merge commit**, never squash or rebase, so `dev` keeps every work-unit commit.
 - **`main`** only accepts pull requests whose head is `dev` (a CI check rejects any other source). Each release lands as **one squashed commit** titled with the pull request title, which must be a Conventional Commit.
 - **Only the maintainer merges into `main`, by hand.** Coding agents may open the `dev` -> `main` pull request but never merge it.
 - After a release is squashed into `main`, open a sync pull request from `main` into `dev` and merge it with a merge commit, so the two branches do not diverge.
