@@ -35,9 +35,9 @@
   .card-top { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; white-space: nowrap; }
   /* A terminal has one font size: the question is the normal role in bold --text, everything around it is dim. */
   .q { font-weight: 700; }
-  /* Answers on one line: key in yellow bold, action muted, · between. */
+  /* Answers on one line: key bold --text, action muted, · between. */
   .keys { color: var(--text-muted); font-size: 14px; white-space: nowrap; }
-  .keys b { color: var(--accent); font-weight: 700; }
+  .keys b { color: var(--text); font-weight: 600; }
   /* CV lines: inert plain text, dim, behind a │ gutter with the line number; never the flame, never goop's voice. */
   .cv { font: 13px/1.5 var(--mono); color: var(--text-muted); }
   .cv li { display: grid; grid-template-columns: 3ch 1ch 1fr; column-gap: 1ch; padding-left: 6px; white-space: pre; }
@@ -81,7 +81,7 @@
   .toast, .running { background: var(--background-panel); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
   .toast { box-shadow: inset 2px 0 var(--success); }
   .running { box-shadow: inset 2px 0 var(--warning); color: var(--text-muted); }
-  .toast b, .running .k { color: var(--accent); font-weight: 700; }
+  .toast b, .running .k { color: var(--text); font-weight: 600; }
   .running b { color: var(--text); font-weight: 600; }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
@@ -103,7 +103,7 @@
 
   <div class="panes">
     <section class="profile" aria-labelledby="profile-head">
-      <div class="pane-head"><h2 id="profile-head">What goop understood</h2><span class="count">Profiler read it · Validator checked it</span></div>
+      <div class="pane-head"><h2 id="profile-head">Profile</h2><span class="count">Profiler read it · Validator checked it</span></div>
       <p class="dim legend"><span class="from-cv">✓</span> read from your CV · <span class="unsure">~</span> not sure · <span class="by-you">✎</span> corrected by you, yours wins</p>
       <section class="sec" aria-labelledby="skills-head">
         <h3 id="skills-head">Skills · 6</h3>
@@ -147,7 +147,7 @@
     </section>
 
     <section class="source" aria-labelledby="cv-head">
-      <div class="pane-head"><h2 id="cv-head">Your CV · cv-2026.pdf · plain text</h2><span class="count">lines 1–25 of 38</span></div>
+      <div class="pane-head"><h2 id="cv-head">CV</h2><span class="count">cv-2026.pdf · plain text · lines 1–25 of 38</span></div>
       <p class="dim">shown as plain text · nothing in it is run or followed</p>
       <ol class="cv">
         <li><span class="ln">1</span><span class="g">│</span><span>ALEX MORENO · Backend Developer</span></li>
@@ -179,7 +179,7 @@
     </section>
   </div>
 
-  <footer class="status"><span class="mode m-profile">profile</span><span><b>1</b> <b>3</b> answer · <b>e</b> edit · <b>n</b> skip · <b>tab</b> to profile · <b>r</b> reload CV · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer class="status"><span class="mode m-profile">profile</span><span><b>1</b> <b>3</b> answer · <b>e</b> edit · <b>n</b> skip · <b>tab</b> to profile · <b>r</b> reload CV · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="States around the profile">
   <div class="stack">
@@ -196,6 +196,6 @@
     </section>
   </div>
 </section>
-<p class="notes"><strong>Full screen:</strong> /profile opens like M5 and M8: title breadcrumb with where the profile came from, one muted summary line, no key-hint line under the header, one status line. The Validator's doubts come first as an M5 decision card, one question at a time: focused, so it takes the --background-element fill and keeps its 2px yellow to-review edge; muted "goop is not sure · 1 of 2", the question in bold, the CV line it doubts quoted as dim plain text behind a │ gutter with its line number (14 · Docker in all projects), and the answers on one line with yellow keys (1 one year · 3 three years · e edit). Two panes below, like parser views that point back to the source text. On the left, what goop understood: Skills, Experience, Education and Languages, one line per item with an origin glyph (✓ green read from your CV, ~ yellow not sure, ✎ lavender corrected by you: lavender is you and your correction wins over the CV, as with English B2 where the CV says "fluent") and the CV lines it came from on the right; the two open questions point back to the card (1 of 2, 2 of 2). A Gaps section closes the pane: what today's offers ask for that your profile lacks (Kubernetes asked by 3, not in your CV; Fluent English asked by 2, you have B2), muted with the counts in yellow; then the privacy line. On the right, the CV exactly as read: plain text with line numbers, dim, never goop's voice, with the note that nothing in it is run or followed; the source lines of the active item get a subtle 2px yellow marker at the left (line 14 for the Docker question; line 3 for Python stays plain because Python is not active). Focus choice: while the card has focus the list shows no selection at all (as in M5, where the unfocused list has no selected row), so only one thing looks live and only the card's source line is marked. The status line hints follow the card (1 3 answer · e edit · n skip · tab to profile · r reload CV · esc back). tab moves focus to the list: the selected row gets the fill and the orange edge, the hints become ↑↓ move · ↵ edit · a add · x remove · c confirm, the card dims to the panel fill, and the selected item's source lines get the marker on the right (Python marks line 3). After an answer the item turns ✎ and the next question takes the card; with no questions left the card disappears and the panes move up. Preferences are not shown here: you set them in /settings (M6), the CV never does. Costs a full screen that hides the chat, the card takes four rows while questions remain, and the CV pane only shows about 25 lines, so it scrolls to the active item. Below the screen: the toast after answering (rescoring today's offers, ctrl+z undo), the second question card and the reload-CV state.</p>
+<p class="notes"><strong>Full screen:</strong> /profile opens like M5 and M8: title breadcrumb with where the profile came from, one muted summary line, no key-hint line under the header, one status line. The Validator's doubts come first as an M5 decision card, one question at a time: focused, so it takes the --background-element fill and keeps its 2px yellow to-review edge; muted "goop is not sure · 1 of 2", the question in bold, the CV line it doubts quoted as dim plain text behind a │ gutter with its line number (14 · Docker in all projects), and the answers on one line with bold keys in the text color (1 one year · 3 three years · e edit). Two panes below, like parser views that point back to the source text. On the left, under the Profile head (Profiler read it · Validator checked it), what goop understood: Skills, Experience, Education and Languages, one line per item with an origin glyph (✓ green read from your CV, ~ yellow not sure, ✎ lavender corrected by you: lavender is you and your correction wins over the CV, as with English B2 where the CV says "fluent") and the CV lines it came from on the right; the two open questions point back to the card (1 of 2, 2 of 2). A Gaps section closes the pane: what today's offers ask for that your profile lacks (Kubernetes asked by 3, not in your CV; Fluent English asked by 2, you have B2), muted with the counts in yellow; then the privacy line. On the right, under the CV head (cv-2026.pdf · plain text · lines 1–25 of 38), the CV exactly as read: plain text with line numbers, dim, never goop's voice, with the note that nothing in it is run or followed; the source lines of the active item get a subtle 2px yellow marker at the left (line 14 for the Docker question; line 3 for Python stays plain because Python is not active). Focus choice: while the card has focus the list shows no selection at all (as in M5, where the unfocused list has no selected row), so only one thing looks live and only the card's source line is marked. The status line hints follow the card (1 3 answer · e edit · n skip · tab to profile · r reload CV · esc back). tab moves focus to the list: the selected row gets the fill and the orange edge, the hints become ↑↓ move · ↵ edit · a add · x remove · c confirm, the card dims to the panel fill, and the selected item's source lines get the marker on the right (Python marks line 3). After an answer the item turns ✎ and the next question takes the card; with no questions left the card disappears and the panes move up. Preferences are not shown here: you set them in /settings (M6), the CV never does. Costs a full screen that hides the chat, the card takes four rows while questions remain, and the CV pane only shows about 25 lines, so it scrolls to the active item. Below the screen: the toast after answering (rescoring today's offers, ctrl+z undo), the second question card and the reload-CV state.</p>
 </body>
 </html>

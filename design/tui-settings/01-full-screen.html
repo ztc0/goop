@@ -25,13 +25,6 @@
   ul { list-style: none; margin: 0; padding: 0; }
   p { margin: 0; }
   .idle { color: var(--text-muted); }
-  /* Key hints: one plain line, key in yellow bold, action muted, no boxes; the primary is told apart only by green. */
-  .keys { display: flex; gap: 24px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
-  .keys b { color: var(--accent); font-weight: 700; margin-right: 6px; }
-  .keys .primary { color: var(--success); font-weight: 600; }
-  .keys .primary b { color: var(--success); }
-  /* Keys of the pane without focus: same line, all muted, so no key looks live where it does nothing. */
-  .keys.unfocused b, .keys.unfocused .primary, .keys.unfocused .primary b { color: var(--text-muted); font-weight: 600; }
   /* Left pane: short category list, 1px --border right edge like the sidebar edge. */
   .cats { display: flex; flex-direction: column; gap: 10px; padding-right: 20px; border-right: 1px solid var(--border); }
   .cat { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 6px; padding: 5px 8px; font-size: 14px; color: var(--text-muted); }
@@ -39,7 +32,6 @@
   .cat .go { font-size: 13px; }
   /* Current category while the pane has no focus: fill only, no orange edge (the edge belongs to the focused pane). */
   .cat.current { background: var(--background-element); color: var(--text); font-weight: 600; }
-  .cats .keys { margin-top: auto; flex-direction: column; gap: 2px; font-size: 13px; }
   /* Right pane: terminal form rows, label left, value right, one row each. */
   .fields { display: flex; flex-direction: column; gap: 14px; padding-left: 24px; min-height: 0; }
   .fields-head { display: flex; justify-content: space-between; align-items: baseline; }
@@ -84,19 +76,20 @@
   .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
   .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
   .toast .ok { color: var(--success); }
-  .toast b { color: var(--accent); }
+  .toast b { color: var(--text); font-weight: 600; }
   .preview .row { padding: 3px 8px; }
-  .ask { background: var(--background-element); border-left: 2px solid var(--primary); padding: 8px 12px; display: grid; gap: 4px; }
+  /* One-line ask (reversible or costly): panel fill, 2px yellow edge, question bold, keys bold --text. */
+  .ask { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 8px 12px; display: grid; gap: 4px; }
   .ask .q { color: var(--text); font-weight: 600; }
   .ask .opts { color: var(--text-muted); white-space: nowrap; }
-  .ask .opts b { color: var(--accent); }
+  .ask .opts b { color: var(--text); font-weight: 600; }
   .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
   .notes strong { color: #f4ede6; }
 </style>
 </head>
 <body>
 <main>
-  <header class="title">Settings › <b>Search preferences</b>· esc back to session 3</header>
+  <header class="title">Settings › <b>Search preferences</b> · 6 categories · esc back to session 3</header>
 
   <div class="panes">
     <nav class="cats" aria-labelledby="cats-head">
@@ -112,7 +105,7 @@
     </nav>
 
     <section class="fields" aria-labelledby="fields-head">
-      <div class="fields-head"><h2 id="fields-head">Search preferences · 7 fields</h2><span class="count">used by the next search</span></div>
+      <div class="fields-head"><h2 id="fields-head">Fields</h2><span class="count">7 · used by the next search</span></div>
       <ul>
         <li class="row"><span class="label">Role keywords</span><span class="value">backend, python, api</span><span class="note">matched in titles and descriptions before ranking</span></li>
         <li class="row"><span class="label">Seniority</span><span class="value radio">junior · <span class="on">mid ●</span> · senior</span></li>
@@ -135,13 +128,13 @@
   </div>
 
 
-  <footer><span class="mode m-settings">settings</span><span><span class="unsaved">● 1 unsaved</span> · <b class="save">ctrl+s</b> save · <b>ctrl+z</b> undo · <b>ctrl+d</b> discard · <b>tab</b> categories · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-settings">settings</span><span><span class="unsaved">● 1 unsaved</span> · <b class="save">ctrl+s</b> save · <b>ctrl+z</b> undo · <b>ctrl+d</b> discard · <b>tab</b> categories · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="States around settings">
   <div><h3>After save (ctrl+s)</h3><div class="toast"><span><span class="ok">✓</span> Saved · applied to the next search</span><span><b>ctrl+z</b> undo</span></div></div>
   <div class="preview"><h3>Schedule category</h3><ul><li class="row"><span class="label">Daily search</span><span class="value">daily at 09:00 · next tomorrow 09:00 · run now: /search</span></li></ul></div>
-  <div><h3>Leaving with unsaved changes (esc)</h3><div class="ask"><span class="q">Save 1 change?</span><span class="opts"><b>y</b> save · <b>n</b> discard · <b>esc</b> stay</span></div></div>
+  <div><h3>Leaving with unsaved changes (esc)</h3><div class="ask"><span class="q">Save 1 change?</span><span class="opts"><b>y</b> yes · <b>n</b> no · <b>esc</b> stay</span></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> /settings opens like M2, M5 and M10 (title breadcrumb, status line) with two panes: a short category list on the left and the fields of the current category on the right as terminal form rows (label left, value right, one row each; radios inline with the chosen value bold and ●). Privacy &amp; data opens its own screen (M13). Focus is on the fields: the focused row takes the selection style (fill + orange edge) and carries its own action at the right, muted (↵ edit; while editing, its value becomes a lavender composer with the old value and the hint reads ↵ done · esc cancel). The category keys are muted and the current category keeps only the fill. A dim note under a field says what goop does with it. Form actions live in the single status line, first, only while there are unsaved changes (no second bar): ● 1 unsaved change and the changed field on the left, ctrl+s save (green), ctrl+z undo, ctrl+d discard on the right; the changed label also gets a ●. Nothing is applied until ctrl+s, and the form keys use ctrl so they also work while typing in a field; esc back with unsaved changes opens the ask below instead of dropping them silently. Without unsaved changes the status line shows only navigation (↑↓ move · tab categories · esc back). The pane foot says settings are stored encrypted and never sent anywhere. Costs a full screen that hides the chat, and fields with long values (keywords) are edited one line at a time. Below the screen: the save toast with undo, the Schedule category preview and the leave ask.</p>
+<p class="notes"><strong>Full screen:</strong> /settings opens like M2, M5 and M10 (title breadcrumb, status line) with two panes: a short category list on the left and the fields of the current category on the right as terminal form rows (label left, value right, one row each; radios inline with the chosen value bold and ●). Privacy &amp; data opens its own screen (M13). Focus is on the fields: the focused row takes the selection style (fill + orange edge) and carries its own action at the right, muted (↵ edit; while editing, its value becomes a lavender composer with the old value and the hint reads ↵ done · esc cancel). The category keys are muted and the current category keeps only the fill. A dim note under a field says what goop does with it. Form actions live in the single status line, first, only while there are unsaved changes (no second bar): ● 1 unsaved change and the changed field on the left, ctrl+s save (green), ctrl+z undo, ctrl+d discard on the right; the changed label also gets a ●. Nothing is applied until ctrl+s, and the form keys use ctrl so they also work while typing in a field; esc back with unsaved changes opens the ask below instead of dropping them silently. Without unsaved changes the status line shows only navigation (↑↓ move · tab categories · esc back). The pane foot says settings are stored encrypted and never sent anywhere. Costs a full screen that hides the chat, and fields with long values (keywords) are edited one line at a time. Below the screen: the save toast with ctrl+z undo, the Schedule category preview and the leave ask (Save 1 change? y yes · n no · esc stay), drawn as the one-line ask every screen shares: panel fill, 2px yellow edge, keys bold in the text color.</p>
 </body>
 </html>

@@ -28,14 +28,13 @@
   .mode.m-confirm::before { color: var(--error); }
   .zone-right { display: flex; gap: 12px; }
   .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
-  /* Level 1 (strip) stays an inline one-line ask (like M2/M6), not a dialog. */
-  .ask { background: var(--background-element); border-left: 2px solid var(--primary); padding: 8px 12px; display: grid; gap: 4px; }
+  /* Level 1 (strip) stays an inline one-line ask (like M2/M6), not a dialog: panel fill, 2px yellow edge, keys bold --text. */
+  .ask { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 8px 12px; display: grid; gap: 4px; }
   .ask .q { color: var(--text); font-weight: 600; }
   .hints { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
-  .hints b { color: var(--accent); font-weight: 700; }
-  .hints b.default { color: var(--success); }
+  .hints b { color: var(--text); font-weight: 600; }
   .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
-  .toast b { color: var(--accent); }
+  .toast b { color: var(--text); font-weight: 600; }
   /* Screen: the 04 session stays drawn under the dialog, dimmed and inert; only the dialog and the status line are live. */
   main { position: relative; width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-rows: 1fr auto; }
   .under { display: grid; grid-template-columns: 1fr 420px; min-height: 0; opacity: .3; }
@@ -147,7 +146,7 @@
       <div class="composer"><span class="prompt">›</span> <span class="placeholder">tab to write</span></div>
     </section>
     <aside>
-      <div class="sec-head"><h2>Offers</h2><span class="count">7 ranked · 3 new</span></div>
+      <div class="sec-head"><h2>Offers</h2><span class="count">8 ranked · 3 new</span></div>
       <ul class="offers">
         <li><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
         <li><span class="score apply">85</span><span>API Engineer</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
@@ -175,7 +174,7 @@
     <ul class="list" aria-label="Deleted">
       <li class="opt item"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Offers</span><span class="k">412</span></li>
       <li class="opt item"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-session"/></svg></span><span class="label">Sessions</span><span class="k">7</span></li>
-      <li class="opt item"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-rules"/></svg></span><span class="label">Rules</span><span class="k">7</span></li>
+      <li class="opt item"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-rules"/></svg></span><span class="label">Rules</span><span class="k">6 · 1 to review</span></li>
       <li class="opt item"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-profile"/></svg></span><span class="label">Profile and CV</span><span class="k">cv-2026.pdf</span></li>
       <li class="opt item"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-db"/></svg></span><span class="label">Encrypted database</span><span class="k">38 MB</span></li>
     </ul>
@@ -191,13 +190,13 @@
     </div>
   </section>
 
-  <footer><span class="mode m-confirm">confirm</span><span class="keys">type <b>delete</b> · <span class="off"><b>↵</b> delete</span> · <b class="default">esc</b> cancel</span><span class="zone-right"><span class="idle">○ next 09:00</span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-confirm">confirm</span><span class="keys">type <b>delete</b> · <span class="off"><b>↵</b> delete</span> · <b class="default">esc</b> cancel</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 
 <section class="strip" aria-label="The other confirm levels and the matched state">
   <div>
     <h3>1 · Reversible · one-line ask</h3>
-    <div class="ask"><span class="q">Dismiss 3 offers?</span><span class="hints"><b class="default">y</b> yes · <b>n</b> no</span></div>
+    <div class="ask"><span class="q">Dismiss 3 offers?</span><span class="hints"><b>y</b> yes · <b>n</b> no</span></div>
     <p class="dim">or no ask at all: do it and offer undo</p>
     <div class="toast"><span><span class="ok">✓</span> 3 offers dismissed</span><span><b>ctrl+z</b> undo</span></div>
   </div>
@@ -230,7 +229,7 @@
   <table>
     <thead><tr><th>Level</th><th>Example</th><th>Shape</th><th>Header tile</th><th>Default</th></tr></thead>
     <tbody>
-      <tr><td>Reversible</td><td>Dismiss 3 offers</td><td>One-line ask in place (like M2/M6), or no ask and an undo toast; not a dialog</td><td>none (inline ask, --primary edge)</td><td>y</td></tr>
+      <tr><td>Reversible</td><td>Dismiss 3 offers</td><td>One-line ask in place (like M2/M6), or no ask and an undo toast; not a dialog</td><td>none (inline ask on the panel color, 2px --accent edge, keys bold --text)</td><td>y</td></tr>
       <tr><td>Costly</td><td>Unfollow 3 companies</td><td>Bordered box with the items that change and y/n</td><td>--accent</td><td>n keep</td></tr>
       <tr><td>Irreversible</td><td>Delete all goop data (Privacy M13)</td><td>Bordered box with what goes, what stays, a pink warning and a type-to-confirm line</td><td>--error</td><td>esc cancel</td></tr>
     </tbody>

@@ -26,7 +26,7 @@
   ul { list-style: none; margin: 0; padding: 0; }
   p { margin: 0; }
   .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
-  /* Reasoning level: ◇ low, ◈ medium, ◆ high (gpt-oss); think off muted (qwen); — when the model has none. */
+  /* Reasoning level: ◇ low, ◈ medium, ◆ high (gpt-oss); think off muted (Qwen3.5-9B); — when the model has none. */
   .reason { color: var(--accent); }
   .reason.off { color: var(--text-muted); }
   /* Problems first: one banner under the title, 2px --error left edge on --background-panel. */
@@ -103,13 +103,13 @@
 <main>
   <header class="title">Models › <b>local models</b> · 5 roles · 4 ready · 1 restarting · esc back to session 3</header>
 
-  <p class="banner" role="alert"><span><span class="err">⚠</span> Qwen not responding · restarting 2/3 · matching paused, chat still works</span><span class="hint"><b>r</b> restart</span></p>
+  <p class="banner" role="alert"><span><span class="err">⚠</span> Qwen3.5-9B not responding · restarting 2/3 · matching paused, chat still works</span><span class="hint"><b>r</b> restart</span></p>
 
   <section class="memory" aria-labelledby="mem-head">
     <h2 id="mem-head">Memory</h2>
     <span class="pool">VRAM 8 GB <span>· RX 7700S (Vulkan)</span></span>
-    <span class="bar" role="img" aria-label="VRAM 8 GB: Qwen 5.7 GB, Embeddings 0.6 GB, free 1.7 GB"><i class="m1" style="flex: 5.7"></i><i class="m2" style="flex: 0.6"></i><i class="free" style="flex: 1.7"></i></span>
-    <span class="labels">Qwen <b>5.7</b> · Embeddings <b>0.6</b> · free <b>1.7</b></span>
+    <span class="bar" role="img" aria-label="VRAM 8 GB: Qwen3.5-9B 5.7 GB, Embeddings 0.6 GB, free 1.7 GB"><i class="m1" style="flex: 5.7"></i><i class="m2" style="flex: 0.6"></i><i class="free" style="flex: 1.7"></i></span>
+    <span class="labels">Qwen3.5-9B <b>5.7</b> · Embeddings <b>0.6</b> · free <b>1.7</b></span>
     <span class="pool">RAM 30 GB</span>
     <span class="bar" role="img" aria-label="RAM 30 GB: gpt-oss-20b 12.1 GB, Reranker 0.6 GB, system 1.5 GB, free 15.8 GB"><i class="m1" style="flex: 12.1"></i><i class="m2" style="flex: 0.6"></i><i class="sys" style="flex: 1.5"></i><i class="free" style="flex: 15.8"></i></span>
     <span class="labels">gpt-oss-20b <b>12.1</b> · Reranker <b>0.6</b> · system <b>1.5</b> · free <b>15.8</b></span>
@@ -144,7 +144,7 @@
           </li>
           <li class="model">
             <p class="top"><span class="role">Reranker</span><span class="state ok">● ready</span></p>
-            <p class="sub">bge-reranker-v2-m3 · Q8_0 · <b>0.6</b> GB · — · <span class="reason off">—</span></p>
+            <p class="sub">Qwen3-Reranker · Q8_0 · <b>0.6</b> GB · — · <span class="reason off">—</span></p>
           </li>
         </ul>
       </section>
@@ -152,7 +152,7 @@
 
     <section class="detail" aria-labelledby="detail-name">
       <p class="detail-name" id="detail-name"><span class="err">⚠</span> Profile &amp; matching <span>· Qwen3.5-9B</span></p>
-      <p class="tabs"><span>Info</span><span aria-hidden="true">·</span><span class="on" aria-current="true">Log</span><span aria-hidden="true">·</span><span>Benchmark</span></p>
+      <p class="tabs"><span>Info</span><span aria-hidden="true">·</span><span class="on" aria-current="true">Log 48</span><span aria-hidden="true">·</span><span>Benchmark</span></p>
       <p class="facts">llama-server <b>:8082</b> · GPU · 1 slot · ctx <b>8K</b> · KV q8_0 · profiler · analytic</p>
       <h3>Last log lines</h3>
 <pre class="log"><span class="gutter">│</span> 10:41:52  ggml_vulkan: 0 = AMD Radeon RX 7700S (RADV NAVI33) | uma: 0 | fp16: 1
@@ -163,7 +163,7 @@
 <span class="gutter">│</span> 10:43:09  load_tensors: offloaded 33/33 layers to GPU · 5.4 GiB</pre>
       <h3>What goop did</h3>
       <div class="turn">
-        <p>El chat sigue en gpt-oss. Pausé el matching: 3 ofertas nuevas esperan y las analizo solas cuando qwen vuelva a responder.</p>
+        <p>El chat sigue en gpt-oss. Pausé el matching: 3 ofertas nuevas esperan y las analizo solas cuando Qwen3.5-9B vuelva a responder.</p>
         <p class="dim">chat still on <b>gpt-oss-20b</b> · matching <span class="busy">paused</span> · 3 offers waiting</p>
         <p class="dim">next try <b>3/3</b> in 25s · if it fails: matching moves to gpt-oss on CPU, slower</p>
       </div>
@@ -174,7 +174,7 @@
     </section>
   </div>
 
-  <footer><span class="mode m-models">models</span><span><b>↑↓</b> move · <b>r</b> restart · <b>d</b> device · <b>ctrl+r</b> reasoning · <b>[ ]</b> tabs · <b>esc</b> back</span><span class="zone-right"><span class="busy">◐ restarting qwen 2/3</span><span>↓ <b>32%</b></span><span><b>?</b> help</span></span></footer>
+  <footer><span class="mode m-models">models</span><span><b>↑↓</b> move · <b>r</b> restart · <b>d</b> device · <b>ctrl+r</b> reasoning · <b>[ ]</b> tabs · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
 </main>
 <section class="feedback" aria-label="States around a model">
   <div>
@@ -191,9 +191,9 @@
   </div>
   <div>
     <h3>Status line (leads here)</h3>
-    <div class="fbar"><span class="mode m-chat">chat</span><span><b>enter</b> send</span><span class="zone-right"><span class="alert">⚠ qwen not responding · /models</span><span><b>?</b> help</span></span></div>
+    <div class="fbar"><span class="mode m-chat">chat</span><span><b>enter</b> send</span><span class="zone-right"><span class="alert">⚠ Qwen3.5-9B not responding · /models</span><span><b>?</b> help</span></span></div>
   </div>
 </section>
-<p class="notes"><strong>Full screen:</strong> /models opens like M7 (title breadcrumb, one status line; no key-hint line under the header). Problems first: a banner right under the title says what is wrong and what still works (Qwen not responding · restarting 2/3 · matching paused, chat still works) with r restart on the right; 2px pink edge on the panel color. Then the memory map, like btop and nvtop: one bar for VRAM (8 GB, RX 7700S, Vulkan) and one for RAM (30 GB), labels after each bar in the same order as the segments, so you see why qwen sits on the GPU and gpt-oss on the CPU. Fill rule: every loaded model is one segment and model segments are all blue (--secondary), separated by a one-cell gap; lavender stays reserved for you (the fill carries no meaning, the label order names it); system memory is --border and free memory --background-element. Two panes: on the left the models grouped by where they run (GPU · RX 7700S, CPU · RAM, like the processor column of ollama ps), two short lines each: role and state on the right (⚠ error pink, ● ready green, ◐ loading yellow, ○ on demand muted, plus ↓ update 32% while the guard updates, llama-swap states), then a dim line with model · quant · size · tok/s · reasoning (◆ high, think off, — when none). The failing Qwen is selected (fill + orange edge); pink stays on its state only. On the right the selected model with tabs Info · Log · Benchmark ([ ] switches); the Log tab quotes the last log lines as untrusted dim plain text behind a │ gutter, never parsed into UI, then what goop did as a goop turn (chat still on gpt-oss, matching paused and resumed on its own, the fallback if the third try fails). Below it an estimate, like LM Studio's load estimate, previews what d does before it happens: move to CPU → +5.7 GB RAM · ~9 tok/s (now 41) · fits, with ↵ confirm · esc cancel. The status line hints follow the focused list (↑↓ move · r restart · d device · ctrl+r reasoning · [ ] tabs · esc back) and its right zone shows the restart and the update. Model startup never blocks the TUI: models load and restart in the background through llama-swap, the chat keeps working on whatever is ready, and only the banner and a short ◐ in the status line tell you. Trades the single table for a grouped side list plus one tabbed panel: memory pressure and where each model runs are visible at a glance, but the detail shows one model and one tab at a time, the memory map costs three rows, same-color segments ask you to read the labels, and the screen still hides the chat. Below the screen: the update download (current version stays in use until the hash checks out), the Benchmark tab results and the chat status line chip that leads here.</p>
+<p class="notes"><strong>Full screen:</strong> /models opens like M7 (title breadcrumb, one status line; no key-hint line under the header). Problems first: a banner right under the title says what is wrong and what still works (Qwen3.5-9B not responding · restarting 2/3 · matching paused, chat still works) with r restart on the right; 2px pink edge on the panel color. Then the memory map, like btop and nvtop: one bar for VRAM (8 GB, RX 7700S, Vulkan) and one for RAM (30 GB), labels after each bar in the same order as the segments, so you see why Qwen3.5-9B sits on the GPU and gpt-oss-20b on the CPU. Fill rule: every loaded model is one segment and model segments are all blue (--secondary), separated by a one-cell gap; lavender stays reserved for you (the fill carries no meaning, the label order names it); system memory is --border and free memory --background-element. Two panes: on the left the models grouped by where they run (GPU · RX 7700S, CPU · RAM, like the processor column of ollama ps), two short lines each: role and state on the right (⚠ error pink, ● ready green, ◐ loading yellow, ○ on demand muted, plus ↓ update 32% while the guard updates, llama-swap states), then a dim line with model · quant · size · tok/s · reasoning (◆ high, think off, — when none). The failing Qwen3.5-9B is selected (fill + orange edge); pink stays on its state only. On the right the selected model with tabs Info · Log 48 · Benchmark ([ ] switches; only Log is a list, so only Log carries a count); the Log tab quotes the last log lines as untrusted dim plain text behind a │ gutter, never parsed into UI, then what goop did as a goop turn (chat still on gpt-oss, matching paused and resumed on its own, the fallback if the third try fails). Below it an estimate, like LM Studio's load estimate, previews what d does before it happens: move to CPU → +5.7 GB RAM · ~9 tok/s (now 41) · fits, with ↵ confirm · esc cancel. The status line hints follow the focused list (↑↓ move · r restart · d device · ctrl+r reasoning · [ ] tabs · esc back) and its right zone is the shared ○ next search 09:00 │ ? help. Model startup never blocks the TUI: models load and restart in the background through llama-swap, the chat keeps working on whatever is ready, and only the banner and the states in the list tell you. Trades the single table for a grouped side list plus one tabbed panel: memory pressure and where each model runs are visible at a glance, but the detail shows one model and one tab at a time, the memory map costs three rows, same-color segments ask you to read the labels, and the screen still hides the chat. Below the screen: the update download (current version stays in use until the hash checks out), the Benchmark tab results and the chat status line chip that leads here.</p>
 </body>
 </html>
