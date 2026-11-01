@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.svg" width="120" alt="goop logo: a pixel-art flame with two square eyes"></p>
+
 # goop
 
 **A local job search agent for developers.** · **Un agente local de búsqueda de empleo para desarrolladores.**
