@@ -1,0 +1,7 @@
+# Keep LF line endings on every platform; Windows checkouts would otherwise get CRLF
+# and fail the Biome format check.
+* text=auto eol=lf
+
+*.svg text eol=lf
+*.png binary
+*.gguf binary
