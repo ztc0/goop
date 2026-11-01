@@ -1,0 +1,14 @@
+{
+  "title": "Confirmations (M11)",
+  "brief": "Confirm pattern for hard-to-undo actions, restyled to share the command palette's box, tiles and rows. A centered ~600px box on --background-panel with a 1px --text-muted border on all four sides (no radius, no shadow, no colored edge, no esc label) sits over the dimmed, inert 04 session. Main frame: Delete all goop data? (from Privacy M13). Header: an --error tile with a trash glyph in --background, the question as a bold label and the muted subline From Privacy · everything goop stored on this machine. Palette-style rows with tile, label and a muted right-aligned count under small uppercase labels: Deleted (Offers 412 --success, Sessions 7 --text-muted, Rules 6 · 1 to review --accent, Profile and CV cv-2026.pdf --accent, Encrypted database 38 MB --text-muted) and Stays, dimmed (Downloaded models 31 GB · reusable, --primary). A bold --error line This cannot be undone. goop keeps no backup. The type-to-confirm input is the palette search line at the bottom of the box under a --border-subtle separator: dele typed, lavender cursor, muted type delete to confirm on the right. No hint row inside: the status line shows confirm (--error dot), type delete · ↵ delete (muted until it matches) · esc cancel (green safe default), ○ next search 09:00 │ ? help. Strip below: (1) reversible inline one-line ask Dismiss 3 offers? y yes · n no (--background-panel, 2px --accent edge, keys bold --text) plus the undo toast (ctrl+z undo); (2) costly Unfollow 3 companies? as a small bordered box with an --accent tile, Acme Labs, Kraft and Orbit rows with --secondary tiles, the muted line They stop being searched. Their offers stay in your list. and y unfollow · n keep; (3) the matched confirm line delete · matches with a note that ↵ now deletes, then an icons: emoji (default) excerpt of three Deleted rows (💼 Offers 412, 💬 Sessions 7, 🔐 Encrypted database 38 MB) with neutral tiles (--background-element fill, same 2 cells and place); the main frame shows icons: nerd, and in emoji mode the irreversible header is ⛔ and the costly one 🔕. Notes with the three-level table.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-dialog.html",
+      "title": "Dialog levels",
+      "tradeoff": "One box style for every modal, so the confirm reads as part of the palette family and the tiles show by color what the loss touches, while a stray enter can never delete; but the bordered box stops being palette-only, the danger rests on one pink tile and the warning line instead of a pink edge (quieter), the confirm word is English in a Spanish chat, and each new action needs its level chosen at design time",
+      "width": 1440,
+      "height": 1570
+    }
+  ]
+}

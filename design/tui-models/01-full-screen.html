@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M8 models · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M7: title, problem banner, memory map, two panes (models | detail), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; }
+  .title { padding: 20px 28px 10px; color: var(--text-muted); white-space: nowrap; }
+  /* Bold numbers and keys inside dim text (speed line style): one rule for every dim line. */
+  footer b, .fbar b, .hint b, .labels b, .sub b, .facts b, .dim b, .act b, .line b { color: var(--text); font-weight: 600; }
+  .title b { color: var(--text); }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  /* Reasoning level: ◇ low, ◈ medium, ◆ high (gpt-oss); think off muted (Qwen3.5-9B); — when the model has none. */
+  .reason { color: var(--accent); }
+  .reason.off { color: var(--text-muted); }
+  /* Problems first: one banner under the title, 2px --error left edge on --background-panel. */
+  .banner { display: flex; justify-content: space-between; gap: 24px; margin: 0 28px 14px; padding: 6px 14px; background: var(--background-panel); border-left: 2px solid var(--error); font-size: 14px; white-space: nowrap; }
+  .banner .hint { color: var(--text-muted); font-size: 13px; }
+  /* Memory map (btop/nvtop): one bar per memory pool, one row each, labels after the bar in label order.
+     Fill rule: every loaded model is one segment; model segments are all --secondary, in the
+     order of the labels, separated by a 1-cell gap (lavender stays reserved for you; the label order names each segment). System memory is --border, free is --background-element. */
+  .memory { display: grid; grid-template-columns: 30ch 60ch 1fr; column-gap: 16px; row-gap: 6px; align-items: center; margin: 0 28px 16px; padding: 0 8px 14px; border-bottom: 1px solid var(--border-subtle); font-size: 13px; white-space: nowrap; }
+  .memory h2 { grid-column: 1 / -1; }
+  .memory .pool { color: var(--text); font-weight: 600; }
+  .memory .pool span { color: var(--text-muted); font-weight: 400; }
+  .bar { display: flex; gap: 1ch; height: 12px; }
+  .bar i { display: block; height: 100%; }
+  .bar .m1 { background: var(--secondary); } .bar .m2 { background: var(--secondary); }
+  .bar .sys { background: var(--border); } .bar .free { background: var(--background-element); }
+  .memory .labels { color: var(--text-muted); }
+  .panes { display: grid; grid-template-columns: 600px 1fr; min-height: 0; padding: 0 28px 12px; }
+  /* Left pane: models grouped by where they run; two short lines each, state on the right. */
+  .list { display: flex; flex-direction: column; gap: 10px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .list-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .group { display: flex; flex-direction: column; gap: 2px; }
+  .group h3 { padding: 0 8px 2px; }
+  .model { padding: 4px 8px; white-space: nowrap; }
+  .model .top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .model .role { font-weight: 600; }
+  .model .role small { color: var(--text-muted); font-size: 13px; font-weight: 400; }
+  .model .state { font-size: 13px; }
+  .model .sub { color: var(--text-muted); font-size: 13px; }
+  /* Selection: inset 2px orange edge on --background-element. */
+  .model.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  /* Right pane: the selected model; tabs on one line, active one bold --text and underlined. */
+  .detail { display: flex; flex-direction: column; gap: 10px; padding-left: 24px; min-height: 0; }
+  .detail-name { font-weight: 600; white-space: nowrap; }
+  .detail-name span:last-child { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .tabs .on { color: var(--text); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+  .facts { color: var(--text-muted); font-size: 13px; white-space: nowrap; margin-top: -4px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+  /* Last log lines: untrusted text, quoted dim and plain behind a │ gutter, never colored or parsed into UI. */
+  .log { margin: 0; color: var(--text-muted); font: 13px/1.5 var(--mono); white-space: pre; overflow: hidden; }
+  .log .gutter { color: var(--border); }
+  /* What goop did: a goop turn (flame marker, ● fallback), so it reads as goop's words. */
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 4px; font-size: 14px; }
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .dim { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  /* Estimate (LM Studio load estimate): preview of what d does before it happens; thought-block look. */
+  .estimate { margin-top: auto; display: flex; justify-content: space-between; gap: 16px; padding: 8px 14px; background: var(--background-panel); border-left: 1px solid var(--border); font-size: 14px; white-space: nowrap; }
+  .estimate .k { font-weight: 700; }
+  .estimate .act { color: var(--text-muted); font-size: 13px; }
+  /* One status line, three zones: focus label | hints for the focused pane | background state + help. */
+  footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-models::before { color: var(--secondary); }
+  .mode.m-chat::before { color: var(--user); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .alert { color: var(--background); background: var(--error); padding: 0 8px; font-weight: 600; }
+  /* Below the screen: the update download, benchmark results and the status line chip that leads here. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 24px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin-bottom: 8px; }
+  .feedback .line { white-space: nowrap; font-size: 13px; color: var(--text-muted); }
+  .meter { display: block; width: 100%; height: 6px; margin: 6px 0; background: var(--background-element); }
+  .meter i { display: block; height: 100%; width: 32%; background: var(--warning); }
+  .fbar { border: 0; background: var(--background-panel); }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="title">Models › <b>local models</b> · 5 roles · 4 ready · 1 restarting · esc back to session 3</header>
+
+  <p class="banner" role="alert"><span><span class="err">⚠</span> Qwen3.5-9B not responding · restarting 2/3 · matching paused, chat still works</span><span class="hint"><b>r</b> restart</span></p>
+
+  <section class="memory" aria-labelledby="mem-head">
+    <h2 id="mem-head">Memory</h2>
+    <span class="pool">VRAM 8 GB <span>· RX 7700S (Vulkan)</span></span>
+    <span class="bar" role="img" aria-label="VRAM 8 GB: Qwen3.5-9B 5.7 GB, Embeddings 0.6 GB, free 1.7 GB"><i class="m1" style="flex: 5.7"></i><i class="m2" style="flex: 0.6"></i><i class="free" style="flex: 1.7"></i></span>
+    <span class="labels">Qwen3.5-9B <b>5.7</b> · Embeddings <b>0.6</b> · free <b>1.7</b></span>
+    <span class="pool">RAM 30 GB</span>
+    <span class="bar" role="img" aria-label="RAM 30 GB: gpt-oss-20b 12.1 GB, Reranker 0.6 GB, system 1.5 GB, free 15.8 GB"><i class="m1" style="flex: 12.1"></i><i class="m2" style="flex: 0.6"></i><i class="sys" style="flex: 1.5"></i><i class="free" style="flex: 15.8"></i></span>
+    <span class="labels">gpt-oss-20b <b>12.1</b> · Reranker <b>0.6</b> · system <b>1.5</b> · free <b>15.8</b></span>
+  </section>
+
+  <div class="panes">
+    <nav class="list" aria-labelledby="list-head">
+      <div class="list-head"><h2 id="list-head">Models</h2><span class="count">by where they run</span></div>
+      <section class="group" aria-labelledby="gpu-head">
+        <h3 id="gpu-head">GPU · RX 7700S</h3>
+        <ul>
+          <li class="model sel" aria-current="true">
+            <p class="top"><span class="role">Profile &amp; matching</span><span class="state err">⚠ error</span></p>
+            <p class="sub">Qwen3.5-9B · Q4_K_M · <b>5.7</b> GB · last <b>41</b> tok/s · <span class="reason off">think off</span></p>
+          </li>
+          <li class="model">
+            <p class="top"><span class="role">Embeddings</span><span class="state ok">● ready</span></p>
+            <p class="sub">Qwen3-Embedding-0.6B · Q8_0 · <b>0.6</b> GB · — · <span class="reason off">—</span></p>
+          </li>
+        </ul>
+      </section>
+      <section class="group" aria-labelledby="cpu-head">
+        <h3 id="cpu-head">CPU · RAM</h3>
+        <ul>
+          <li class="model">
+            <p class="top"><span class="role">Chat <small>· Orchestrator</small></span><span class="state ok">● ready</span></p>
+            <p class="sub">gpt-oss-20b · MXFP4 · <b>12.1</b> GB · <b>17.9</b> tok/s · <span class="reason">◆ high</span></p>
+          </li>
+          <li class="model">
+            <p class="top"><span class="role">Security <small>· guard</small></span><span class="state"><span class="idle">○ on demand</span> <span class="idle">· ↓ update</span> <b>32%</b></span></p>
+            <p class="sub">gpt-oss-safeguard-20b · MXFP4 · <b>12.8</b> GB · — · <span class="reason">◇ low</span> · locked</p>
+          </li>
+          <li class="model">
+            <p class="top"><span class="role">Reranker</span><span class="state ok">● ready</span></p>
+            <p class="sub">Qwen3-Reranker · Q8_0 · <b>0.6</b> GB · — · <span class="reason off">—</span></p>
+          </li>
+        </ul>
+      </section>
+    </nav>
+
+    <section class="detail" aria-labelledby="detail-name">
+      <p class="detail-name" id="detail-name"><span class="err">⚠</span> Profile &amp; matching <span>· Qwen3.5-9B</span></p>
+      <p class="tabs"><span>Info</span><span aria-hidden="true">·</span><span class="on" aria-current="true">Log 48</span><span aria-hidden="true">·</span><span>Benchmark</span></p>
+      <p class="facts">llama-server <b>:8082</b> · GPU · 1 slot · ctx <b>8K</b> · KV q8_0 · profiler · analytic</p>
+      <h3>Last log lines</h3>
+<pre class="log"><span class="gutter">│</span> 10:41:52  ggml_vulkan: 0 = AMD Radeon RX 7700S (RADV NAVI33) | uma: 0 | fp16: 1
+<span class="gutter">│</span> 10:41:58  srv  update_slots: id 0 | task 812 | prompt processing, n_tokens = 3072
+<span class="gutter">│</span> 10:42:31  llama-swap: health check /health timed out after 30s (1/3)
+<span class="gutter">│</span> 10:43:04  llama-swap: health check /health timed out after 30s (2/3)
+<span class="gutter">│</span> 10:43:05  llama-swap: stopping qwen3.5-9b (pid 48211), starting again
+<span class="gutter">│</span> 10:43:09  load_tensors: offloaded 33/33 layers to GPU · 5.4 GiB</pre>
+      <h3>What goop did</h3>
+      <div class="turn">
+        <p>El chat sigue en gpt-oss. Pausé el matching: 3 ofertas nuevas esperan y las analizo solas cuando Qwen3.5-9B vuelva a responder.</p>
+        <p class="dim">chat still on <b>gpt-oss-20b</b> · matching <span class="busy">paused</span> · 3 offers waiting</p>
+        <p class="dim">next try <b>3/3</b> in 25s · if it fails: matching moves to gpt-oss on CPU, slower</p>
+      </div>
+      <section aria-labelledby="est-head">
+        <h3 id="est-head">Estimate · preview of d</h3>
+        <p class="estimate"><span><span class="k">d</span> move to CPU → <b>+5.7</b> GB RAM · ~<b>9</b> tok/s (now 41) · <span class="ok">fits</span></span><span class="act"><b>↵</b> confirm · <b>esc</b> cancel</span></p>
+      </section>
+    </section>
+  </div>
+
+  <footer><span class="mode m-models">models</span><span><b>↑↓</b> move · <b>r</b> restart · <b>d</b> device · <b>ctrl+r</b> reasoning · <b>[ ]</b> tabs · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around a model">
+  <div>
+    <h3>Download / update</h3>
+    <p class="line">↓ <b>gpt-oss-safeguard-20b</b> 4.1 / 12.8 GB · 38 MB/s · 4m left · <b>p</b> pause</p>
+    <span class="meter"><i></i></span>
+    <p class="line">update · current version stays in use until sha256 checks out</p>
+  </div>
+  <div>
+    <h3>Benchmark tab</h3>
+    <p class="line"><span class="ok">✓</span> <b>gpt-oss-20b</b> · CPU · prefill <b>142</b> tok/s · output <b>17.9</b> tok/s · 2m ago</p>
+    <p class="line"><span class="ok">✓</span> <b>Qwen3.5-9B</b> · GPU · prefill <b>1,210</b> tok/s · output <b>41.0</b> tok/s · yesterday</p>
+    <p class="line">4K prompt · 256 tokens out · drafts off</p>
+  </div>
+  <div>
+    <h3>Status line (leads here)</h3>
+    <div class="fbar"><span class="mode m-chat">chat</span><span><b>enter</b> send</span><span class="zone-right"><span class="alert">⚠ Qwen3.5-9B not responding · /models</span><span><b>?</b> help</span></span></div>
+  </div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /models opens like M7 (title breadcrumb, one status line; no key-hint line under the header). Problems first: a banner right under the title says what is wrong and what still works (Qwen3.5-9B not responding · restarting 2/3 · matching paused, chat still works) with r restart on the right; 2px pink edge on the panel color. Then the memory map, like btop and nvtop: one bar for VRAM (8 GB, RX 7700S, Vulkan) and one for RAM (30 GB), labels after each bar in the same order as the segments, so you see why Qwen3.5-9B sits on the GPU and gpt-oss-20b on the CPU. Fill rule: every loaded model is one segment and model segments are all blue (--secondary), separated by a one-cell gap; lavender stays reserved for you (the fill carries no meaning, the label order names it); system memory is --border and free memory --background-element. Two panes: on the left the models grouped by where they run (GPU · RX 7700S, CPU · RAM, like the processor column of ollama ps), two short lines each: role and state on the right (⚠ error pink, ● ready green, ◐ loading yellow, ○ on demand muted, plus ↓ update 32% while the guard updates, llama-swap states), then a dim line with model · quant · size · tok/s · reasoning (◆ high, think off, — when none). The failing Qwen3.5-9B is selected (fill + orange edge); pink stays on its state only. On the right the selected model with tabs Info · Log 48 · Benchmark ([ ] switches; only Log is a list, so only Log carries a count); the Log tab quotes the last log lines as untrusted dim plain text behind a │ gutter, never parsed into UI, then what goop did as a goop turn (chat still on gpt-oss, matching paused and resumed on its own, the fallback if the third try fails). Below it an estimate, like LM Studio's load estimate, previews what d does before it happens: move to CPU → +5.7 GB RAM · ~9 tok/s (now 41) · fits, with ↵ confirm · esc cancel. The status line hints follow the focused list (↑↓ move · r restart · d device · ctrl+r reasoning · [ ] tabs · esc back) and its right zone is the shared ○ next search 09:00 │ ? help. Model startup never blocks the TUI: models load and restart in the background through llama-swap, the chat keeps working on whatever is ready, and only the banner and the states in the list tell you. Trades the single table for a grouped side list plus one tabbed panel: memory pressure and where each model runs are visible at a glance, but the detail shows one model and one tab at a time, the memory map costs three rows, same-color segments ask you to read the labels, and the screen still hides the chat. Below the screen: the update download (current version stays in use until the hash checks out), the Benchmark tab results and the chat status line chip that leads here.</p>
+</body>
+</html>

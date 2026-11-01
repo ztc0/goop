@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · command palette (ctrl+p) · 01 dialog</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  p { margin: 0; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  main { position: relative; width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr 420px; grid-template-rows: 1fr auto; }
+
+  /* Session behind (04 layout), inert while the palette is open. */
+  .session { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; white-space: nowrap; }
+  .title b { color: var(--text); }
+  .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; padding-right: 14px; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  /* goop marker: Nerd Font flame (U+F06D) drawn with an SVG mask; "●" fallback without a Nerd Font. */
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .meta, .speed { color: var(--text-muted); font-size: 13px; }
+  .speed { display: flex; gap: 14px; white-space: nowrap; }
+  .speed b { color: var(--text); font-weight: 600; }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--border); padding: 10px 16px; }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--text-muted); font-weight: 700; }
+  .placeholder { color: var(--text-muted); }
+  .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; white-space: nowrap; }
+  .below .model { color: var(--primary); font-weight: 600; }
+  .reason { color: var(--accent); }
+  aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .ts-line { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); white-space: nowrap; }
+  .ts-line b { color: var(--text); font-weight: 600; }
+  .mini { width: 70px; height: 6px; background: var(--background-element); }
+  .mini span { display: block; height: 100%; width: 35%; background: var(--success); }
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; white-space: nowrap; }
+  .sec-head h2::before { content: "▾ "; }
+  .sec.folded .sec-head h2::before { content: "▸ "; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .offers li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 6px 8px; }
+  .offers li.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .sub { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
+  .new { color: var(--accent); font-size: 12px; font-weight: 700; }
+  .act { color: var(--accent); }
+  .ok { color: var(--success); } .idle { color: var(--text-muted); }
+  .sb-foot { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted); font-size: 12px; display: flex; justify-content: space-between; }
+
+  /* Backdrop: the session dims behind the dialog; the status line stays lit. */
+  .backdrop { position: absolute; left: 0; right: 0; top: 0; bottom: 29px; background: var(--background); opacity: .62; }
+
+  /* Command palette, launcher style: centered, --background-panel, 1px --text-muted border on all
+     four sides (bordered like every modal box), no radius, no shadow. No title, no hints inside:
+     the status line carries them. Cell = 1ch: search line and rows inset 3 cells. */
+  .palette { background: var(--background-panel); border: 1px solid var(--text-muted); color: var(--text); font-size: 15px; line-height: 1.5; padding: 21px 0; }
+  .screen-palette { position: absolute; top: 168px; left: 420px; width: 600px; }
+  .search { padding: 0 3ch; display: flex; white-space: nowrap; }
+  .search .typed { color: var(--text); }
+  .search .placeholder { color: var(--text-muted); }
+  .cursor { display: inline-block; width: 2px; height: 18px; background: var(--user); vertical-align: -3px; margin-right: 1ch; animation: blink 1s steps(1) infinite; }
+  .typed + .cursor { margin: 0 0 0 1px; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .list { margin-top: 21px; }
+  /* Row, about 2 lines high: icon tile (2 cells), two spaces, label; only the selected row shows
+     its keybind or slash command, right-aligned and muted. */
+  .opt { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 2ch; align-items: center; padding: 11px 3ch; white-space: nowrap; }
+  .opt .k { display: none; color: var(--text-muted); text-align: right; }
+  /* Matched letters are a goop search result: bold --accent. */
+  .opt .m { color: var(--accent); font-weight: 700; }
+  .opt.sel .label { color: var(--primary); font-weight: 700; }
+  .opt.sel .k { display: block; }
+  /* Icon tile (icons: nerd): one Nerd Font glyph in --background on a filled cell pair; the color
+     follows the system meanings (never lavender). icons: letters shows the label's first letter. */
+  .tile { display: grid; place-items: center; width: 2ch; height: 22px; color: var(--background); font-weight: 700; }
+  .tile svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .t-offers { background: var(--success); }
+  .t-search { background: var(--secondary); }
+  .t-rules { background: var(--accent); }
+  .t-agents { background: var(--primary); }
+  .t-system { background: var(--text-muted); }
+  .t-quit { background: var(--error); }
+  /* Emoji mode (icons: emoji, the default): emoji bring their own colors, so the tile is neutral, same
+     2 cells and place, --background-element fill, emoji centered. Only Emoji_Presentation=Yes code
+     points (always 2 cells wide), no VS16 or ZWJ sequences. */
+  .t-emoji { background: var(--background-element); font-weight: 400; font-size: 13px; line-height: 1; }
+  .empty { padding: 11px 3ch; color: var(--text-muted); }
+
+  /* One status line, three zones: focus label | hints for the palette | background state + help. */
+  footer { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-commands::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+
+  /* Below the screen: four smaller copies of the box; (a) and (b) stack in the first column. */
+  .strip { width: 1440px; background: var(--background); color: var(--text); padding: 18px 28px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; align-items: start; border-top: 1px solid var(--border); font-family: var(--mono); }
+  .strip .stack { display: flex; flex-direction: column; gap: 28px; }
+  .strip h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop session with the command palette open">
+  <section class="session" aria-label="Session" inert>
+    <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
+    <div class="msgs">
+      <div class="user"><p>Buscame backend remoto que acepte 2 años de experiencia</p><div class="meta">you · 10:42</div></div>
+      <div class="turn">
+        <p>Encontré 8 que encajan; están a la derecha. La mejor es <b>Backend Developer (Python)</b> en Acme Labs: pide Python, Django y APIs REST, y tenés las tres. Te frena un poco el inglés fluido.</p>
+        <div class="speed"><span>gpt-oss-20b</span><span>prefill <b>412</b> tok/s</span><span>output <b>18.4</b> tok/s</span><span>1,240 → 186 tok</span><span>4.1s</span></div>
+      </div>
+      <div class="user"><p>¿Por qué la de Kraft tiene menos?</p><div class="meta">you · 10:43</div></div>
+      <div class="turn">
+        <p>Pide Kubernetes como requisito obligatorio y en tu perfil no está. El resto encaja: Python, APIs REST y trabajo remoto.</p>
+        <div class="speed"><span>gpt-oss-20b</span><span>prefill <b>398</b> tok/s</span><span>output <b>17.9</b> tok/s</span><span>980 → 64 tok</span><span>1.8s</span></div>
+      </div>
+    </div>
+    <div class="composer">
+      <div class="line"><span class="prompt">›</span><span class="placeholder">pedí algo · / comandos · @ oferta</span></div>
+      <div class="below"><span><span class="model">gpt-oss-20b</span> · <span class="reason">◆ high</span> · CPU · ready</span><span>focus is on the commands</span></div>
+    </div>
+  </section>
+  <aside aria-label="Sidebar with offers and status" inert>
+    <div class="ts-line"><span>ctx <b>2.4K</b>/6K</span><span class="mini"><span></span></span><span class="idle">○ next search 09:00</span><span class="ok">● 5 sources</span></div>
+    <div class="sec">
+      <div class="sec-head"><h2>Offers</h2><span class="count">8 ranked · <span class="new">3 new</span></span></div>
+      <ul class="offers">
+        <li class="sel"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">NEW</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
+        <li><span class="score apply">85</span><span>API Engineer</span><span class="new">NEW</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
+        <li><span class="score maybe">71</span><span>Python Developer</span><span></span><span class="sub">Kraft · Remote · ~ maybe</span></li>
+        <li><span class="score check">—</span><span>Backend Engineer</span><span></span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+        <li><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">NEW</span><span class="sub">Lumen · Hybrid Madrid · ~ maybe</span></li>
+      </ul>
+    </div>
+    <div class="sec folded"><div class="sec-head"><h2>Rules</h2><span class="count">6 rules · <span class="act">1 to review</span></span></div></div>
+    <div class="sec folded"><div class="sec-head"><h2>Search</h2><span class="count">5 sources ok · next 09:00</span></div></div>
+    <div class="sec folded"><div class="sec-head"><h2>Profile</h2><span class="count">Backend · mid · 3 yrs</span></div></div>
+    <div class="sb-foot"><span>local · encrypted</span><span>ctrl+x b hide</span></div>
+  </aside>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></symbol>
+    <symbol id="i-offers" viewBox="0 0 16 16"><rect x="2" y="5" width="12" height="9"/><path d="M6 5V3h4v2M2 9h12"/></symbol>
+    <symbol id="i-rules" viewBox="0 0 16 16"><path d="M3 2h10v12H3zM6 6h4M6 9h4"/></symbol>
+    <symbol id="i-new" viewBox="0 0 16 16"><path d="M8 2v12M2 8h12"/></symbol>
+    <symbol id="i-resume" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2 2v3h3M8 5v3l2 2"/></symbol>
+    <symbol id="i-agents" viewBox="0 0 16 16"><rect x="3" y="5" width="10" height="8"/><path d="M8 2v3M6 9h.01M10 9h.01"/></symbol>
+    <symbol id="i-models" viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8"/><path d="M6 1v3M10 1v3M6 12v3M10 12v3M1 6h3M1 10h3M12 6h3M12 10h3"/></symbol>
+    <symbol id="i-sources" viewBox="0 0 16 16"><path d="M3 3a10 10 0 0 1 10 10M3 7a6 6 0 0 1 6 6M4 12h.01"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15M3 3l1.8 1.8M11.2 11.2 13 13M3 13l1.8-1.8M11.2 4.8 13 3"/></symbol>
+    <symbol id="i-help" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M6 6.2a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9V10M8 12.2v.01"/></symbol>
+    <symbol id="i-profile" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.8"/><path d="M2.5 14.5a5.5 5.5 0 0 1 11 0"/></symbol>
+  </svg>
+
+  <section class="palette screen-palette" role="dialog" aria-modal="true" aria-label="Command palette" tabindex="-1">
+    <div class="search"><span class="cursor" aria-hidden="true"></span><span class="placeholder">search commands</span></div>
+    <div class="list" role="listbox" aria-label="Commands">
+      <div class="opt sel" role="option" aria-selected="true" tabindex="0"><span class="tile t-search"><svg aria-hidden="true"><use href="#i-search"/></svg></span><span class="label">Search now</span><span class="k">/search</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Open offers list</span><span class="k">/offers</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-rules"/></svg></span><span class="label">Rules goop learned</span><span class="k">/rules</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-new"/></svg></span><span class="label">New session</span><span class="k">ctrl+x n</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-resume"/></svg></span><span class="label">Resume session</span><span class="k">ctrl+x l</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-agents"><svg aria-hidden="true"><use href="#i-agents"/></svg></span><span class="label">Agents</span><span class="k">/agents</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-agents"><svg aria-hidden="true"><use href="#i-models"/></svg></span><span class="label">Models</span><span class="k">/models</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-search"><svg aria-hidden="true"><use href="#i-sources"/></svg></span><span class="label">Sources</span><span class="k">/sources</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-settings"/></svg></span><span class="label">Settings</span><span class="k">/settings</span></div>
+      <div class="opt" role="option" aria-selected="false" tabindex="-1"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-help"/></svg></span><span class="label">Help</span><span class="k">?</span></div>
+    </div>
+  </section>
+
+  <footer><span class="mode m-commands">commands</span><span><b>↵</b> run · <b>↑↓</b> move · <b>esc</b> close</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+
+<section class="strip" aria-label="Other palette states">
+  <div class="stack">
+    <div>
+      <h3>(a) Filtered · of</h3>
+      <section class="palette" aria-label="Command palette filtered by of">
+        <div class="search"><span class="typed">of</span><span class="cursor" aria-hidden="true"></span></div>
+        <div class="list">
+          <div class="opt sel"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Open <span class="m">of</span>fers list</span><span class="k">/offers</span></div>
+          <div class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Show only new <span class="m">of</span>fers</span><span class="k">n</span></div>
+          <div class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Saved <span class="m">of</span>fers</span><span class="k">/saved</span></div>
+          <div class="opt"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-profile"/></svg></span><span class="label">Pr<span class="m">of</span>ile</span><span class="k">/profile</span></div>
+        </div>
+      </section>
+    </div>
+    <div>
+      <h3>(b) No results · kubernetes</h3>
+      <section class="palette" aria-label="Command palette with no results">
+        <div class="search"><span class="typed">kubernetes</span><span class="cursor" aria-hidden="true"></span></div>
+        <div class="list">
+          <p class="empty">No results</p>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div>
+    <h3>(c) icons: emoji · Emoji icons (default)</h3>
+    <section class="palette" aria-label="Command palette with emoji icons">
+      <div class="search"><span class="cursor" aria-hidden="true"></span><span class="placeholder">search commands</span></div>
+      <div class="list">
+        <div class="opt sel"><span class="tile t-emoji">🔍</span><span class="label">Search now</span><span class="k">/search</span></div>
+        <div class="opt"><span class="tile t-emoji">💼</span><span class="label">Open offers list</span></div>
+        <div class="opt"><span class="tile t-emoji">📋</span><span class="label">Rules goop learned</span></div>
+        <div class="opt"><span class="tile t-emoji">💬</span><span class="label">New session</span></div>
+        <div class="opt"><span class="tile t-emoji">💬</span><span class="label">Resume session</span></div>
+        <div class="opt"><span class="tile t-emoji">🤖</span><span class="label">Agents</span></div>
+        <div class="opt"><span class="tile t-emoji">🧠</span><span class="label">Models</span></div>
+        <div class="opt"><span class="tile t-emoji">📡</span><span class="label">Sources</span></div>
+        <div class="opt"><span class="tile t-emoji">🔧</span><span class="label">Settings</span></div>
+        <div class="opt"><span class="tile t-emoji">❓</span><span class="label">Help</span></div>
+      </div>
+    </section>
+  </div>
+  <div>
+    <h3>(d) icons: letters · letter tiles</h3>
+    <section class="palette" aria-label="Command palette without a Nerd Font">
+      <div class="search"><span class="cursor" aria-hidden="true"></span><span class="placeholder">search commands</span></div>
+      <div class="list">
+        <div class="opt sel"><span class="tile t-search">S</span><span class="label">Search now</span><span class="k">/search</span></div>
+        <div class="opt"><span class="tile t-offers">O</span><span class="label">Open offers list</span></div>
+        <div class="opt"><span class="tile t-rules">R</span><span class="label">Rules goop learned</span></div>
+        <div class="opt"><span class="tile t-system">N</span><span class="label">New session</span></div>
+        <div class="opt"><span class="tile t-system">R</span><span class="label">Resume session</span></div>
+        <div class="opt"><span class="tile t-agents">A</span><span class="label">Agents</span></div>
+        <div class="opt"><span class="tile t-agents">M</span><span class="label">Models</span></div>
+        <div class="opt"><span class="tile t-search">S</span><span class="label">Sources</span></div>
+        <div class="opt"><span class="tile t-system">S</span><span class="label">Settings</span></div>
+        <div class="opt"><span class="tile t-system">H</span><span class="label">Help</span></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<p class="notes"><strong>Dialog, launcher style:</strong> ctrl+p opens a launcher-like box over the session: the 04 layout stays behind, dimmed and inert, the composer edge turns --border because focus left it, and the status line switches to the commands focus (blue dot). The box is about 600px (≈ 66 cells), centered, on the panel color with a 1px muted border on all four sides, no radius and no shadow; modal boxes (this palette and M11 confirmations) are the only bordered boxes in goop. Inside there is no title, no esc label and no hint row: just the search line (muted placeholder search commands, lavender cursor because typing is you) and a flat list of rows about two lines high. Each row is a 2-cell icon tile filled with the color of what the command touches (green offers, blue search and sources, yellow rules and profile, orange agents and models, gray session, settings, privacy and help, pink quit; never lavender), a dark Nerd Font glyph inside, two spaces, then the label. The selected row's label turns bold orange, and only that row shows its keybind or slash command, right-aligned and muted. All hints live in the status line: ↵ run · ↑↓ move · esc close. Typing flattens the list to fuzzy matches with matched letters in bold yellow, like every goop search match (a); no match shows a muted No results (b); (a) and (b) stack in the first column. <strong>Icon modes:</strong> the setting icons in Settings (M6) picks nerd · emoji · letters. The screen above is icons: nerd (the Nerd Font look). (c) is icons: emoji, the default: each tile turns neutral (--background-element fill, same 2 cells and place) with one emoji centered, because emoji bring their own colors; only Emoji_Presentation=Yes code points with no VS16 or ZWJ sequence, so every emoji is 2 cells wide and rows never shift (🔍 search, 💼 offers, 📋 rules, 💬 sessions, 🤖 agents, 🧠 models, 📡 sources, 🔧 settings, ❓ help; full mapping in system.md). (d) is icons: letters for old terminals or SSH: the label's first letter, bold, on the colored tile. <strong>Tradeoff:</strong> calmer and closer to a launcher, and the tiles let you find a command by color and shape; emoji work on most terminals without a Nerd Font, but in emoji mode the tiles lose the meaning colors and the emoji look depends on the terminal's emoji font, categories are gone so the list relies on its order (suggested and recent first), and keybinds show only on the selected row, so they are less discoverable (? help lists every key).</p>
+</body>
+</html>

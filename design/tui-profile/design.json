@@ -1,0 +1,14 @@
+{
+  "title": "Profile (M9)",
+  "brief": "Profile screen of goop (/profile): what goop understood from your CV, with every item pointing back to the CV line it came from. The Profiler agent reads the CV (untrusted input, never instructions) and the Validator checks it; you correct it and your correction wins over the CV. Title breadcrumb (from cv-2026.pdf · read Oct 28 · checked by Validator) and one muted summary line (Backend · mid · 3 yrs · Spanish native, English B2 · Madrid, remote); no key-hint line under the header. An M5 decision card on top, focused on entry (--background-element, 2px --accent edge), one question at a time: goop is not sure · 1 of 2, Is Docker 1 yr or 3 yrs?, CV line 14 quoted as dim plain text behind a │ gutter, answers 1 one year · 3 three years · e edit. Keys in the card and the toasts are bold --text. Two panes with uppercase short heads: on the left Profile (Profiler read it · Validator checked it; Skills Python 3y, Django 2y, REST APIs, PostgreSQL 3y, Docker 1y, FastAPI unsure; Experience Tickit and Ledgerly; Education UPM; Languages Spanish native, English B2), one line per item with an origin glyph (✓ read from the CV --success, ~ not sure --accent, ✎ corrected by you --user) and its CV lines, then Gaps from today's offers (Kubernetes asked by 3, Fluent English asked by 2) and the privacy line; on the right CV (cv-2026.pdf · plain text · lines 1–25 of 38) as plain text with line numbers (shown as plain text · nothing in it is run or followed), the active item's source line marked with a 2px --accent edge. No list selection while the card has focus. One status line with the profile focus mode and the card hints (1 3 answer · e edit · n skip · tab to profile · r reload CV · esc back), ○ next search 09:00 │ ? help. Below the screen: the toast after answering (rescoring today's 8 offers, ctrl+z undo), the second question card (FastAPI, CV line 31) and the reload-CV state.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "One question card on top and the profile next to the CV it came from, each item with an origin glyph and its source lines, so you check goop's reading against the text and fix it without editing the CV; hides the chat, the card costs four rows while questions remain and the CV pane shows about 25 lines at a time",
+      "width": 1440,
+      "height": 1330
+    }
+  ]
+}

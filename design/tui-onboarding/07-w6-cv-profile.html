@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · onboarding · W6 CV &amp; profile</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Setup frame like M6/M8: breadcrumb, two panes (steps | current step), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .title { padding: 20px 28px 18px; color: var(--text-muted); white-space: nowrap; }
+  /* Bold keys and numbers inside dim text (speed line style): one rule for every line. */
+  b { color: var(--text); font-weight: 600; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul, ol { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .todo { color: var(--accent); }
+  .dim { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .panes { display: grid; grid-template-columns: 360px 1fr; min-height: 0; padding: 0 28px 12px; }
+  .pane-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .pane-foot { margin-top: auto; color: var(--text-muted); font-size: 13px; padding-top: 8px; border-top: 1px solid var(--border-subtle); white-space: nowrap; }
+  /* Left pane: the step list. Progress only, never focused: ↵ and shift+tab move between steps. */
+  .steps { display: flex; flex-direction: column; gap: 10px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .step { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 8px; padding: 4px 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .step .tag { font-size: 13px; color: var(--text-muted); }
+  /* Current step while the pane has no focus: fill and bold text, no edge (M6 current category; the edge belongs to the focused pane). */
+  .step.current { background: var(--background-element); color: var(--text); font-weight: 600; }
+  .step.current .tag { font-weight: 400; }
+  /* Right pane: the current step. */
+  .body { display: flex; flex-direction: column; gap: 14px; padding-left: 24px; min-height: 0; }
+  /* Decision card (M5, M9): one question at a time; focused, so --background-element fill and the 2px yellow to-review edge. */
+  .card { background: var(--background-element); border-left: 2px solid var(--accent); padding: 12px 20px 12px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .card-top { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .q { font-weight: 700; }
+  /* Answers on one line: key bold --text, action muted, · between. */
+  .keys { color: var(--text-muted); font-size: 14px; white-space: nowrap; }
+  /* CV lines: inert plain text, dim, behind a │ gutter with the line number; never goop's voice. */
+  .cv { font: 13px/1.5 var(--mono); color: var(--text-muted); }
+  .cv li { display: grid; grid-template-columns: 3ch 1ch 1fr; column-gap: 1ch; padding-left: 6px; white-space: pre; }
+  .cv .ln { text-align: right; }
+  .cv .g { color: var(--border); }
+  /* What goop understood (M9 list), compacted into two columns. */
+  .legend { padding: 0 8px; }
+  .understood { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 12px; }
+  .sec { display: flex; flex-direction: column; gap: 2px; }
+  .sec h3 { padding: 0 8px 2px; }
+  .item { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; white-space: nowrap; }
+  .item .sub, .item .ref { color: var(--text-muted); font-size: 13px; }
+  /* Origin glyphs: ✓ read from the CV (green), ~ goop is not sure (yellow), ✎ corrected by you (lavender = you, wins over the CV). */
+  .from-cv { color: var(--success); } .unsure { color: var(--accent); } .by-you { color: var(--user); }
+  /* Summary: what goop will rank offers with, one line. */
+  .summary { padding: 8px 8px 0; border-top: 1px solid var(--border-subtle); font-size: 14px; white-space: nowrap; }
+  .summary .label { color: var(--text-muted); font-size: 13px; }
+  /* Path input (composer look, M4/M6): --background-panel, 2px --user edge, lavender prompt and cursor. */
+  .input { background: var(--background-panel); border-left: 2px solid var(--user); padding: 6px 14px; display: flex; align-items: center; white-space: nowrap; font-size: 14px; }
+  .input .prompt { color: var(--user); font-weight: 700; margin-right: 1ch; }
+  .input .typed { color: var(--text); }
+  .input .ask-word { margin-left: auto; color: var(--text-muted); font-size: 13px; }
+  .cursor { display: inline-block; width: 2px; height: 18px; background: var(--user); vertical-align: -3px; margin-left: 1px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  /* Completion list: files found, muted; the one that matches what you typed in --text. */
+  .found { font-size: 13px; color: var(--text-muted); padding: 0 16px; }
+  .found li { display: grid; grid-template-columns: 1fr auto; column-gap: 16px; white-space: nowrap; }
+  .found li.match { color: var(--text); }
+  .found .meta { color: var(--text-muted); }
+  /* Running line (M9 reload): --background-panel, inset 2px --warning edge. */
+  .running { background: var(--background-panel); box-shadow: inset 2px 0 var(--warning); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; color: var(--text-muted); white-space: nowrap; }
+  /* One status line, three zones: focus label | keys of the focused pane | busy state + help. */
+  footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b.next, .fbar b.next { color: var(--success); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: W6 before reading, reading, skipped. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px 24px; border-top: 1px solid var(--border); align-items: start; }
+  .feedback > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .feedback .a { grid-row: span 2; }
+  .fbar { border: 0; background: var(--background-panel); }
+  .fbar .mode { padding-left: 14px; }
+  .skipped { white-space: nowrap; font-size: 14px; color: var(--text-muted); padding: 0 8px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="title">Setup › <b>CV &amp; profile</b> · step 7 of 10 · esc quit setup</header>
+
+  <div class="panes">
+    <nav class="steps" aria-labelledby="steps-head">
+      <div class="pane-head"><h2 id="steps-head">Steps</h2><span class="count">5 of 10 done</span></div>
+      <ol class="step-list">
+        <li class="step"><span class="ok">✓</span><span>Welcome</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>System check</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>Models</span><span class="tag"></span></li>
+        <li class="step"><span class="busy">◐</span><span>Download</span><span class="tag">↓ <b>42%</b></span></li>
+        <li class="step"><span class="ok">✓</span><span>Benchmark</span><span class="tag">optional</span></li>
+        <li class="step"><span class="ok">✓</span><span>Security</span><span class="tag">required</span></li>
+        <li class="step current" aria-current="step"><span class="busy">◐</span><span>CV &amp; profile</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Preferences</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Schedule</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Done</span><span class="tag"></span></li>
+      </ol>
+      <p class="pane-foot">you can leave and come back; nothing is lost</p>
+    </nav>
+
+    <section class="body" aria-labelledby="body-head">
+      <div class="pane-head"><h2 id="body-head">CV &amp; profile</h2><span class="count">cv-2026.pdf · read by Profiler · checked by Validator · 2 questions</span></div>
+
+      <section class="card" aria-labelledby="q-1">
+        <p class="card-top"><span>goop is not sure · 1 of 2</span><span>Profiler wrote 1 yr · your answer wins over the CV</span></p>
+        <p class="q" id="q-1">Is Docker 1 yr or 3 yrs?</p>
+        <ol class="cv"><li><span class="ln">14</span><span class="g">│</span><span>  Docker in all projects</span></li></ol>
+        <p class="keys"><b>1</b> one year · <b>3</b> three years · <b>e</b> edit</p>
+      </section>
+
+      <p class="dim legend"><span class="from-cv">✓</span> read from your CV · <span class="unsure">~</span> not sure · <span class="by-you">✎</span> corrected by you, yours wins</p>
+
+      <div class="understood">
+        <div class="col">
+          <section class="sec" aria-labelledby="skills-head">
+            <h3 id="skills-head">Skills · 6</h3>
+            <ul>
+              <li class="item"><span class="from-cv">✓</span><span>Python <span class="sub">· 3y</span></span><span class="ref">line 3</span></li>
+              <li class="item"><span class="from-cv">✓</span><span>Django <span class="sub">· 2y</span></span><span class="ref">lines 3, 7, 12</span></li>
+              <li class="item"><span class="from-cv">✓</span><span>REST APIs</span><span class="ref">lines 3, 7</span></li>
+              <li class="item"><span class="from-cv">✓</span><span>PostgreSQL <span class="sub">· 3y</span></span><span class="ref">lines 3, 8</span></li>
+              <li class="item"><span class="unsure">~</span><span>Docker <span class="sub">· 1y</span></span><span class="ref"><span class="todo">1 of 2</span> · line 14</span></li>
+              <li class="item"><span class="unsure">~</span><span>FastAPI <span class="sub">· mentioned once</span></span><span class="ref"><span class="todo">2 of 2</span> · line 31</span></li>
+            </ul>
+          </section>
+        </div>
+        <div class="col">
+          <section class="sec" aria-labelledby="exp-head">
+            <h3 id="exp-head">Experience · 2 roles</h3>
+            <ul>
+              <li class="item"><span class="from-cv">✓</span><span>Backend Developer · <b>Tickit</b></span><span class="ref">Jul 2025 – now</span></li>
+              <li class="item"><span class="from-cv">✓</span><span>Python Developer · <b>Ledgerly</b></span><span class="ref">Oct 2023 – Jun 2025</span></li>
+            </ul>
+          </section>
+          <section class="sec" aria-labelledby="edu-head">
+            <h3 id="edu-head">Education · 1</h3>
+            <ul>
+              <li class="item"><span class="from-cv">✓</span><span>BSc Computer Engineering · <b>UPM</b></span><span class="ref">2019 – 2023</span></li>
+            </ul>
+          </section>
+          <section class="sec" aria-labelledby="lang-head">
+            <h3 id="lang-head">Languages · 2</h3>
+            <ul>
+              <li class="item"><span class="from-cv">✓</span><span>Spanish <span class="sub">· native</span></span><span class="ref">line 21</span></li>
+              <li class="item"><span class="from-cv">✓</span><span>English <span class="sub">· fluent</span></span><span class="ref">line 21</span></li>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      <p class="summary"><span class="label">Profile · </span><b>Backend · mid · 3 yrs</b> · Python, Django, PostgreSQL, Docker</p>
+
+      <p class="pane-foot">open questions stay in /profile if you go on · your CV stays encrypted on this machine and is never sent anywhere</p>
+    </section>
+  </div>
+
+  <footer><span class="mode">setup</span><span><b>1</b> <b>3</b> answer · <b class="next">↵</b> next · <b>s</b> skip · <b>shift+tab</b> back · <b>esc</b> quit setup</span><span class="zone-right"><span>↓ <b>13.4</b> of 31.8 GB · 18 MB/s · 17m</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around the CV and profile step">
+  <div class="a">
+    <h3>(a) Pick the CV · before reading</h3>
+    <p class="input"><span class="prompt">›</span><span class="typed">~/Documents/cv-2026.pdf</span><span class="cursor" aria-hidden="true"></span><span class="ask-word"><b>↵</b> read</span></p>
+    <ul class="found" aria-label="Files found">
+      <li class="match"><span>~/Documents/cv-2026.pdf</span><span class="meta">pdf · 184 KB · Oct 28</span></li>
+      <li><span>~/Documents/cv-2026-en.docx</span><span class="meta">docx · 41 KB · Oct 28</span></li>
+      <li><span>~/Downloads/CV_Alex_Moreno_2025.pdf</span><span class="meta">pdf · 212 KB · Mar 3</span></li>
+    </ul>
+    <p class="dim">the file is copied into goop's encrypted store; the original is not changed</p>
+    <div class="fbar"><span class="mode">setup</span><span><b class="next">↵</b> read · <b>tab</b> complete · <b>↑↓</b> pick · <b>s</b> skip · <b>shift+tab</b> back · <b>esc</b> quit setup</span><span class="zone-right"><span><b>?</b> help</span></span></div>
+  </div>
+  <div>
+    <h3>(b) Reading</h3>
+    <p class="running"><span><span class="busy">◐</span> reading <b>cv-2026.pdf</b> · Profiler · Qwen3.5-9B · 12s</span><span><b>esc</b> stop</span></p>
+  </div>
+  <div>
+    <h3>(c) Skipped</h3>
+    <ol class="step-list" aria-label="Step list excerpt">
+      <li class="step"><span>—</span><span>CV &amp; profile</span><span class="tag">skipped</span></li>
+    </ol>
+    <p class="skipped">— CV &amp; profile · skipped · add it later in /profile · offers are ranked without your skills until then</p>
+  </div>
+</section>
+<p class="notes"><strong>Setup frame:</strong> the same frame as W1 and W2 (breadcrumb Setup › CV &amp; profile · step 7 of 10, step list on the left, current step on the right, one status line with the setup mode; see the W1 notes). Security is now ✓ (5 of 10 done) and Download keeps running (◐ ↓ 42%). This artboard covers W6 (pick the CV, strip a) and W6b (confirm the profile, the main frame). <strong>W6b:</strong> the approved M9 profile, compacted into the right pane. The Validator's doubts come first as the M9 decision card, focused (element fill, 2px yellow to-review edge): goop is not sure · 1 of 2, the question in bold (Is Docker 1 yr or 3 yrs?), the CV line it doubts quoted inert behind a │ gutter with its line number (14 · Docker in all projects), and the answers on one line (1 one year · 3 three years · e edit). Under it, the M9 legend and what goop understood in two columns to save rows: Skills on the left, Experience, Education and Languages on the right, one line per item with its origin glyph (✓ read from your CV, ~ not sure with its question number, ✎ corrected by you) and the CV lines on the right. On a first read nothing is corrected yet, so ✎ only appears in the legend; answering a question turns that item ✎. The CV pane and the Gaps section of M9 are left out: the right pane has no room for the full CV, and gaps need today's offers, which do not exist before the first search. A summary line closes the list (Profile · Backend · mid · 3 yrs · Python, Django, PostgreSQL, Docker). <strong>Status line:</strong> 1 3 answer · ↵ next · s skip · shift+tab back · esc quit setup. ↵ next keeps the profile as read and goes on; open questions stay ~ and wait in /profile (pane foot). s skip skips what is in front of you: here the current question, before reading the whole step. <strong>Below the screen:</strong> (a) W6 before reading: a lavender path input (› ~/Documents/cv-2026.pdf, ↵ read on the right), a muted completion list of the pdf and docx files found in ~/Documents and ~/Downloads (the matching one in --text), the line on the encrypted copy (the original is not changed) and its status line (↵ read green · tab complete · ↑↓ pick · s skip); (b) reading, as the M9 running line (◐ reading cv-2026.pdf · Profiler · Qwen3.5-9B · 12s, esc stop) — it runs on the GPU model, which downloads first; (c) skipped, as the step list row (— muted, skipped tag) and its line (add it later in /profile · offers are ranked without your skills until then). File sizes and dates are illustrative. Tradeoff: the profile is confirmed in setup with the same card and glyphs as /profile, so nothing is new later, but without the CV pane you check the doubted line only through its one-line quote.</p>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M9 profile · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M5 and M8: title, summary, one decision card, two panes (profile | CV), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto; }
+  .head { padding: 20px 28px 14px; white-space: nowrap; }
+  .title { color: var(--text-muted); }
+  .title b { color: var(--text); }
+  .summary { color: var(--text-muted); font-size: 13px; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul, ol { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  .todo { color: var(--accent); }
+  .dim { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  /* Decision card (M5): one question at a time; focused, so --background-element fill and the 2px yellow edge (to review). */
+  .card { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 12px 20px 12px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .card.focused { background: var(--background-element); }
+  .screen-card { margin: 0 28px 16px; }
+  .card-top { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  /* A terminal has one font size: the question is the normal role in bold --text, everything around it is dim. */
+  .q { font-weight: 700; }
+  /* Answers on one line: key bold --text, action muted, · between. */
+  .keys { color: var(--text-muted); font-size: 14px; white-space: nowrap; }
+  .keys b { color: var(--text); font-weight: 600; }
+  /* CV lines: inert plain text, dim, behind a │ gutter with the line number; never the flame, never goop's voice. */
+  .cv { font: 13px/1.5 var(--mono); color: var(--text-muted); }
+  .cv li { display: grid; grid-template-columns: 3ch 1ch 1fr; column-gap: 1ch; padding-left: 6px; white-space: pre; }
+  .cv .ln { text-align: right; }
+  .cv .g { color: var(--border); }
+  /* Source of the active item: a subtle 2px yellow marker at the left of the line, nothing else changes. */
+  .cv li.src { box-shadow: inset 2px 0 var(--accent); }
+  .panes { display: grid; grid-template-columns: 620px 1fr; min-height: 0; padding: 0 28px 10px; }
+  .pane-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; white-space: nowrap; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  /* Left pane: what goop understood, one line per item, origin glyph first. */
+  .profile { display: flex; flex-direction: column; gap: 12px; padding-right: 20px; border-right: 1px solid var(--border); min-height: 0; }
+  .legend { margin-top: -8px; }
+  .sec { display: flex; flex-direction: column; gap: 2px; }
+  .sec h3 { padding: 0 8px 2px; }
+  .sec h3::before { content: "▾ "; }
+  .item { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; white-space: nowrap; }
+  .item .sub, .item .ref { color: var(--text-muted); font-size: 13px; }
+  /* Origin glyphs: ✓ read from the CV (green), ~ goop is not sure (yellow), ✎ corrected by you (lavender = you, wins over the CV). */
+  .from-cv { color: var(--success); } .unsure { color: var(--accent); } .by-you { color: var(--user); }
+  /* Selection while the list has focus (not in this state): --background-element and the inset 2px orange edge. */
+  .item.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .gaps .item { color: var(--text-muted); font-size: 13px; }
+  .private { margin-top: auto; padding: 0 8px; }
+  /* Right pane: the CV as it was read, plain text with line numbers. */
+  .source { display: flex; flex-direction: column; gap: 8px; padding-left: 24px; min-height: 0; }
+  .source .dim { margin-top: -6px; }
+  .source .cv { overflow: hidden; }
+  /* One status line, three zones: focus label | hints for the focused card | background state + help. */
+  .status { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  .status b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-profile::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: after answering, the second question, and the reload-CV state. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid var(--border); }
+  .feedback .stack { display: flex; flex-direction: column; gap: 16px; }
+  .feedback h3 { margin-bottom: 8px; }
+  .toast, .running { background: var(--background-panel); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast { box-shadow: inset 2px 0 var(--success); }
+  .running { box-shadow: inset 2px 0 var(--warning); color: var(--text-muted); }
+  .toast b, .running .k { color: var(--text); font-weight: 600; }
+  .running b { color: var(--text); font-weight: 600; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <p class="title">Profile › <b>from cv-2026.pdf</b> · read Oct 28 · checked by Validator · esc back to session 3</p>
+    <p class="summary">Backend · mid · 3 yrs · Spanish native, English B2 · Madrid, remote</p>
+  </header>
+
+  <section class="card focused screen-card" aria-labelledby="q-1">
+    <p class="card-top"><span>goop is not sure · 1 of 2</span><span>Profiler wrote 1 yr · your answer wins over the CV</span></p>
+    <p class="q" id="q-1">Is Docker 1 yr or 3 yrs?</p>
+    <ol class="cv"><li><span class="ln">14</span><span class="g">│</span><span>Docker in all projects</span></li></ol>
+    <p class="keys"><b>1</b> one year · <b>3</b> three years · <b>e</b> edit</p>
+  </section>
+
+  <div class="panes">
+    <section class="profile" aria-labelledby="profile-head">
+      <div class="pane-head"><h2 id="profile-head">Profile</h2><span class="count">Profiler read it · Validator checked it</span></div>
+      <p class="dim legend"><span class="from-cv">✓</span> read from your CV · <span class="unsure">~</span> not sure · <span class="by-you">✎</span> corrected by you, yours wins</p>
+      <section class="sec" aria-labelledby="skills-head">
+        <h3 id="skills-head">Skills · 6</h3>
+        <ul>
+          <li class="item"><span class="from-cv">✓</span><span>Python <span class="sub">· 3y</span></span><span class="ref">line 3</span></li>
+          <li class="item"><span class="from-cv">✓</span><span>Django <span class="sub">· 2y</span></span><span class="ref">lines 3, 7, 12</span></li>
+          <li class="item"><span class="from-cv">✓</span><span>REST APIs</span><span class="ref">lines 3, 7</span></li>
+          <li class="item"><span class="from-cv">✓</span><span>PostgreSQL <span class="sub">· 3y</span></span><span class="ref">lines 3, 8</span></li>
+          <li class="item"><span class="unsure">~</span><span>Docker <span class="sub">· 1y</span></span><span class="ref"><span class="todo">1 of 2</span> · line 14</span></li>
+          <li class="item"><span class="unsure">~</span><span>FastAPI <span class="sub">· unsure · mentioned once</span></span><span class="ref"><span class="todo">2 of 2</span> · line 31</span></li>
+        </ul>
+      </section>
+      <section class="sec" aria-labelledby="exp-head">
+        <h3 id="exp-head">Experience · 2 roles</h3>
+        <ul>
+          <li class="item"><span class="from-cv">✓</span><span>Backend Developer · <b>Tickit</b> <span class="sub">· Django, REST API</span></span><span class="ref">Jul 2025 – now</span></li>
+          <li class="item"><span class="from-cv">✓</span><span>Python Developer · <b>Ledgerly</b> <span class="sub">· payments</span></span><span class="ref">Oct 2023 – Jun 2025</span></li>
+        </ul>
+      </section>
+      <section class="sec" aria-labelledby="edu-head">
+        <h3 id="edu-head">Education · 1</h3>
+        <ul>
+          <li class="item"><span class="from-cv">✓</span><span>BSc Computer Engineering · <b>UPM</b></span><span class="ref">2019 – 2023</span></li>
+        </ul>
+      </section>
+      <section class="sec" aria-labelledby="lang-head">
+        <h3 id="lang-head">Languages · 2</h3>
+        <ul>
+          <li class="item"><span class="from-cv">✓</span><span>Spanish <span class="sub">· native</span></span><span class="ref">line 21</span></li>
+          <li class="item"><span class="by-you">✎</span><span>English <span class="sub">· B2 · you said B2, CV says "fluent"</span></span><span class="ref">line 21</span></li>
+        </ul>
+      </section>
+      <section class="sec gaps" aria-labelledby="gaps-head">
+        <h3 id="gaps-head">Gaps · from today's offers</h3>
+        <ul>
+          <li class="item"><span></span><span>Kubernetes · asked by <span class="todo">3</span> of today's offers · not in your CV</span><span></span></li>
+          <li class="item"><span></span><span>Fluent English · asked by <span class="todo">2</span> · you have B2</span><span></span></li>
+        </ul>
+      </section>
+      <p class="dim private">Your CV stays encrypted on this machine and is never sent anywhere.</p>
+    </section>
+
+    <section class="source" aria-labelledby="cv-head">
+      <div class="pane-head"><h2 id="cv-head">CV</h2><span class="count">cv-2026.pdf · plain text · lines 1–25 of 38</span></div>
+      <p class="dim">shown as plain text · nothing in it is run or followed</p>
+      <ol class="cv">
+        <li><span class="ln">1</span><span class="g">│</span><span>ALEX MORENO · Backend Developer</span></li>
+        <li><span class="ln">2</span><span class="g">│</span><span>Madrid, España · disponible en remoto</span></li>
+        <li><span class="ln">3</span><span class="g">│</span><span>Python (3 años) · Django · REST APIs · PostgreSQL</span></li>
+        <li><span class="ln">4</span><span class="g">│</span><span></span></li>
+        <li><span class="ln">5</span><span class="g">│</span><span>EXPERIENCIA</span></li>
+        <li><span class="ln">6</span><span class="g">│</span><span>Backend Developer · Tickit · jul 2025 – actualidad</span></li>
+        <li><span class="ln">7</span><span class="g">│</span><span>  API REST pública para venta de entradas (Django, DRF)</span></li>
+        <li><span class="ln">8</span><span class="g">│</span><span>  PostgreSQL: particionado de la tabla de pedidos, 40M filas</span></li>
+        <li><span class="ln">9</span><span class="g">│</span><span>  Colas con Celery y Redis para los envíos de email</span></li>
+        <li><span class="ln">10</span><span class="g">│</span><span></span></li>
+        <li><span class="ln">11</span><span class="g">│</span><span>Python Developer · Ledgerly · oct 2023 – jun 2025</span></li>
+        <li><span class="ln">12</span><span class="g">│</span><span>  Informes de pagos para pymes (Django, pandas)</span></li>
+        <li><span class="ln">13</span><span class="g">│</span><span>  Integración con APIs bancarias (PSD2)</span></li>
+        <li class="src" aria-current="true"><span class="ln">14</span><span class="g">│</span><span>  Docker in all projects</span></li>
+        <li><span class="ln">15</span><span class="g">│</span><span></span></li>
+        <li><span class="ln">16</span><span class="g">│</span><span>EDUCACIÓN</span></li>
+        <li><span class="ln">17</span><span class="g">│</span><span>Grado en Ingeniería de Computadores · UPM · 2019 – 2023</span></li>
+        <li><span class="ln">18</span><span class="g">│</span><span>  TFG: detección de fraude en pagos con Python</span></li>
+        <li><span class="ln">19</span><span class="g">│</span><span></span></li>
+        <li><span class="ln">20</span><span class="g">│</span><span>IDIOMAS</span></li>
+        <li><span class="ln">21</span><span class="g">│</span><span>Español nativo · English fluent</span></li>
+        <li><span class="ln">22</span><span class="g">│</span><span></span></li>
+        <li><span class="ln">23</span><span class="g">│</span><span>HERRAMIENTAS</span></li>
+        <li><span class="ln">24</span><span class="g">│</span><span>Git, GitHub Actions, Linux, Docker Compose</span></li>
+        <li><span class="ln">25</span><span class="g">│</span><span>pytest, Postman, Sentry</span></li>
+      </ol>
+    </section>
+  </div>
+
+  <footer class="status"><span class="mode m-profile">profile</span><span><b>1</b> <b>3</b> answer · <b>e</b> edit · <b>n</b> skip · <b>tab</b> to profile · <b>r</b> reload CV · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around the profile">
+  <div class="stack">
+    <div><h3>After answering (3)</h3><div class="toast"><span><span class="ok">✓</span> Docker set to 3 yrs · rescoring today's 8 offers</span><span><b>ctrl+z</b> undo</span></div></div>
+    <div><h3>Reload CV (r · /reload-cv)</h3><div class="running"><span><span class="busy">◐</span> reading <b>cv-2026.pdf</b> · Profiler · 12s</span><span><span class="k">esc</span> stop</span></div></div>
+  </div>
+  <div>
+    <h3>Next question</h3>
+    <section class="card focused" aria-labelledby="q-2">
+      <p class="card-top"><span>goop is not sure · 2 of 2</span><span>mentioned once, with no role or dates</span></p>
+      <p class="q" id="q-2">Did you use FastAPI at work, or only try it?</p>
+      <ol class="cv"><li><span class="ln">31</span><span class="g">│</span><span>Proyectos personales: API de recetas con FastAPI</span></li></ol>
+      <p class="keys"><b>1</b> side project only · <b>2</b> used at work · <b>x</b> remove · <b>e</b> edit</p>
+    </section>
+  </div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /profile opens like M5 and M8: title breadcrumb with where the profile came from, one muted summary line, no key-hint line under the header, one status line. The Validator's doubts come first as an M5 decision card, one question at a time: focused, so it takes the --background-element fill and keeps its 2px yellow to-review edge; muted "goop is not sure · 1 of 2", the question in bold, the CV line it doubts quoted as dim plain text behind a │ gutter with its line number (14 · Docker in all projects), and the answers on one line with bold keys in the text color (1 one year · 3 three years · e edit). Two panes below, like parser views that point back to the source text. On the left, under the Profile head (Profiler read it · Validator checked it), what goop understood: Skills, Experience, Education and Languages, one line per item with an origin glyph (✓ green read from your CV, ~ yellow not sure, ✎ lavender corrected by you: lavender is you and your correction wins over the CV, as with English B2 where the CV says "fluent") and the CV lines it came from on the right; the two open questions point back to the card (1 of 2, 2 of 2). A Gaps section closes the pane: what today's offers ask for that your profile lacks (Kubernetes asked by 3, not in your CV; Fluent English asked by 2, you have B2), muted with the counts in yellow; then the privacy line. On the right, under the CV head (cv-2026.pdf · plain text · lines 1–25 of 38), the CV exactly as read: plain text with line numbers, dim, never goop's voice, with the note that nothing in it is run or followed; the source lines of the active item get a subtle 2px yellow marker at the left (line 14 for the Docker question; line 3 for Python stays plain because Python is not active). Focus choice: while the card has focus the list shows no selection at all (as in M5, where the unfocused list has no selected row), so only one thing looks live and only the card's source line is marked. The status line hints follow the card (1 3 answer · e edit · n skip · tab to profile · r reload CV · esc back). tab moves focus to the list: the selected row gets the fill and the orange edge, the hints become ↑↓ move · ↵ edit · a add · x remove · c confirm, the card dims to the panel fill, and the selected item's source lines get the marker on the right (Python marks line 3). After an answer the item turns ✎ and the next question takes the card; with no questions left the card disappears and the panes move up. Preferences are not shown here: you set them in /settings (M6), the CV never does. Costs a full screen that hides the chat, the card takes four rows while questions remain, and the CV pane only shows about 25 lines, so it scrolls to the active item. Below the screen: the toast after answering (rescoring today's offers, ctrl+z undo), the second question card and the reload-CV state.</p>
+</body>
+</html>
