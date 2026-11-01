@@ -1,0 +1,21 @@
+{
+  "title": "Security alert (M10)",
+  "brief": "Security alert screen of goop, opened from an offer the Security agent (gpt-oss-safeguard-20b) flagged, or from the status line alert: offer header with a pink ⚠ quarantined tag and the reason category; the flagged lines quoted as inert plain text with the rule that fired; what goop did (lines removed from the summary and prompts, offer out of the ranking, nothing sent); the decision as key hints (enter keep quarantined, r release, d dismiss, b block company/source, f full text, esc back, ? all actions); status line with the alert focus mode. Below the screen: the status line alert chip and the toast after release.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "Consistent with M2 and room for full quotes and goop's advice; hides the chat and the list while you decide",
+      "width": 1440,
+      "height": 1240
+    },
+    {
+      "file": "02-modal.html",
+      "title": "Modal over the session",
+      "tradeoff": "Quick decision without losing your place in the session; quotes are cut to one line and goop's advice does not fit",
+      "width": 1440,
+      "height": 1190
+    }
+  ]
+}
