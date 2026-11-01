@@ -1,6 +1,6 @@
 {
   "title": "Full text (M3)",
-  "brief": "Full text screen of goop, opened with f on the offer detail (M2): the original offer text exactly as fetched, shown as untrusted plain text in a framed reader with a dim │ gutter and line numbers, never in goop's voice; header with breadcrumb, source host, fetch time and word count; left markers on the requirement lines goop matched (green match, yellow partial, pink missing) with a legend; search with / (kubern, 1 of 2); key hints / search, n/N, y copy, o open, a ask goop, esc back, ? all actions; reader scrollbar; status line with the text focus mode.",
+  "brief": "Full text screen of goop, opened with f on the offer detail (M2): the original offer text exactly as fetched, shown as untrusted plain text in a framed reader with a dim │ gutter and line numbers, never in goop's voice; header with breadcrumb, source host, fetch time and word count; left markers on the requirement lines goop matched (green match, yellow partial, pink missing) with a legend; search with / (kubern, 1 of 2); key hints / search, n/N, y copy, o open, a ask goop, esc back, ctrl+p all actions; reader scrollbar; status line with the text focus mode.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {

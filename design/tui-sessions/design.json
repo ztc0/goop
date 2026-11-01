@@ -1,6 +1,6 @@
 {
   "title": "Sessions (M4)",
-  "brief": "Sessions screen of goop, opened with ctrl+x l or /resume: a filter input at the top in the composer style (placeholder 'filter sessions'); sessions grouped by day (Today, Yesterday, Last week) with title, time, message count and offers mentioned, the current one tagged ● current; a preview of the selected session (first user message, goop's last reply, offers mentioned); key hints ↵ open, n new session, r rename, d delete, / filter, esc back, ? all actions; status line with the sessions focus mode. Below the screen: filtering, inline rename, the delete confirmation (encrypted, cannot be recovered) and the toast after delete without undo.",
+  "brief": "Sessions screen of goop, opened with ctrl+x l or /resume: a filter input at the top in the composer style (placeholder 'filter sessions'); sessions grouped by day (Today, Yesterday, Last week) with title, time, message count and offers mentioned, the current one tagged ● current; a preview of the selected session (first user message, goop's last reply, offers mentioned); key hints ↵ open, n new session, r rename, d delete, / filter, esc back, ctrl+p all actions; status line with the sessions focus mode. Below the screen: filtering, inline rename, the delete confirmation (encrypted, cannot be recovered) and the toast after delete without undo.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {

@@ -60,7 +60,7 @@
   /* Actions: one line of keys, like the status line hints but for this offer. */
   /* Actions: one line of key hints under the header (k9s / gh-dash), same style as the status line:
      key in yellow, action in muted text, no boxes; the primary action is told apart only by color.
-     State (saved, applied) is a tag in the header, never a button. ? opens the full actions menu (lazygit). */
+     State (saved, applied) is a tag in the header, never a button. ctrl+p opens every action in the command palette; ? opens help. */
   .actions { display: flex; gap: 24px; padding: 10px 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-muted); white-space: nowrap; }
   .actions b { color: var(--accent); font-weight: 700; margin-right: 6px; }
   .actions .primary { color: var(--success); font-weight: 600; }
@@ -98,7 +98,7 @@
       <span class="verdict apply">✔ apply · matches 5 of 6 requirements</span>
     </header>
     <nav class="actions" aria-label="Offer actions">
-      <span class="primary"><b>↵</b>apply</span><span><b>s</b>unsave</span><span><b>a</b>ask goop</span><span><b>d</b>dismiss</span><span><b>o</b>browser</span><span><b>f</b>full text</span><span class="more"><b>?</b>all actions</span>
+      <span class="primary"><b>↵</b>apply</span><span><b>s</b>unsave</span><span><b>a</b>ask goop</span><span><b>d</b>dismiss</span><span><b>o</b>browser</span><span><b>f</b>full text</span><span class="more"><b>ctrl+p</b>all actions</span>
     </nav>
     <div class="body">
       <div class="col">
@@ -143,6 +143,6 @@
   <div><h3>After apply (enter)</h3><div class="ask"><span class="q">Opened the application page. Did you apply?</span><span class="opts"><b>y</b> yes, mark applied · <b>n</b> not yet · <b>esc</b> later</span></div></div>
   <div><h3>On dismiss</h3><div class="ask"><span class="q">Why not this one? (goop learns from it)</span><span class="opts"><b>1</b> salary · <b>2</b> stack · <b>3</b> location · <b>4</b> seniority · <b>5</b> other · <b>esc</b> skip</span></div></div>
 </section>
-<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. The actions are one line of key hints under the header, in the status line style (k9s, gh-dash): apply is the primary action, told apart only by its green color, and opens the application page, then asks whether you applied; state lives in the header as a tag (★ saved, ✓ applied) and the hint flips (s save → s unsave); ? opens every action in a menu (lazygit); Dismiss asks for a reason the Learner uses; every action shows a short toast with undo. the status line keeps only navigation keys. Below the screen: the feedback states.</p>
+<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. The actions are one line of key hints under the header, in the status line style (k9s, gh-dash): apply is the primary action, told apart only by its green color, and opens the application page, then asks whether you applied; state lives in the header as a tag (★ saved, ✓ applied) and the hint flips (s save → s unsave); ctrl+p opens every action in the command palette and ? opens help; Dismiss asks for a reason the Learner uses; every action shows a short toast with undo. the status line keeps only navigation keys. Below the screen: the feedback states.</p>
 </body>
 </html>
