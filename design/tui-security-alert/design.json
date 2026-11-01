@@ -1,14 +1,14 @@
 {
   "title": "Security alert (M10)",
-  "brief": "Security alert screen of goop, opened from an offer the Security agent (gpt-oss-safeguard-20b) flagged, or from the status line alert: offer header with a pink ⚠ quarantined tag and the reason category; the flagged lines quoted as inert plain text with the rule that fired; what goop did (lines removed from the summary and prompts, offer out of the ranking, nothing sent); no key-hint line under the header: the status line (alert focus mode) carries the decision keys (enter keep quarantined, r release, d dismiss, b block company/source, f full text, tab next finding, esc back). Below the screen: the status line alert chip, the toast after release (ctrl+z undo) and the block ask.",
+  "brief": "Security alert screen of goop, opened from an offer the Security agent (gpt-oss-safeguard-20b) flagged, or from the status line alert: offer header with a pink ⚠ quarantined tag, a verdict line that leads with the severity (⚠ high · asks to send your data · 3 findings), and goop's safest choice right under it (keep it quarantined, release later); the findings ordered by severity, each with a small high/low tag, the flagged lines quoted as inert plain text with their original line numbers, and one plain line on why it matters; what goop did (lines removed from the summary and prompts, offer out of the ranking, nothing sent) plus what release does; a dim History block of timestamped events. No key-hint line under the header: the status line (alert focus mode) carries only the decision keys (enter keep quarantined, r release, d dismiss, b block company/source, f full text, esc back); navigation keys live in help. Below the screen: the status line alert chip, the dismiss reason ask (false alarm feeds the Learner and Security tuning), the toast and History after a release (ctrl+z undo), the block ask, and full-text (f) excerpts with flagged lines marked by a 2px pink gutter marker, n/3 tags and hidden text made visible, with their status line.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {
       "file": "01-full-screen.html",
       "title": "Full screen",
-      "tradeoff": "Consistent with M2 and room for full quotes and goop's advice; hides the chat and the list while you decide",
+      "tradeoff": "Consistent with M2, severity first and room for full quotes, why-it-matters lines and goop's advice; hides the chat and the list while you decide",
       "width": 1440,
-      "height": 1240
+      "height": 1780
     }
   ]
 }
