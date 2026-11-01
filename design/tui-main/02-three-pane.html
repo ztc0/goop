@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · 02 Three panes</title>
+<style>
+  :root {
+    --bg: #14110f; --line: #3a302a; --text: #f4ede6; --muted: #b3a79c; --dim: #8a7f75;
+    --pink: #ff5f7a; --orange: #ff7a2e; --yellow: #ffc24a; --green: #8fd694; --blue: #7cc4ff;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  main { width: 1440px; height: 900px; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; display: grid; grid-template-columns: 400px 440px 1fr; grid-template-rows: 1fr auto; }
+  .pane, section.pane { padding: 18px 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .label { color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: 12px; margin-bottom: 12px; }
+  .label b { color: var(--orange); }
+  .msgs { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  .you { color: var(--blue); } .goop { color: var(--orange); }
+  .msg p { margin: 2px 0 0; color: var(--text); }
+  .model { color: var(--dim); }
+  .input { color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 8px 10px; border-left: 2px solid transparent; }
+  li.sel { border-left-color: var(--orange); background: #221a15; }
+  .row { display: flex; gap: 10px; }
+  .score { font-weight: 700; width: 3ch; text-align: right; }
+  .apply { color: var(--green); } .maybe { color: var(--yellow); }
+  .sub { color: var(--muted); padding-left: calc(3ch + 10px); }
+  .new { color: var(--yellow); font-weight: 700; }
+  h1 { font-size: 18px; margin: 0; }
+  .meta { color: var(--muted); margin: 2px 0 16px; }
+  .big { font-size: 30px; font-weight: 800; color: var(--green); }
+  h3 { margin: 18px 0 6px; font-size: 14px; }
+  .block p { margin: 0 0 4px; }
+  .crit { color: var(--pink); } .des { color: var(--yellow); }
+  .fit { color: var(--green); }
+  .link { color: var(--blue); text-decoration: underline; }
+  .status { grid-column: 1 / -1; display: flex; gap: 28px; padding: 8px 20px; border-top: 1px solid var(--line); color: var(--muted); }
+  .ok { color: var(--green); } .busy { color: var(--yellow); }
+  .keys { color: var(--dim); margin-left: auto; }
+  .notes { width: 1440px; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop main screen mockup: three panes with chat, list and live detail">
+  <section class="pane" aria-label="Chat">
+    <div class="label"><b>goop</b> · chat</div>
+    <div class="msgs">
+      <div class="msg"><span class="you">You</span><p>Buscame backend remoto que acepte 2 años</p></div>
+      <div class="msg"><span class="goop">goop</span> <span class="model">gpt-oss</span><p>Encontré 8. La mejor es Acme Labs; la tenés a la derecha.</p></div>
+      <div class="msg"><span class="you">You</span><p>¿Por qué la de Kraft tiene menos?</p></div>
+      <div class="msg"><span class="goop">goop</span> <span class="model">gpt-oss</span><p>Pide Kubernetes como obligatorio y en tu perfil no está.</p></div>
+    </div>
+    <div class="input">&gt; _</div>
+  </section>
+  <section class="pane" aria-label="Offer list">
+    <div class="label">offers · 8 · <span class="new">3 new</span></div>
+    <ul>
+      <li class="sel"><div class="row"><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="new">●</span></div><div class="sub">Acme Labs · Remote</div></li>
+      <li><div class="row"><span class="score apply">85</span><span>API Engineer</span><span class="new">●</span></div><div class="sub">Nubio · Remote EU</div></li>
+      <li><div class="row"><span class="score maybe">71</span><span>Python Developer</span></div><div class="sub">Kraft · Remote</div></li>
+      <li><div class="row"><span class="score maybe">64</span><span>Platform Engineer</span><span class="new">●</span></div><div class="sub">Lumen · Hybrid Madrid</div></li>
+      <li><div class="row"><span class="score maybe">58</span><span>Backend Engineer</span></div><div class="sub">Orbit · Remote</div></li>
+    </ul>
+  </section>
+  <section class="pane" aria-label="Selected offer detail" style="border-right:0">
+    <div class="label">detail</div>
+    <h1>Backend Developer (Python)</h1>
+    <p class="meta">Acme Labs · Remote · 2 days ago · Greenhouse</p>
+    <div><span class="big">92</span> <span class="apply">✔ Apply</span></div>
+    <div class="block"><h3>What holds you back</h3><p class="des">◦ Fluent English (preferred)</p><p class="des">◦ Kubernetes (nice to have)</p></div>
+    <div class="block"><h3>Why it fits</h3><p class="fit">✔ Python, Django and REST APIs: you have all three</p><p class="fit">✔ Remote, mid level, 2+ years</p></div>
+    <div class="block"><h3>Salary</h3><p>40,000 – 50,000 EUR</p></div>
+    <div class="block"><h3>Apply</h3><p class="link">boards.greenhouse.io/acme/jobs/48213</p></div>
+  </section>
+  <div class="status"><span class="ok">● models ready</span><span class="busy">◐ searching 312/1240</span><span>answering: gpt-oss-20b</span><span class="keys">↑↓ move · s save · d dismiss · o open · tab switch</span></div>
+</main>
+<p class="notes"><strong>Tradeoff:</strong> moving through the list updates the detail live, so you never open a separate screen. Fastest for triage, but it needs a wide terminal (about 160 columns); below that it falls back to chat + list.</p>
+</body>
+</html>

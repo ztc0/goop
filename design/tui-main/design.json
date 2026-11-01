@@ -1,0 +1,28 @@
+{
+  "title": "goop main screen",
+  "brief": "Main TUI screen of goop (layout B: chat + offer list). Shows the chat with the Orchestrator, today's offers with score, verdict and NEW badge, the answering model and background search progress. Terminal look, logo palette.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-boxed-split.html",
+      "title": "Boxed split",
+      "tradeoff": "Familiar bordered boxes, clear focus; borders cost space",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-three-pane.html",
+      "title": "Three panes",
+      "tradeoff": "Live detail while moving through the list; needs ~160 columns",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-borderless-cards.html",
+      "title": "Borderless cards",
+      "tradeoff": "Calm, portfolio-friendly cards; fewer offers fit, needs true color",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}
