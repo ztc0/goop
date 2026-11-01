@@ -8,17 +8,20 @@ This file is the entry point. It stays short on purpose: read the detailed rule 
 
 All scripts run inside the repo-local environment (`scripts/dev-env/run.ts`).
 
-| Command               | What it does                                       |
-| --------------------- | -------------------------------------------------- |
-| `bun install`         | Install dependencies (cache in `.local/cache/bun`) |
-| `bun run dev`         | Run goop from source and restart on file changes   |
-| `bun run test`        | Run the test suite                                 |
-| `bun run typecheck`   | TypeScript check, no output files                  |
-| `bun run lint`        | Biome lint and format check                        |
-| `bun run format`      | Apply Biome formatting                             |
-| `bun run build`       | Compile the single `goop` executable into `dist/`  |
-| `bun run clean`       | Delete `.temp/` (never `.local/`)                  |
-| `bun run clean:local` | Delete `.local/` after an interactive confirmation |
+| Command                   | What it does                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| `bun install`             | Install dependencies (cache in `.local/cache/bun`)                                       |
+| `bun run dev`             | Run goop from source and restart on file changes                                         |
+| `bun run test`            | Run the test suite                                                                       |
+| `bun run typecheck`       | TypeScript check, no output files                                                        |
+| `bun run lint`            | Biome lint and format check                                                              |
+| `bun run format`          | Apply Biome formatting                                                                   |
+| `bun run build`           | Compile the single `goop` executable into `dist/`                                        |
+| `bun run clean`           | Delete `.temp/` (never `.local/`)                                                        |
+| `bun run clean:local`     | Delete `.local/` after an interactive confirmation                                       |
+| `bun run windows:install` | Install Windows once into `.local/windows/base/` (Podman, about 25 min)                  |
+| `bun run windows:run`     | Run a PowerShell command in a throwaway Windows VM (`-- <command>`, `--copy`, `--fetch`) |
+| `bun run windows:status`  | Show the Windows base and the running VMs                                                |
 
 ## Golden rules
 
