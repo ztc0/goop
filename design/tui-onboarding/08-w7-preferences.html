@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · onboarding · W7 preferences</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Setup frame like M6/M8: breadcrumb, two panes (steps | current step), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .title { padding: 20px 28px 18px; color: var(--text-muted); white-space: nowrap; }
+  /* Bold keys and numbers inside dim text (speed line style): one rule for every line. */
+  b { color: var(--text); font-weight: 600; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .panes { display: grid; grid-template-columns: 360px 1fr; min-height: 0; padding: 0 28px 12px; }
+  .pane-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .pane-foot { margin-top: auto; color: var(--text-muted); font-size: 13px; padding-top: 8px; border-top: 1px solid var(--border-subtle); white-space: nowrap; }
+  /* Left pane: the step list. Progress only, never focused: ↵ and shift+tab move between steps. */
+  .steps { display: flex; flex-direction: column; gap: 10px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .step { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 8px; padding: 4px 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .step .tag { font-size: 13px; color: var(--text-muted); }
+  /* Current step while the pane has no focus: fill and bold text, no edge (M6 current category; the edge belongs to the focused pane). */
+  .step.current { background: var(--background-element); color: var(--text); font-weight: 600; }
+  .step.current .tag { font-weight: 400; }
+  /* Right pane: the current step. */
+  .body { display: flex; flex-direction: column; gap: 14px; padding-left: 24px; min-height: 0; }
+  /* M6 form rows: label, value, muted note on the right (where the value came from). */
+  .row { display: grid; grid-template-columns: 20ch 1fr auto; column-gap: 16px; padding: 5px 8px; font-size: 14px; white-space: nowrap; }
+  .row .label { color: var(--text-muted); }
+  .row .note { color: var(--text-muted); font-size: 13px; }
+  /* Selection: inset 2px orange edge on --background-element (the focused pane). */
+  .row.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .row.sel .label { color: var(--text); font-weight: 600; }
+  /* Field action on the selected row only (M6): ↵ done · esc cancel while editing. */
+  .row .hint { align-self: start; color: var(--text-muted); font-size: 13px; }
+  /* Value being edited: composer look; the value is lavender because you type it. */
+  .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 6px 14px; }
+  .line { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .prompt { color: var(--user); font-weight: 700; }
+  .typed { color: var(--user); }
+  .ph { color: var(--text-muted); }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .below { color: var(--text-muted); font-size: 13px; margin-top: 4px; white-space: nowrap; }
+  /* Natural language (S15): a composer line under the rows; goop turns it into a diff you confirm. */
+  .nl { margin-top: 6px; }
+  .nl .line { font-size: 14px; }
+  /* One status line, three zones: focus label | keys of the focused pane | busy state + help. */
+  footer, .fbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b.next, .fbar b.next { color: var(--success); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: the proposed change from your words, and the skipped step. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px 24px; border-top: 1px solid var(--border); }
+  .feedback > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .fbar { border: 0; background: var(--background-panel); }
+  /* M5 decision card: panel fill, 2px yellow edge (to review); focused, so it takes the selected-row fill. */
+  .card { background: var(--background-element); border-left: 2px solid var(--accent); padding: 12px 20px 12px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .card-top { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .card-top .badge { color: var(--accent); font-weight: 700; }
+  .diff { display: grid; grid-template-columns: 20ch auto 2ch 1fr; column-gap: 12px; row-gap: 4px; font-size: 14px; white-space: nowrap; }
+  .diff .key { color: var(--text-muted); }
+  .diff .was { color: var(--text-muted); text-decoration: line-through; }
+  .diff .arrow { color: var(--text-muted); }
+  .diff .new { color: var(--text); font-weight: 700; }
+  .card .said { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .card .said .typed { color: var(--user); }
+  .skipped { color: var(--text-muted); font-size: 14px; white-space: nowrap; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <header class="title">Setup › <b>Preferences</b> · step 8 of 10 · esc quit setup</header>
+
+  <div class="panes">
+    <nav class="steps" aria-labelledby="steps-head">
+      <div class="pane-head"><h2 id="steps-head">Steps</h2><span class="count">7 of 10 done</span></div>
+      <ol class="step-list">
+        <li class="step"><span class="ok">✓</span><span>Welcome</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>System check</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>Models</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>Download</span><span class="tag"></span></li>
+        <li class="step"><span class="ok">✓</span><span>Benchmark</span><span class="tag">optional</span></li>
+        <li class="step"><span class="ok">✓</span><span>Security</span><span class="tag">required</span></li>
+        <li class="step"><span class="ok">✓</span><span>CV &amp; profile</span><span class="tag">optional</span></li>
+        <li class="step current" aria-current="step"><span class="busy">◐</span><span>Preferences</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Schedule</span><span class="tag">optional</span></li>
+        <li class="step"><span>○</span><span>Done</span><span class="tag"></span></li>
+      </ol>
+      <p class="pane-foot">you can leave and come back; nothing is lost</p>
+    </nav>
+
+    <section class="body" aria-labelledby="body-head">
+      <div class="pane-head"><h2 id="body-head">Preferences</h2><span class="count">7 · prefilled from your profile · used by the first search</span></div>
+
+      <ul aria-label="Preferences">
+        <li class="row"><span class="label">Roles</span><span>Backend · Platform</span><span class="note">from your CV</span></li>
+        <li class="row"><span class="label">Seniority</span><span>mid</span><span class="note">from your CV · 3 yrs</span></li>
+        <li class="row"><span class="label">Work mode</span><span>remote · hybrid Madrid</span><span class="note">you set it</span></li>
+        <li class="row sel" aria-current="true">
+          <span class="label">Salary minimum</span>
+          <div class="composer">
+            <div class="line"><span class="prompt">›</span><span class="typed">€42K</span><span class="cursor"></span></div>
+            <div class="below">gross per year · you set it · offers without a salary are kept</div>
+          </div>
+          <span class="hint"><b>↵</b> done · <b>esc</b> cancel</span>
+        </li>
+        <li class="row"><span class="label">Languages</span><span>Spanish native · English B2</span><span class="note">from your CV</span></li>
+        <li class="row"><span class="label">Stack must-haves</span><span>Python</span><span class="note">from your CV</span></li>
+        <li class="row"><span class="label">Avoid</span><span>crypto · gambling</span><span class="note">you set it</span></li>
+      </ul>
+
+      <section class="composer nl" aria-label="Change preferences in your own words">
+        <div class="line"><span class="prompt">›</span><span class="ph">o decilo con tus palabras: "solo remoto, mínimo 45K"</span></div>
+        <div class="below">goop shows the change before saving it</div>
+      </section>
+
+      <p class="pane-foot">stored encrypted on this machine · change later in /settings</p>
+    </section>
+  </div>
+
+  <footer><span class="mode">setup</span><span><b>↑↓</b> move · <b>↵</b> edit · <b class="next">n</b> next step · <b>shift+tab</b> back · <b>s</b> skip · <b>esc</b> quit setup</span><span class="zone-right"><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around the preferences step">
+  <div>
+    <h3>Proposed change (after the natural-language line)</h3>
+    <section class="card" aria-label="Proposed change">
+      <div class="card-top"><span>goop wants to change 2 preferences</span><span><span class="badge">1 of 1</span> to review</span></div>
+      <p class="said">you wrote <span class="typed">"solo remoto, mínimo 45K"</span></p>
+      <div class="diff">
+        <span class="key">Work mode</span><span class="was">remote · hybrid Madrid</span><span class="arrow">→</span><span class="new">remote only</span>
+        <span class="key">Salary minimum</span><span class="was">€42K</span><span class="arrow">→</span><span class="new">€45K</span>
+      </div>
+    </section>
+    <div class="fbar"><span class="mode">setup</span><span><b class="next">↵</b> apply · <b>e</b> edit · <b>x</b> discard</span><span class="zone-right"><span><b>?</b> help</span></span></div>
+  </div>
+  <div>
+    <h3>Skipped (s)</h3>
+    <ol class="step-list" aria-label="Step list excerpt">
+      <li class="step"><span class="ok">✓</span><span>CV &amp; profile</span><span class="tag">optional</span></li>
+      <li class="step"><span>—</span><span>Preferences</span><span class="tag">skipped</span></li>
+      <li class="step current" aria-current="step"><span class="busy">◐</span><span>Schedule</span><span class="tag">optional</span></li>
+    </ol>
+    <p class="skipped">— <b>Preferences</b> · skipped · goop uses your profile · change later in /settings</p>
+  </div>
+</section>
+<p class="notes"><strong>Setup frame:</strong> the same frame as W1 and W2 (breadcrumb Setup › Preferences · step 8 of 10, step list with Welcome to CV &amp; profile ✓ and Preferences ◐, one status line with the setup mode). <strong>W7:</strong> optional; the seven preferences come prefilled from the profile as M6 form rows (label, value, muted note on the right saying where the value came from: from your CV or you set it). Salary minimum is selected (orange inset edge) and being edited: its value becomes the M6 composer (2px lavender edge, lavender value and cursor, a dim line under it), and the row hint reads ↵ done · esc cancel, as in M6. Under the rows, the S15 natural-language option is a composer line with the example in muted text and goop shows the change before saving it under it; ↓ past the last row moves into it. Status line: ↑↓ move · ↵ edit · ↵ next (green) · s skip · esc quit setup. <strong>Below the screen:</strong> the proposed change after the natural-language line as the M5 decision card (yellow edge, focused fill, 1 of 1 to review, your words in lavender, each change as label · old struck through → new in bold) with its keys in the status line (↵ apply green · e edit · x discard); and the skipped step: — in the step list with a skipped tag and the line — Preferences · skipped · goop uses your profile · change later in /settings. Tradeoff: everything prefilled means one ↵ for most users and your own words work too, but ↵ both edits a row and moves to the next step, and the natural-language line costs a confirm card before anything is saved. On form steps ↵ edits the selected row, so the next step moves to n (n next step); shift+tab still goes back.</p>
+</body>
+</html>

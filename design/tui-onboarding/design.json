@@ -1,6 +1,6 @@
 {
   "title": "Onboarding (W0–W9)",
-  "brief": "First-run setup of goop (W0–W9), one shared full-screen frame shown on two steps. Frame like M6/M8: breadcrumb Setup › <step> · step N of 10 · esc quit setup with no key line under it; on the left (360px, unbordered, 1px divider) the STEPS pane (count N of 10 done) with one row per step (Welcome, System check, Models, Download, Benchmark, Security, CV & profile, Preferences, Schedule, Done; W2a/W2b fold into Models, W6b into CV & profile), glyph ✓ done --success, ◐ current or running --warning, ○ to do --text-muted, muted tags required on Security, optional on Schedule and a live ↓ 42% on Download while it runs; the list is progress only (↵ next, shift+tab back), so the current step keeps the M6 current fill without the edge and the orange inset edge goes to the focused row on the right; pane foot: you can leave and come back; nothing is lost. On the right the current step: uppercase pane head, the M8 problem banner only on a warning (2px --warning edge) or a failure (2px --error edge), then the step body. One status line: mode setup with a --secondary dot; keys ↵ next (--success) · shift+tab back · ↑↓ move · esc quit setup; zone 3 drops ○ next search 09:00 (nothing is scheduled before setup) and follows the busy state: ↓ done of total GB · speed · time left │ ? help while the download runs, otherwise ? help. W1 System check: warning banner (Vulkan lists the 780M iGPU first · goop will use the RX 7700S (device 1), ↵ ok), nine one-line checks (GPU, GPU order ⚠ selected with a detail line, RAM, Disk, CPU, Vulkan, TPM2, Terminal, Icons emoji default), foot 8 of 9 ok · 1 warning fixed automatically · nothing blocks setup; below: a failing RAM check (error banner, ↵ next muted, c use CPU-only small models) and the Welcome line. W2 Models: recommended models preselected (●) as M8 two-line rows grouped GPU · RX 7700S (Profile & matching Qwen3.5-9B Q4_K_M 5.7 GB, Embeddings Qwen3-Embedding-0.6B 0.6 GB) and CPU · RAM (Chat & Learner gpt-oss-20b MXFP4 12.1 GB, Reranker Qwen3-Reranker 0.6 GB, Security gpt-oss-safeguard-20b 12.8 GB on demand, never loaded with gpt-oss-20b), fit badges Fits / May be slow / Won't fit, alternatives line (←→ change quant), M8 memory map (VRAM 6.3 of 8 GB, RAM 14.2 of 30 GB + 12.8 on demand) and Download 31.8 GB · starts in the background when you press ↵; below: an alternative quant (May be slow), the download running while on Benchmark (↓ 42% in the step list, ↓ 13.4 of 31.8 GB · 18 MB/s · 17m in the status line), the resume toast and the disk-full error banner with ↵ retry.",
+  "brief": "First-run setup of goop (W0–W9), one shared full-screen frame shown on two steps. Frame like M6/M8: breadcrumb Setup › <step> · step N of 10 · esc quit setup with no key line under it; on the left (360px, unbordered, 1px divider) the STEPS pane (count N of 10 done) with one row per step (Welcome, System check, Models, Download, Benchmark, Security, CV & profile, Preferences, Schedule, Done; W2a/W2b fold into Models, W6b into CV & profile), glyph ✓ done --success, ◐ current or running --warning, ○ to do --text-muted, muted tags required on Security, optional on Schedule and a live ↓ 42% on Download while it runs; the list is progress only (↵ next, shift+tab back), so the current step keeps the M6 current fill without the edge and the orange inset edge goes to the focused row on the right; pane foot: you can leave and come back; nothing is lost. On the right the current step: uppercase pane head, the M8 problem banner only on a warning (2px --warning edge) or a failure (2px --error edge), then the step body. One status line: mode setup with a --secondary dot; keys ↵ next (--success) · shift+tab back · ↑↓ move · esc quit setup; zone 3 drops ○ next search 09:00 (nothing is scheduled before setup) and follows the busy state: ↓ done of total GB · speed · time left │ ? help while the download runs, otherwise ? help. W1 System check: warning banner (Vulkan lists the 780M iGPU first · goop will use the RX 7700S (device 1), ↵ ok), nine one-line checks (GPU, GPU order ⚠ selected with a detail line, RAM, Disk, CPU, Vulkan, TPM2, Terminal, Icons emoji default), foot 8 of 9 ok · 1 warning fixed automatically · nothing blocks setup; below: a failing RAM check (error banner, ↵ next muted, c use CPU-only small models) and the Welcome line. W2 Models: recommended models preselected (●) as M8 two-line rows grouped GPU · RX 7700S (Profile & matching Qwen3.5-9B Q4_K_M 5.7 GB, Embeddings Qwen3-Embedding-0.6B 0.6 GB) and CPU · RAM (Chat & Learner gpt-oss-20b MXFP4 12.1 GB, Reranker Qwen3-Reranker 0.6 GB, Security gpt-oss-safeguard-20b 12.8 GB on demand, never loaded with gpt-oss-20b), fit badges Fits / May be slow / Won't fit, alternatives line (←→ change quant), M8 memory map (VRAM 6.3 of 8 GB, RAM 14.2 of 30 GB + 12.8 on demand) and Download 31.8 GB · starts in the background when you press ↵; below: an alternative quant (May be slow), the download running while on Benchmark (↓ 42% in the step list, ↓ 13.4 of 31.8 GB · 18 MB/s · 17m in the status line), the resume toast and the disk-full error banner with ↵ retry. W0 and W3–W9 follow the approved frame: Welcome, Download (per-file progress, sha256, keeps going in the background), Benchmark (optional), Security (required; recovery key shown once and confirmed by typing its last group), CV & profile (optional; M9 card), Preferences (optional; M6 form rows and natural-language changes), Schedule (optional; names every file it installs) and Done.",
   "feature": "odd/tasks/goop.md",
   "artboards": [
     {
@@ -16,6 +16,62 @@
       "tradeoff": "Recommended set preselected with fit badges, quant alternatives and the memory map on one screen, and the download starts in the background on ↵; the safe default is one key away, but the screen is dense and quant names stay jargon",
       "width": 1440,
       "height": 1330
+    },
+    {
+      "file": "03-w0-welcome.html",
+      "title": "W0 Welcome",
+      "tradeoff": "The welcome looks like home, so the first screen already feels like goop, but it spends a whole step on promises most users skip with one ↵",
+      "width": 1440,
+      "height": 1180
+    },
+    {
+      "file": "04-w3-download.html",
+      "title": "W3 Download",
+      "tradeoff": "Every file, hash and speed is visible, which builds trust in a 31.8 GB download, but most users only need the total line and goop's one sentence",
+      "width": 1440,
+      "height": 1260
+    },
+    {
+      "file": "05-w4-benchmark.html",
+      "title": "W4 Benchmark",
+      "tradeoff": "Real numbers from this machine make chat faster and show why, but MTP, EAGLE3 and KV cache are jargon for most users, who are better off skipping",
+      "width": 1440,
+      "height": 1290
+    },
+    {
+      "file": "06-w5-security.html",
+      "title": "W5 Security",
+      "tradeoff": "Required recovery key with type-the-last-group confirm; a moment of friction on first run, but only five characters, and nobody finishes setup with data they could never recover",
+      "width": 1440,
+      "height": 1280
+    },
+    {
+      "file": "07-w6-cv-profile.html",
+      "title": "W6 CV & profile",
+      "tradeoff": "Profile confirmed in setup with the same card and glyphs as /profile, so nothing is new later; without the CV pane you check the doubted line only through its one-line quote",
+      "width": 1440,
+      "height": 1300
+    },
+    {
+      "file": "08-w7-preferences.html",
+      "title": "W7 Preferences",
+      "tradeoff": "Everything is prefilled, so one key is enough for most users and your own words work too, but the natural-language path needs a confirm card first",
+      "width": 1440,
+      "height": 1320
+    },
+    {
+      "file": "09-w8-schedule.html",
+      "title": "W8 Schedule",
+      "tradeoff": "Every file and command is named before anything is installed, which earns trust, but the paths and systemctl are jargon and the step is longer than a yes/no",
+      "width": 1440,
+      "height": 1250
+    },
+    {
+      "file": "10-w9-done.html",
+      "title": "W9 Done",
+      "tradeoff": "One calm summary closes setup and goop starts working at once, but it repeats the step list, and the first offers take about 5 minutes",
+      "width": 1440,
+      "height": 1230
     }
   ]
 }
