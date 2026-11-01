@@ -1,0 +1,6 @@
+# Keep Bun's package cache inside the repo (S25): nothing is written to ~/.bun.
+[install.cache]
+dir = ".local/cache/bun"
+
+[test]
+root = "."

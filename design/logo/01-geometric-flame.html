@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop logo · 01 Geometric flame</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #2a2f3a; --text: #ece9e4; --muted: #a8a39b;
+    --flame: #ff6a1a; --flame-core: #ffb020; --eye: #fff8ee; --pupil: #14161b;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+  main { width: 1440px; min-height: 900px; padding: 48px 64px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; }
+  header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 0; color: var(--muted); font-size: 15px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 28px; }
+  h2 { margin: 0 0 20px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .hero { display: flex; align-items: center; gap: 40px; }
+  .wordmark { font-size: 120px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+  .tagline { margin: 12px 0 0; color: var(--muted); font-size: 18px; }
+  .stack { display: grid; gap: 24px; }
+  .sizes { display: flex; align-items: end; gap: 28px; }
+  .sizes figure { margin: 0; display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+  .grounds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ground { border-radius: 12px; padding: 24px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; }
+  .ground.light { background: #f6f3ee; color: #1b1d22; }
+  .ground.dark { background: #000; color: var(--text); border: 1px solid var(--line); }
+  .ground.mono svg { filter: grayscale(1) contrast(1.2); }
+  pre { margin: 0; background: #000; border-radius: 12px; padding: 20px; font-family: var(--mono); font-size: 14px; line-height: 1.35; color: var(--text); }
+  .o { color: var(--flame); } .y { color: var(--flame-core); } .m { color: var(--muted); }
+  .notes { grid-column: 1 / -1; color: var(--muted); font-size: 15px; line-height: 1.5; }
+  .notes strong { color: var(--text); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="goop" viewBox="0 0 100 120">
+    <path fill="var(--flame)" d="M50 4 L82 52 L86 84 L68 114 L32 114 L14 84 L18 52 L34 30 L42 46 Z"/>
+    <path fill="var(--flame-core)" d="M50 46 L70 74 L66 104 L34 104 L30 74 Z"/>
+    <rect x="31" y="70" width="14" height="18" rx="3" fill="var(--eye)"/>
+    <rect x="55" y="70" width="14" height="18" rx="3" fill="var(--eye)"/>
+    <rect x="37" y="76" width="7" height="10" rx="2" fill="var(--pupil)"/>
+    <rect x="61" y="76" width="7" height="10" rx="2" fill="var(--pupil)"/>
+  </symbol>
+</svg>
+<main>
+  <header>
+    <h1>01 · Geometric flame</h1>
+    <p>Sharp facets, square eyes: a technical, serious mark.</p>
+  </header>
+
+  <section aria-labelledby="hero-title">
+    <h2 id="hero-title">Primary lockup</h2>
+    <div class="hero">
+      <svg width="200" height="240" role="img" aria-label="goop logo: a faceted flame with two square eyes"><use href="#goop"/></svg>
+      <div>
+        <div class="wordmark">goop</div>
+        <p class="tagline">Your local job search agent.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="stack">
+    <section aria-labelledby="sizes-title">
+      <h2 id="sizes-title">Sizes</h2>
+      <div class="sizes">
+        <figure><svg width="107" height="128" role="img" aria-label="goop logo, 128 px"><use href="#goop"/></svg>128</figure>
+        <figure><svg width="53" height="64" role="img" aria-label="goop logo, 64 px"><use href="#goop"/></svg>64</figure>
+        <figure><svg width="27" height="32" role="img" aria-label="goop logo, 32 px"><use href="#goop"/></svg>32</figure>
+        <figure><svg width="13" height="16" role="img" aria-label="goop logo, 16 px"><use href="#goop"/></svg>16</figure>
+      </div>
+    </section>
+    <section aria-labelledby="grounds-title">
+      <h2 id="grounds-title">Backgrounds</h2>
+      <div class="grounds">
+        <div class="ground light"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+        <div class="ground dark"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+        <div class="ground dark mono"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+        <div class="ground light mono"><svg width="40" height="48" aria-hidden="true"><use href="#goop"/></svg>goop</div>
+      </div>
+    </section>
+  </div>
+
+  <section aria-labelledby="tui-title" style="grid-column: 1 / -1">
+    <h2 id="tui-title">In the terminal (TUI splash, text only)</h2>
+<pre role="img" aria-label="goop logo drawn with text characters in a terminal">
+<span class="o">        /\</span>
+<span class="o">       /  \   /\</span>           <strong>goop</strong>  <span class="m">v0.1.0</span>
+<span class="o">      /    \_/  \</span>          <span class="m">local job search agent</span>
+<span class="o">     /</span> <span class="y">[o]</span>  <span class="y">[o]</span> <span class="o">\</span>
+<span class="o">    |</span>  <span class="y">  \__/  </span>  <span class="o">|</span>         <span class="m">loading models… qwen ✔  gpt-oss ◌</span>
+<span class="o">     \__________/</span>
+</pre>
+  </section>
+
+  <p class="notes"><strong>Tradeoff:</strong> reads as a serious engineering tool and stays crisp at 16 px because every edge is straight. It is the least friendly of the three and the eyes lose personality when small.</p>
+</main>
+</body>
+</html>

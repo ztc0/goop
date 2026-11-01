@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop logo · 04 Pixel mascot</title>
+<style>
+  :root {
+    --bg: #14110f; --panel: #1d1916; --line: #342c26; --text: #f4ede6; --muted: #b3a79c; --accent: #ff7a2e;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+  main { width: 1440px; min-height: 900px; padding: 40px 64px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; }
+  header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 0; color: var(--muted); font-size: 15px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+  h2 { margin: 0 0 18px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  canvas { image-rendering: pixelated; display: block; }
+  .hero { display: flex; align-items: center; gap: 40px; }
+  .wordmark { font-family: var(--mono); font-size: 112px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+  .tagline { margin: 12px 0 0; color: var(--muted); font-size: 18px; font-family: var(--mono); }
+  .stack { display: grid; gap: 20px; }
+  .sizes { display: flex; align-items: end; gap: 28px; }
+  .sizes figure { margin: 0; display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+  .grounds { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ground { border-radius: 8px; padding: 18px; display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 28px; font-weight: 800; }
+  .ground.light { background: #fbf6f0; color: #1d1714; }
+  .ground.dark { background: #000; color: var(--text); border: 1px solid var(--line); }
+  .ground.mono canvas { filter: grayscale(1) contrast(1.2); }
+  .controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+  .controls label { display: flex; align-items: center; gap: 10px; }
+  .controls output { font-family: var(--mono); color: var(--text); min-width: 5ch; }
+  input[type="range"] { accent-color: var(--accent); width: 220px; }
+  button { font: inherit; color: #1d1714; background: var(--accent); border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #ffc24a; outline-offset: 3px; }
+  #copied { color: var(--text); }
+  pre { margin: 0; background: #000; border-radius: 8px; padding: 20px; font-family: var(--mono); font-size: 14px; line-height: 1; color: var(--text); display: flex; gap: 32px; align-items: center; }
+  pre .info { line-height: 1.6; }
+  /* A terminal cell is about 1:2, and "▀" fills exactly its top half, so each cell is two square pixels. */
+  #blocks { display: grid; grid-auto-rows: 20px; }
+  #blocks span { width: 10px; height: 20px; color: transparent; overflow: hidden; user-select: all; }
+  .m { color: var(--muted); }
+  .notes { grid-column: 1 / -1; color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0; }
+  .notes strong { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>04 · Pixel mascot</h1>
+    <p>The friendly mascot (02) through a pixel-art filter with a fixed 5-color palette.</p>
+  </header>
+
+  <section aria-labelledby="hero-title">
+    <h2 id="hero-title">Primary lockup</h2>
+    <div class="hero">
+      <canvas id="hero" width="200" height="240" role="img" aria-label="goop logo: a pixel-art round flame with two square eyes looking sideways"></canvas>
+      <div>
+        <div class="wordmark">goop</div>
+        <p class="tagline">&gt; your local job search buddy_</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="stack">
+    <section aria-labelledby="controls-title">
+      <h2 id="controls-title">Pixel grid</h2>
+      <div class="controls">
+        <label for="grid">Width in pixels
+          <input id="grid" type="range" min="12" max="48" step="2" value="24">
+        </label>
+        <output id="grid-value" for="grid">24×29</output>
+        <button id="copy" type="button">Copy as prompt</button>
+        <span id="copied" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+    <section aria-labelledby="sizes-title">
+      <h2 id="sizes-title">Sizes (16 px always uses a 16-pixel grid)</h2>
+      <div class="sizes">
+        <figure><canvas data-size="128" role="img" aria-label="goop logo, 128 px"></canvas>128</figure>
+        <figure><canvas data-size="64" role="img" aria-label="goop logo, 64 px"></canvas>64</figure>
+        <figure><canvas data-size="32" role="img" aria-label="goop logo, 32 px"></canvas>32</figure>
+        <figure><canvas data-size="16" data-grid="16" role="img" aria-label="goop logo, 16 px"></canvas>16</figure>
+      </div>
+    </section>
+    <section aria-labelledby="grounds-title">
+      <h2 id="grounds-title">Backgrounds</h2>
+      <div class="grounds">
+        <div class="ground light"><canvas data-size="48" aria-hidden="true"></canvas>goop</div>
+        <div class="ground dark"><canvas data-size="48" aria-hidden="true"></canvas>goop</div>
+        <div class="ground dark mono"><canvas data-size="48" aria-hidden="true"></canvas>goop</div>
+        <div class="ground light mono"><canvas data-size="48" aria-hidden="true"></canvas>goop</div>
+      </div>
+    </section>
+  </div>
+
+  <section aria-labelledby="tui-title" style="grid-column: 1 / -1">
+    <h2 id="tui-title">In the terminal (half-block characters: two pixels per character cell)</h2>
+    <pre role="img" aria-label="goop logo drawn with half-block characters in a terminal"><span id="blocks"></span><span class="info"><strong>goop</strong>  <span class="m">v0.1.0</span>
+<span class="m">Hi! I keep searching while we chat.</span>
+
+<span class="m">loading models… qwen ✔  gpt-oss ◌</span></span></pre>
+  </section>
+
+  <p class="notes"><strong>Tradeoff:</strong> keeps the mascot's warmth and makes it terminal-native: one pixel grid drives the logo, the favicon and the TUI splash. A fixed palette replaces the smooth gradient, so the flame reads as bands of color. The eyes are stamped on the pixel grid, so they stay sharp at every size, and they match the pixel flame (03), so both marks share the same face.</p>
+</main>
+<script>
+  // Source vector: the friendly mascot from 02, with explicit colors.
+  const MASCOT = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+    <defs><linearGradient id="f" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff5f7a"/><stop offset=".55" stop-color="#ff7a2e"/><stop offset="1" stop-color="#ffc24a"/>
+    </linearGradient></defs>
+    <path fill="url(#f)" d="M52 6 C58 22 72 30 80 44 C90 60 90 78 86 90 C80 108 66 116 50 116 C32 116 16 106 13 86 C10 68 20 54 30 46 C30 56 34 62 40 64 C36 46 42 24 52 6 Z"/>
+  </svg>`;
+
+  const WHITE = [255, 250, 243];
+  const BLACK = [26, 20, 18];
+
+  // Eyes are drawn on the pixel grid, not in the vector, so they stay sharp at any size:
+  // the proportions of the pixel flame (03): square white eyes, a pupil half their size
+  // in the bottom-right corner, and a gap of one eye between them.
+  function stampEyes(grid) {
+    const { width, height, pixels } = grid;
+    const eye = Math.max(2, Math.round(width / 6));
+    const pupil = Math.max(1, Math.round(eye / 2));
+    const top = Math.round(height * 0.6);
+    const first = Math.round(width / 2 - eye * 1.5);
+    for (const left of [first, first + eye * 2]) {
+      for (let y = 0; y < eye; y++) {
+        for (let x = 0; x < eye; x++) {
+          const isPupil = x >= eye - pupil && y >= eye - pupil;
+          pixels[(top + y) * width + left + x] = isPupil ? BLACK : WHITE;
+        }
+      }
+    }
+    return grid;
+  }
+
+  // The pixel-art filter snaps every pixel to this palette.
+  const PALETTE = [[255, 95, 122], [255, 122, 46], [255, 194, 74], [255, 250, 243], [26, 20, 18]];
+
+  function nearest([r, g, b]) {
+    let best = PALETTE[0];
+    let bestDistance = Infinity;
+    for (const color of PALETTE) {
+      const d = (r - color[0]) ** 2 + (g - color[1]) ** 2 + (b - color[2]) ** 2;
+      if (d < bestDistance) { bestDistance = d; best = color; }
+    }
+    return best;
+  }
+
+  // Downsample the vector to a small grid, drop soft edges and snap colors.
+  function pixelate(image, width) {
+    const height = Math.round(width * 1.2);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0, width, height);
+    const data = ctx.getImageData(0, 0, width, height);
+    const pixels = [];
+    for (let i = 0; i < data.data.length; i += 4) {
+      const alpha = data.data[i + 3];
+      pixels.push(alpha < 128 ? null : nearest([data.data[i], data.data[i + 1], data.data[i + 2]]));
+    }
+    return stampEyes({ width, height, pixels });
+  }
+
+  function draw(canvas, grid, size) {
+    const scale = Math.max(1, Math.floor(size / grid.width));
+    canvas.width = grid.width * scale;
+    canvas.height = grid.height * scale;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    grid.pixels.forEach((color, index) => {
+      if (!color) return;
+      ctx.fillStyle = `rgb(${color.join(",")})`;
+      ctx.fillRect((index % grid.width) * scale, Math.floor(index / grid.width) * scale, scale, scale);
+    });
+  }
+
+  // Terminal rendering: one "▀" cell holds two pixels, the top one as foreground and the bottom one
+  // as background. The preview paints each cell exactly like a terminal does, with no font seams.
+  function halfBlocks(grid) {
+    const rgb = (c) => (c ? `rgb(${c.join(",")})` : "transparent");
+    const cells = [];
+    for (let y = 0; y < grid.height; y += 2) {
+      for (let x = 0; x < grid.width; x++) {
+        const top = grid.pixels[y * grid.width + x];
+        const bottom = y + 1 < grid.height ? grid.pixels[(y + 1) * grid.width + x] : null;
+        const paint = `linear-gradient(${rgb(top)} 50%, ${rgb(bottom)} 50%)`;
+        cells.push(`<span style="background:${paint}">${top || bottom ? "▀" : " "}</span>`);
+      }
+    }
+    return cells.join("");
+  }
+
+  const slider = document.getElementById("grid");
+  const output = document.getElementById("grid-value");
+  const image = new Image();
+
+  function render() {
+    const width = Number(slider.value);
+    const grid = pixelate(image, width);
+    output.value = `${grid.width}×${grid.height}`;
+    draw(document.getElementById("hero"), grid, 200);
+    for (const canvas of document.querySelectorAll("canvas[data-size]")) {
+      const own = canvas.dataset.grid ? pixelate(image, Number(canvas.dataset.grid)) : grid;
+      draw(canvas, own, Number(canvas.dataset.size));
+    }
+    const blocks = document.getElementById("blocks");
+    blocks.style.gridTemplateColumns = `repeat(${grid.width}, 10px)`;
+    blocks.innerHTML = halfBlocks(grid);
+  }
+
+  image.onload = render;
+  image.src = URL.createObjectURL(new Blob([MASCOT], { type: "image/svg+xml" }));
+  slider.addEventListener("input", render);
+
+  document.getElementById("copy").addEventListener("click", async () => {
+    const width = Number(slider.value);
+    const prompt = `Use the pixel mascot logo (design/logo/04-pixel-mascot.html) with a ${width}×${Math.round(width * 1.2)} pixel grid, the 5-color palette #ff5f7a #ff7a2e #ffc24a #fffaf3 #1a1412, a 16×19 grid for the 16 px favicon, and half-block characters for the TUI splash.`;
+    await navigator.clipboard.writeText(prompt);
+    document.getElementById("copied").textContent = "Copied.";
+  });
+</script>
+</body>
+</html>

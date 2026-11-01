@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop logo · 03 Pixel flame</title>
+<style>
+  :root {
+    --bg: #0c0e12; --panel: #141821; --line: #262d3a; --text: #e9eef5; --muted: #9ea8b8;
+    --o: #ff6b1f; --y: #ffc23d; --w: #f5f7fa; --k: #0c0e12;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+  main { width: 1440px; min-height: 900px; padding: 48px 64px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; }
+  header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 0; color: var(--muted); font-size: 15px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 28px; }
+  h2 { margin: 0 0 20px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .hero { display: flex; align-items: center; gap: 40px; }
+  .wordmark { font-family: var(--mono); font-size: 112px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+  .tagline { margin: 12px 0 0; color: var(--muted); font-size: 18px; font-family: var(--mono); }
+  .stack { display: grid; gap: 24px; }
+  .sizes { display: flex; align-items: end; gap: 28px; }
+  .sizes figure { margin: 0; display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+  .grounds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ground { border-radius: 8px; padding: 24px; display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 30px; font-weight: 800; }
+  .ground.light { background: #f3f5f8; color: #12151b; }
+  .ground.dark { background: #000; color: var(--text); border: 1px solid var(--line); }
+  .ground.mono svg { filter: grayscale(1) contrast(1.25); }
+  svg.px { shape-rendering: crispEdges; }
+  pre { margin: 0; background: #000; border-radius: 8px; padding: 20px; font-family: var(--mono); font-size: 14px; line-height: 1.05; color: var(--text); display: flex; gap: 32px; align-items: center; }
+  pre .info { line-height: 1.6; }
+  .m { color: var(--muted); }
+  .notes { grid-column: 1 / -1; color: var(--muted); font-size: 15px; line-height: 1.5; }
+  .notes strong { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>03 · Pixel flame</h1>
+    <p>A 12×14 pixel grid: the same mark in SVG and in terminal blocks.</p>
+  </header>
+
+  <section aria-labelledby="hero-title">
+    <h2 id="hero-title">Primary lockup</h2>
+    <div class="hero">
+      <svg class="px" data-px="17" role="img" aria-label="goop logo: a pixel-art flame with two square eyes"></svg>
+      <div>
+        <div class="wordmark">goop</div>
+        <p class="tagline">&gt; your local job search agent_</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="stack">
+    <section aria-labelledby="sizes-title">
+      <h2 id="sizes-title">Sizes</h2>
+      <div class="sizes">
+        <figure><svg class="px" data-px="9" role="img" aria-label="goop logo, 128 px"></svg>128</figure>
+        <figure><svg class="px" data-px="4.5" role="img" aria-label="goop logo, 64 px"></svg>64</figure>
+        <figure><svg class="px" data-px="2.3" role="img" aria-label="goop logo, 32 px"></svg>32</figure>
+        <figure><svg class="px" data-px="1.15" role="img" aria-label="goop logo, 16 px"></svg>16</figure>
+      </div>
+    </section>
+    <section aria-labelledby="grounds-title">
+      <h2 id="grounds-title">Backgrounds</h2>
+      <div class="grounds">
+        <div class="ground light"><svg class="px" data-px="3.4" aria-hidden="true"></svg>goop</div>
+        <div class="ground dark"><svg class="px" data-px="3.4" aria-hidden="true"></svg>goop</div>
+        <div class="ground dark mono"><svg class="px" data-px="3.4" aria-hidden="true"></svg>goop</div>
+        <div class="ground light mono"><svg class="px" data-px="3.4" aria-hidden="true"></svg>goop</div>
+      </div>
+    </section>
+  </div>
+
+  <section aria-labelledby="tui-title" style="grid-column: 1 / -1">
+    <h2 id="tui-title">In the terminal (TUI splash, the same grid drawn with block characters)</h2>
+    <pre role="img" aria-label="goop logo drawn with block characters in a terminal"><span id="blocks"></span><span class="info"><strong>goop</strong>  <span class="m">v0.1.0</span>
+<span class="m">local job search agent</span>
+
+<span class="m">loading models… qwen ✔  gpt-oss ◌</span></span></pre>
+  </section>
+
+  <p class="notes"><strong>Tradeoff:</strong> native to the terminal: the exact same mark renders as SVG, as a favicon and as block characters in the TUI, so the brand looks identical everywhere goop lives. Pixel art can look retro or less polished on large surfaces like a README banner.</p>
+</main>
+<script>
+  // One grid drives every rendering. O flame, Y core, W eye white, K pupil.
+  const GRID = [
+    ".....O......",
+    ".....OO.....",
+    "....OOO.....",
+    "....OOOO..O.",
+    "...OOOOO.OO.",
+    "..OOOOOOOOO.",
+    "..OOOYYOOOO.",
+    ".OOOYYYYOOOO",
+    ".OOWWYYWWOOO",
+    ".OOWKYYWKOOO",
+    ".OOYYYYYYOOO",
+    "..OOYYYYOOO.",
+    "..OOOOOOOO..",
+    "....OOOO....",
+  ];
+  const COLORS = { O: "var(--o)", Y: "var(--y)", W: "var(--w)", K: "var(--k)" };
+  const NS = "http://www.w3.org/2000/svg";
+
+  for (const svg of document.querySelectorAll("svg.px")) {
+    const s = Number(svg.dataset.px);
+    svg.setAttribute("width", 12 * s);
+    svg.setAttribute("height", 14 * s);
+    svg.setAttribute("viewBox", "0 0 12 14");
+    GRID.forEach((row, y) => {
+      [...row].forEach((cell, x) => {
+        if (cell === ".") return;
+        const r = document.createElementNS(NS, "rect");
+        for (const [k, v] of Object.entries({ x, y, width: 1, height: 1, fill: COLORS[cell] })) {
+          r.setAttribute(k, v);
+        }
+        svg.appendChild(r);
+      });
+    });
+  }
+
+  const blocks = document.getElementById("blocks");
+  blocks.innerHTML = GRID.map((row) => [...row].map((cell) =>
+    cell === "." ? "  " : `<span style="color:${COLORS[cell]}">██</span>`).join("")).join("\n");
+</script>
+</body>
+</html>

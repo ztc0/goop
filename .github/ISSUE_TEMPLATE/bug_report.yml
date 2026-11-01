@@ -1,0 +1,38 @@
+name: Bug report
+description: Something does not work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Security problems go through SECURITY.md, not an issue. Never paste your CV, secrets or personal data here."
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: goop version or commit
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Linux, Windows]
+    validations:
+      required: true
+  - type: textarea
+    id: hardware
+    attributes:
+      label: GPU, RAM and model mode
+      description: For example "RX 7700S 8 GB, 32 GB RAM, download mode".
