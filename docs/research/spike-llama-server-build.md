@@ -74,10 +74,12 @@ Each archive holds one top folder with `LICENSE`, `llama-server`, `libllama`, `l
 
 ## How to run and verify
 
-Start the workflow by hand from the Actions tab, or with `gh workflow run llama-server.yml`. GitHub offers a manual run only for workflows on the default branch, so until this file reaches `main` it runs from a pull request that changes it (as PR #15 did; not tried by hand). Then download the artifacts of the run into a new, empty folder under `.temp/` and check them:
+Start the workflow by hand from the Actions tab, or with `gh workflow run llama-server.yml --ref main`. GitHub offers a manual run only once the file is on the default branch, which is `dev` in this repository; a run on `dev` builds without signing, and only a run on `main` reaches the `attest` job. Until the file is on `dev`, it runs from a pull request that changes it (as PR #15 did; a manual run was not tried). Then download the artifacts of the run into a new, empty folder under `.temp/` and check them:
 
 ```sh
-# Check the archive against the checksum file
+# Download the Linux artifact of run <run-id> into a new folder and check it against its checksum file
+mkdir -p .temp/downloads/llama-server && cd .temp/downloads/llama-server
+gh run download <run-id> --repo ztc0/goop --name llama-server-linux-x64-vulkan
 sha256sum -c SHA256SUMS
 
 # Check the build provenance (prints nothing on success; add --format json to see the certificate)
@@ -85,9 +87,12 @@ gh attestation verify llama-server-v0.8.0-linux-x64-vulkan.tar.gz \
   --repo ztc0/goop --signer-workflow ztc0/goop/.github/workflows/llama-server.yml \
   --source-ref refs/heads/main
 
-# Unpack into .local/ and list the GPUs, with an empty config folder (finding 6)
-mkdir -p .temp/scratch/empty-config
-XDG_CONFIG_HOME="$PWD/.temp/scratch/empty-config" ./llama-server --list-devices
+# Unpack into a fresh folder and list the GPUs, with an empty config folder (finding 6)
+cd ../../..
+mkdir -p .temp/extract/llama-server .temp/scratch/empty-config
+tar -xzf .temp/downloads/llama-server/llama-server-v0.8.0-linux-x64-vulkan.tar.gz -C .temp/extract/llama-server
+XDG_CONFIG_HOME="$PWD/.temp/scratch/empty-config" \
+  .temp/extract/llama-server/llama-server-v0.8.0-linux-x64-vulkan/llama-server --list-devices
 ```
 
 ## Results
