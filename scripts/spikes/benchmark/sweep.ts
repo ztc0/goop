@@ -31,6 +31,13 @@ export const SWEEP: readonly BenchConfig[] = [
   { label: "oss-cpu-t16", model: GPT_OSS, flags: [...ossCpu, "-t", "16"] },
   { label: "oss-gpu-moe24", model: GPT_OSS, flags: ossGpu(24) },
   { label: "oss-gpu-moe16", model: GPT_OSS, flags: ossGpu(16) },
+  // --fit picks -ngl and the expert split itself; compare it with the hand-picked values above.
+  {
+    label: "oss-fit",
+    model: GPT_OSS,
+    fit: true,
+    flags: ["--device", "Vulkan1", "-c", "8192", "-fa", "on"],
+  },
   {
     label: "oss-eagle3",
     model: GPT_OSS,

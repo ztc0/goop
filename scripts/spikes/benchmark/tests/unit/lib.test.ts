@@ -143,6 +143,15 @@ describe("buildArgv", () => {
     expect(argv.slice(-6)).toEqual(["-ngl", "0", "-c", "1", "-md", "/models/d.gguf"]);
   });
 
+  test("lets --fit choose -ngl and the expert split when the config asks for it", () => {
+    const argv = buildArgv({ ...base, fit: true, flags: ["--device", "Vulkan1", "-c", "8192"] });
+    expect(argv.slice(13, 17)).toEqual(["--api-key-file", "/scratch/key", "--fit", "on"]);
+    expect(argv).not.toContain("off");
+    expect(() => buildArgv({ ...base, fit: true, flags: ["-ngl", "99"] })).toThrow(
+      "needs an explicit -c",
+    );
+  });
+
   test("refuses flags without an explicit -c or -ngl, because --fit is off", () => {
     expect(() => buildArgv({ ...base, flags: ["-ngl", "99"] })).toThrow("needs an explicit -c");
     expect(() => buildArgv({ ...base, flags: ["-c", "8192"] })).toThrow("needs an explicit -ngl");
@@ -178,7 +187,9 @@ describe("SWEEP", () => {
     const labels = SWEEP.map((config) => config.label);
     expect(new Set(labels).size).toBe(labels.length);
     for (const config of SWEEP) {
-      expect(() => buildArgv({ ...base(), flags: config.flags })).not.toThrow();
+      expect(() =>
+        buildArgv({ ...base(), flags: config.flags, fit: config.fit === true }),
+      ).not.toThrow();
     }
   });
 });
