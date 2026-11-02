@@ -74,7 +74,7 @@ Each archive holds one top folder with `LICENSE`, `llama-server`, `libllama`, `l
 
 ## How to run and verify
 
-Start the workflow by hand from the Actions tab, or with `gh workflow run llama-server.yml --ref main`. GitHub offers a manual run only once the file is on the default branch, which is `dev` in this repository; a run on `dev` builds without signing, and only a run on `main` reaches the `attest` job. Until the file is on `dev`, it runs from a pull request that changes it (as PR #15 did; a manual run was not tried). Then download the artifacts of the run into a new, empty folder under `.temp/` and check them:
+Start the workflow by hand from the Actions tab, or with `gh workflow run llama-server.yml --ref main`. GitHub offers a manual run only once the file is on the default branch, which is `main` in this repository (L53); a manual run on `dev` then builds without signing, and only a run on `main` reaches the `attest` job. Until the file reaches `main`, it runs from a pull request or a push to `dev` that changes it (as PR #15 did; a manual run was not tried). Then download the artifacts of the run into a new, empty folder under `.temp/` and check them:
 
 ```sh
 # Download the Linux artifact of run <run-id> into a new folder and check it against its checksum file
