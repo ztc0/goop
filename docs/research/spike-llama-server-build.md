@@ -116,6 +116,7 @@ The S# text is unchanged. This note records the finding for T18.
 
 ## Limits
 
+- **The verify command accepts pull-request runs.** `--signer-workflow` pins the workflow file, not the ref, and this spike's attestations come from `refs/pull/15/merge`. T18 must also pin the ref that may sign real builds (for example `--source-ref refs/heads/main`). Found by the native review (finding R1, advisory).
 - **The Windows build did not run on a PC.** It ran only the `--version` smoke check on the CI runner, not in the goop Windows VM, and no Windows GPU was listed.
 - **Windows was only smoke-tested on the CI runner.** The zip from run `41379281254` was not run in the goop Windows VM or on a real Windows PC with a GPU.
 - **One run per job.** Timings come from a single run, not from a benchmark.
