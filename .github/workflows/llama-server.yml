@@ -1,0 +1,325 @@
+name: llama-server build
+
+# Spike (T12): build a minimal llama-server (CPU + Vulkan, no TLS, no web UI)
+# from a pinned llama.cpp commit for Linux x64 and Windows x64, then package,
+# checksum and attest it. Runs by hand, or when this workflow file changes.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/llama-server.yml
+  push:
+    branches: [main, dev]
+    paths:
+      - .github/workflows/llama-server.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: llama-server-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # llama.cpp stable release v0.8.0 (annotated tag 6ebec9ad2a90f270f0db4a8669c18511d2e82995).
+  LLAMA_CPP_VERSION: v0.8.0
+  LLAMA_CPP_COMMIT: 8642541b255bfb5dc39cd351a178be09013a55d6
+
+jobs:
+  linux:
+    name: Build llama-server (linux-x64-vulkan)
+    # The oldest supported runner keeps the required glibc low.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      ARCHIVE: llama-server-v0.8.0-linux-x64-vulkan.tar.gz
+      # LunarG publishes versioned Ubuntu repositories up to 1.4.313
+      # (https://packages.lunarg.com/vulkan/1.4.313/lunarg-vulkan-1.4.313-jammy.list).
+      LUNARG_SDK_VERSION: 1.4.313
+      # Primary key of https://packages.lunarg.com/lunarg-signing-key-pub.asc,
+      # "LunarG Signing Key (Key used by LunarG to sign packages) <linux-packages@lunarg.com>".
+      LUNARG_KEY_FINGERPRINT: 03F5D621A3710FA95A93D89BAA8452080E383F7E
+    steps:
+      # Actions are pinned by commit SHA; the comment names the release.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ggml-org/llama.cpp
+          ref: ${{ env.LLAMA_CPP_COMMIT }}
+          path: llama.cpp
+          persist-credentials: false
+
+      - name: Verify the llama.cpp commit
+        working-directory: llama.cpp
+        run: |
+          head="$(git rev-parse HEAD)"
+          if [ "$head" != "$LLAMA_CPP_COMMIT" ]; then
+            echo "::error::llama.cpp HEAD is $head, expected $LLAMA_CPP_COMMIT."
+            exit 1
+          fi
+          echo "llama.cpp HEAD: $head"
+
+      - name: Trust the LunarG signing key
+        run: |
+          key="$RUNNER_TEMP/lunarg-signing-key-pub.asc"
+          curl -fsSL -o "$key" https://packages.lunarg.com/lunarg-signing-key-pub.asc
+          # The file must hold exactly one primary key, with the pinned fingerprint.
+          primaries="$(gpg --show-keys --with-colons "$key" | grep -c '^pub:')"
+          fingerprint="$(gpg --show-keys --with-colons "$key" | awk -F: '/^pub:/ {getline; print $10}')"
+          if [ "$primaries" != "1" ] || [ "$fingerprint" != "$LUNARG_KEY_FINGERPRINT" ]; then
+            echo "::error::LunarG key mismatch: $primaries primary key(s), fingerprint $fingerprint."
+            exit 1
+          fi
+          gpg --dearmor < "$key" | sudo tee /usr/share/keyrings/lunarg-vulkan.gpg > /dev/null
+          # Same source as the pinned list file, but trusted only for this repository.
+          echo "deb [signed-by=/usr/share/keyrings/lunarg-vulkan.gpg] https://packages.lunarg.com/vulkan/$LUNARG_SDK_VERSION jammy main" \
+            | sudo tee /etc/apt/sources.list.d/lunarg-vulkan-$LUNARG_SDK_VERSION-jammy.list
+
+      - name: Install the build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            build-essential ninja-build \
+            libvulkan-dev=1.4.313.0~rc1-1lunarg22.04-1 \
+            vulkan-headers=1.4.313.0~rc1-1lunarg22.04-1 \
+            spirv-headers=1.6.1+1.4.313.0~rc1-1lunarg22.04-1 \
+            shaderc=2025.2~rc1-1lunarg22.04-1
+          glslc --version
+          cmake --version
+
+      - name: Configure
+        working-directory: llama.cpp
+        # LLAMA_USE_PREBUILT_UI=OFF: the default ON downloads the web UI from
+        # Hugging Face during the build; the build must not need the network.
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_RPATH='$ORIGIN' \
+            -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+            -DBUILD_SHARED_LIBS=ON \
+            -DGGML_VULKAN=ON \
+            -DGGML_NATIVE=OFF \
+            -DGGML_BACKEND_DL=ON \
+            -DGGML_CPU_ALL_VARIANTS=ON \
+            -DGGML_OPENMP=ON \
+            -DGGML_RPC=OFF \
+            -DLLAMA_OPENSSL=OFF \
+            -DLLAMA_BUILD_UI=OFF \
+            -DLLAMA_USE_PREBUILT_UI=OFF \
+            -DLLAMA_CONNECT=OFF \
+            -DLLAMA_SUBPROCESS=OFF \
+            -DLLAMA_LLGUIDANCE=OFF \
+            -DLLAMA_BUILD_TESTS=OFF \
+            -DLLAMA_BUILD_EXAMPLES=OFF \
+            -DLLAMA_BUILD_APP=OFF
+
+      - name: Build
+        working-directory: llama.cpp
+        # ggml depends on every GGML_BACKEND_DL module, so this also builds the
+        # CPU variants and the Vulkan backend.
+        run: cmake --build build --config Release --target llama-server -j "$(nproc)"
+
+      - name: Smoke check
+        working-directory: llama.cpp/build/bin
+        run: |
+          ls -la
+          ./llama-server --version 2>&1 | tee "$RUNNER_TEMP/version.txt"
+          if ! grep -q "${LLAMA_CPP_COMMIT:0:7}" "$RUNNER_TEMP/version.txt"; then
+            echo "::error::llama-server --version does not name commit $LLAMA_CPP_COMMIT."
+            exit 1
+          fi
+          ./llama-server --help > "$RUNNER_TEMP/help.txt" 2>&1
+          # common/arg.cpp registers --ssl-key-file without a TLS guard at this
+          # commit, so the help text is reported, and the linked libraries decide.
+          if grep -q -- '--ssl-key-file' "$RUNNER_TEMP/help.txt"; then
+            echo "::warning::llama-server --help lists --ssl-key-file."
+          else
+            echo "llama-server --help does not list --ssl-key-file."
+          fi
+          echo "--- ldd llama-server"
+          ldd ./llama-server
+          for file in llama-server *.so*; do
+            echo "--- NEEDED $file"
+            objdump -p "$file" | grep NEEDED
+          done
+          if objdump -p llama-server *.so* | grep NEEDED | grep -E 'libssl|libcrypto'; then
+            echo "::error::The build links OpenSSL."
+            exit 1
+          fi
+          glibc="$(objdump -T llama-server *.so* | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
+          echo "Highest required glibc symbol version: $glibc"
+
+      - name: Package
+        run: |
+          stage="$RUNNER_TEMP/llama-server-$LLAMA_CPP_VERSION-linux-x64-vulkan"
+          mkdir -p "$stage" dist
+          cp -a llama.cpp/build/bin/. "$stage/"
+          cp llama.cpp/LICENSE "$stage/"
+          tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+            -C "$RUNNER_TEMP" -czf "dist/$ARCHIVE" "$(basename "$stage")"
+          (cd dist && sha256sum "$ARCHIVE" > SHA256SUMS && cat SHA256SUMS)
+          tar -tzvf "dist/$ARCHIVE"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: llama-server-linux-x64-vulkan
+          path: dist/
+          if-no-files-found: error
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/${{ env.ARCHIVE }}
+
+  windows:
+    name: Build llama-server (windows-x64-vulkan)
+    runs-on: windows-2025
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      ARCHIVE: llama-server-v0.8.0-windows-x64-vulkan.zip
+      VULKAN_VERSION: 1.4.357.0
+      # sha256 published by LunarG for vulkansdk-windows-X64-1.4.357.0.exe
+      # in https://vulkan.lunarg.com/sdk/files.json.
+      VULKAN_SDK_SHA256: 81f474711e9042f4cd22b31b2f7a8870db2e428b21586fb43dd80150be97310d
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ggml-org/llama.cpp
+          ref: ${{ env.LLAMA_CPP_COMMIT }}
+          path: llama.cpp
+          persist-credentials: false
+
+      - name: Verify the llama.cpp commit
+        working-directory: llama.cpp
+        shell: pwsh
+        run: |
+          $head = git rev-parse HEAD
+          if ($head -ne $env:LLAMA_CPP_COMMIT) {
+            Write-Output "::error::llama.cpp HEAD is $head, expected $env:LLAMA_CPP_COMMIT."
+            exit 1
+          }
+          Write-Output "llama.cpp HEAD: $head"
+
+      - name: Install the Vulkan SDK
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP "VulkanSDK-Installer.exe"
+          curl.exe -fsSL -o $installer "https://sdk.lunarg.com/sdk/download/$env:VULKAN_VERSION/windows/vulkansdk-windows-X64-$env:VULKAN_VERSION.exe"
+          $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLowerInvariant()
+          Write-Output "Vulkan SDK installer sha256: $hash"
+          if ($hash -ne $env:VULKAN_SDK_SHA256) {
+            Write-Output "::error::Vulkan SDK installer sha256 mismatch."
+            exit 1
+          }
+          & $installer --accept-licenses --default-answer --confirm-command install
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Add-Content $env:GITHUB_ENV "VULKAN_SDK=C:\VulkanSDK\$env:VULKAN_VERSION"
+          Add-Content $env:GITHUB_PATH "C:\VulkanSDK\$env:VULKAN_VERSION\bin"
+
+      - name: Find vcvarsall
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvarsall.bat"
+          if (-not (Test-Path $vcvars)) {
+            Write-Output "::error::vcvarsall.bat not found under $vs."
+            exit 1
+          }
+          Write-Output "vcvarsall: $vcvars"
+          Add-Content $env:GITHUB_ENV "VCVARSALL=$vcvars"
+
+      - name: Configure and build
+        working-directory: llama.cpp
+        shell: cmd
+        # Upstream's windows-cpu release job: clang through
+        # cmake/x64-windows-llvm.cmake and Ninja Multi-Config, which
+        # GGML_CPU_ALL_VARIANTS needs. GGML_OPENMP_FETCH downloads the LLVM
+        # 20.1.8 installer from github.com/llvm/llvm-project (sha256 pinned in
+        # ggml/src/CMakeLists.txt) to get libomp, and requires Clang 20.x.
+        # Ninja comes from the Visual Studio CMake tools on PATH after vcvarsall.
+        run: |
+          call "%VCVARSALL%" x64 || exit /b 1
+          where clang
+          clang --version
+          where ninja
+          cmake -S . -B build -G "Ninja Multi-Config" ^
+            -D CMAKE_TOOLCHAIN_FILE=cmake/x64-windows-llvm.cmake ^
+            -DBUILD_SHARED_LIBS=ON ^
+            -DGGML_VULKAN=ON ^
+            -DGGML_NATIVE=OFF ^
+            -DGGML_BACKEND_DL=ON ^
+            -DGGML_CPU_ALL_VARIANTS=ON ^
+            -DGGML_OPENMP=ON ^
+            -DGGML_OPENMP_FETCH=ON ^
+            -DGGML_RPC=OFF ^
+            -DLLAMA_OPENSSL=OFF ^
+            -DLLAMA_BUILD_UI=OFF ^
+            -DLLAMA_USE_PREBUILT_UI=OFF ^
+            -DLLAMA_CONNECT=OFF ^
+            -DLLAMA_SUBPROCESS=OFF ^
+            -DLLAMA_LLGUIDANCE=OFF ^
+            -DLLAMA_BUILD_TESTS=OFF ^
+            -DLLAMA_BUILD_EXAMPLES=OFF ^
+            -DLLAMA_BUILD_APP=OFF || exit /b 1
+          cmake --build build --config Release --target llama-server || exit /b 1
+
+      - name: Smoke check
+        working-directory: llama.cpp/build/bin/Release
+        shell: pwsh
+        run: |
+          Get-ChildItem | Format-Table -AutoSize Name, Length
+          $version = (& .\llama-server.exe --version 2>&1 | Out-String)
+          Write-Output $version
+          if (-not $version.Contains($env:LLAMA_CPP_COMMIT.Substring(0, 7))) {
+            Write-Output "::error::llama-server --version does not name commit $env:LLAMA_CPP_COMMIT."
+            exit 1
+          }
+          $help = (& .\llama-server.exe --help 2>&1 | Out-String)
+          # common/arg.cpp registers --ssl-key-file without a TLS guard at this
+          # commit, so the help text is reported, and the shipped DLLs decide.
+          if ($help.Contains("--ssl-key-file")) {
+            Write-Output "::warning::llama-server --help lists --ssl-key-file."
+          } else {
+            Write-Output "llama-server --help does not list --ssl-key-file."
+          }
+          $tls = Get-ChildItem -Name | Where-Object { $_ -match '^(libssl|libcrypto|ssl|crypto)' }
+          if ($tls) {
+            Write-Output "::error::The build ships TLS libraries: $tls"
+            exit 1
+          }
+          $global:LASTEXITCODE = 0
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $name = "llama-server-$env:LLAMA_CPP_VERSION-windows-x64-vulkan"
+          $stage = Join-Path $env:RUNNER_TEMP $name
+          New-Item -ItemType Directory -Force -Path $stage, dist | Out-Null
+          Copy-Item -Path llama.cpp\build\bin\Release\* -Destination $stage -Recurse
+          Copy-Item -Path llama.cpp\LICENSE -Destination $stage
+          Push-Location $env:RUNNER_TEMP
+          7z a -tzip (Join-Path $env:GITHUB_WORKSPACE "dist\$env:ARCHIVE") $name
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Pop-Location
+          $hash = (Get-FileHash -Algorithm SHA256 "dist\$env:ARCHIVE").Hash.ToLowerInvariant()
+          # sha256sum format with LF line endings, like the Linux job.
+          [IO.File]::WriteAllText((Join-Path $env:GITHUB_WORKSPACE "dist\SHA256SUMS"), "$hash  $env:ARCHIVE`n")
+          Get-Content dist\SHA256SUMS
+          7z l "dist\$env:ARCHIVE"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: llama-server-windows-x64-vulkan
+          path: dist/
+          if-no-files-found: error
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/${{ env.ARCHIVE }}
