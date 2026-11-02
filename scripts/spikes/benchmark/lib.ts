@@ -6,8 +6,10 @@ export interface BenchConfig {
   model: string;
   /** Model id of the draft model, passed with -md. */
   draft?: string;
-  /** Per-config server flags; must include -c and -ngl because --fit is off. */
+  /** Per-config server flags; must include -c, and -ngl unless `fit` is set. */
   flags: string[];
+  /** Let --fit choose -ngl and the CPU/GPU split instead of the config. */
+  fit?: boolean;
   /** Fields merged into every /completion request (sampling checks). */
   request?: Record<string, unknown>;
 }
@@ -83,18 +85,19 @@ export interface ArgvInput {
   port: number;
   apiKeyFile: string;
   flags: readonly string[];
+  fit?: boolean;
 }
 
 /** Hardened flags first (S24), then the config flags. The API key stays in its file. */
 export function buildArgv(input: ArgvInput): string[] {
-  for (const flag of ["-c", "-ngl"]) {
+  for (const flag of input.fit ? ["-c"] : ["-c", "-ngl"]) {
     if (!input.flags.includes(flag)) throw new Error(`config needs an explicit ${flag}`);
   }
   return [
     input.server,
     ...["-m", input.model, "--host", "127.0.0.1", "--port", String(input.port)],
     ...["--no-webui", "--offline", "--no-slots", "--metrics", "-np", "1"],
-    ...["--api-key-file", input.apiKeyFile, "--fit", "off"],
+    ...["--api-key-file", input.apiKeyFile, "--fit", input.fit ? "on" : "off"],
     ...input.flags,
     ...(input.draft ? ["-md", input.draft] : []),
   ];

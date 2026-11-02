@@ -97,6 +97,7 @@ async function runConfig(config: BenchConfig, home: string, vram: string | undef
     port,
     apiKeyFile,
     flags: config.flags,
+    fit: config.fit === true,
   });
   process.stdout.write(`${config.label}: ${argv.join(" ")}\n`);
   const log = join(SCRATCH, "logs", `${config.label}-${Date.now()}.log`);
