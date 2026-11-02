@@ -3,7 +3,7 @@
 // Run: bun scripts/dev-env/run.ts bun scripts/spikes/benchmark/download.ts [model-id ...]
 import { existsSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { downloadUrl, MODELS, type ModelFile } from "./models";
+import { downloadUrl, MODELS, type ModelFile, modelPath } from "./models";
 
 const home = process.env.GOOP_HOME;
 if (!home) {
@@ -21,10 +21,6 @@ async function sha256File(path: string): Promise<string> {
   const hasher = new Bun.CryptoHasher("sha256");
   for await (const chunk of Bun.file(path).stream()) hasher.update(chunk);
   return hasher.digest("hex");
-}
-
-export function modelPath(root: string, model: ModelFile): string {
-  return join(root, "models", model.id, model.file);
 }
 
 async function fetchModel(model: ModelFile): Promise<void> {

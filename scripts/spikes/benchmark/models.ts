@@ -1,5 +1,6 @@
 // T13 spike: the pinned GGUF files. Each entry is fixed to a Hugging Face commit and the
 // file's sha256 (its LFS oid), read from https://huggingface.co/api/models/<repo>/tree/<commit>.
+import { join } from "node:path";
 
 export interface ModelFile {
   id: string;
@@ -38,6 +39,11 @@ export const MODELS: readonly ModelFile[] = [
     sha256: "6955f98a701e97a8c969f3ff33be8ba17b35bd60e5ac96258d2c42d710c7d63f",
   },
 ];
+
+/** Where download.ts stores a model: GOOP_HOME/models/<id>/<file>. */
+export function modelPath(root: string, model: ModelFile): string {
+  return join(root, "models", model.id, model.file);
+}
 
 export function downloadUrl(model: ModelFile): string {
   return `https://huggingface.co/${model.repo}/resolve/${model.commit}/${model.file}`;
