@@ -119,7 +119,7 @@ The S# text is unchanged. This note and the ADR record the design.
 
 ## Limits
 
-- **System change on Linux.** `/var/lib/systemd/credential.secret` was created by this spike. T11 asks to undo system changes afterwards; that step is still pending with the user. Deleting the host key makes every credential wrapped with it unreadable.
+- **System change on Linux.** `/var/lib/systemd/credential.secret` was created by this spike. The user removed it afterwards (`sudo rm`), and `/var/lib/systemd/` matched its listing from before the spike. Deleting the host key makes every credential wrapped with it unreadable, so the spike credentials are gone too.
 - **The DPAPI outage was seen in three separate VM runs** (two report runs and one probe). Its cause was not found. It was not tried on a real Windows PC.
 - **Logon types.** Only the SSH network logon (with `goop` also on the console) and a batch logon of another user were run. An interactive-only logon, and the owner's daemon under a scheduled task, were not tested.
 - **`GetLastError` is read in a separate FFI call.** Bun could in theory overwrite the code between the two calls. The observed codes were consistent.
