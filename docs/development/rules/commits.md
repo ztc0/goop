@@ -21,6 +21,19 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`
 - A change that touches security, stored data or delivery gets its own commit.
 - Record the commit of each task in the plan (`odd/tasks/goop.md`).
 
+## Pull request size
+
+A pull request stays at about **400 changed lines**. When a change grows past that, split it into a chain of stacked pull requests instead of one large pull request:
+- The first pull request targets `dev`; each next one targets the branch of the one before it (`feat/x-1` <- `feat/x-2` <- `feat/x-3`).
+- Each pull request holds one work unit that builds, type-checks and passes the tests on its own, with its tests and docs. Split a commit that is larger than the budget; never trim comments, tests or docs to fit.
+- Each pull request says where it sits in the chain, what comes before and after, with a diagram that marks the current one with 📍.
+- Review and merge them in order. When one is merged, GitHub deletes its branch and moves the next pull request onto `dev`.
+
+```mermaid
+flowchart LR
+    Dev[dev] --- PR1[PR 1<br/>feat/x-1] --- PR2[PR 2<br/>feat/x-2] --- PR3[PR 3<br/>feat/x-3]
+```
+
 ## Branch flow
 
 ```mermaid

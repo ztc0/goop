@@ -11,5 +11,5 @@
 - [ ] The test was written first and failed before the change.
 - [ ] `bun run lint`, `bun run typecheck` and `bun run test` pass.
 - [ ] Docs, help text and `CHANGELOG.md` are updated when behavior changes.
-- [ ] The change stays around 400 changed lines, or explains why it cannot.
+- [ ] The change stays around 400 changed lines; a larger change is split into stacked pull requests (`docs/development/rules/commits.md`).
 - [ ] No secrets, personal data or real CVs are included.
