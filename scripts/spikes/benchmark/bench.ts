@@ -26,7 +26,7 @@ import {
   summarize,
 } from "./lib";
 import { MODELS, modelPath } from "./models";
-import { N_PREDICT, PROMPTS, RUNS, SEED } from "./prompts";
+import { N_PREDICT, PROMPTS, SEED, WARMUP } from "./prompts";
 import { SWEEP } from "./sweep";
 
 const REPO = join(import.meta.dir, "../../..");
@@ -61,6 +61,17 @@ function vramFile(): string | undefined {
   }
 }
 
+/** Power state that changes speed between runs: mains power, platform profile, GPU clock mode. */
+function machineState(): Record<string, string | null> {
+  const read = (path: string) => (existsSync(path) ? readFileSync(path, "utf8").trim() : null);
+  const vram = vramFile();
+  return {
+    ac_online: read("/sys/class/power_supply/ACAD/online"),
+    platform_profile: read("/sys/firmware/acpi/platform_profile"),
+    gpu_dpm_level: vram ? read(join(vram, "..", "power_dpm_force_performance_level")) : null,
+  };
+}
+
 async function freePort(): Promise<number> {
   const probe = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: () => new Response() });
   const port = probe.port as number;
@@ -76,6 +87,8 @@ interface PromptResult {
   acceptance: number | null;
   draft_n: number;
   draft_n_accepted: number;
+  /** The start of the last answer, to tell real speed from a model stuck repeating itself. */
+  sample: string;
 }
 
 async function runConfig(config: BenchConfig, home: string, vram: string | undefined) {
@@ -126,6 +139,7 @@ async function runConfig(config: BenchConfig, home: string, vram: string | undef
     if (readFileSync(log, "utf8").includes("using config file")) {
       throw new Error(`the server read a config file, see ${log}`);
     }
+    let lastContent = "";
     const complete = async (prompt: string) => {
       const body = {
         prompt,
@@ -140,16 +154,18 @@ async function runConfig(config: BenchConfig, home: string, vram: string | undef
         body: JSON.stringify({ ...body, ...config.request }),
       });
       if (!response.ok) throw new Error(`/completion ${response.status}: ${await response.text()}`);
-      return ((await response.json()) as { timings: Record<string, number> }).timings;
+      const json = (await response.json()) as { timings: Record<string, number>; content: string };
+      lastContent = json.content;
+      return json.timings;
     };
     const metrics = async () =>
       parseMetrics(await (await fetch(`${base}/metrics`, { headers })).text());
-    await complete(PROMPTS.short);
+    await complete(WARMUP);
     const prompts: Record<string, PromptResult> = {};
-    for (const [name, prompt] of Object.entries(PROMPTS)) {
+    for (const [name, variants] of Object.entries(PROMPTS)) {
       const before = await metrics();
       const timings: Record<string, number>[] = [];
-      for (let run = 0; run < RUNS; run++) timings.push(await complete(prompt));
+      for (const prompt of variants) timings.push(await complete(prompt));
       const pick = (key: string) => timings.map((entry) => entry[key] ?? Number.NaN);
       const total = (key: string) => timings.reduce((sum, entry) => sum + (entry[key] ?? 0), 0);
       prompts[name] = {
@@ -161,9 +177,16 @@ async function runConfig(config: BenchConfig, home: string, vram: string | undef
         // The per-response counters, to cross-check the /metrics acceptance.
         draft_n: total("draft_n"),
         draft_n_accepted: total("draft_n_accepted"),
+        sample: lastContent.slice(0, 400),
       };
     }
-    return { argv, log, prompts, vram_peak_mib: peak === null ? null : Math.round(peak / 2 ** 20) };
+    return {
+      argv,
+      log,
+      prompts,
+      machine: machineState(),
+      vram_peak_mib: peak === null ? null : Math.round(peak / 2 ** 20),
+    };
   } finally {
     clearInterval(sampler);
     server.kill();
