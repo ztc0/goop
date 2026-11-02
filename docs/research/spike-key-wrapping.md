@@ -73,13 +73,13 @@ bun run windows:run -- --copy .local/build/key-wrapping/goop-key-check.exe \
 
 ## Results
 
-Linux source and compiled runs gave the same results. Windows ran only the compiled executable. Every item that ran passed.
+Linux source and compiled runs gave the same results. Windows ran only the compiled executable. Every item that ran passed, except item u on Windows, which is inconclusive (see below).
 
 | Item | Check                                       | Linux source | Linux compiled | Windows compiled | Observed                                                                                                                                                                                                             |
 | ---- | ------------------------------------------- | ------------ | -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | a    | OS round trip; the key is not in the output | PASS         | PASS           | PASS (waited)    | Linux: 768-byte credential (base64 text), host+tpm2 scoped, pinned SRK; wrap ~290 ms, unwrap ~610-630 ms. Windows: 262-byte blob; wrap 2.0 ms, unwrap 0.3 ms                                                         |
 | b    | Tamper and a wrong binding are rejected     | PASS         | PASS           | PASS (waited)    | Linux: flipped byte -> `Failed to decrypt: io.systemd.System`; wrong name -> `Name in credential doesn't match expectations.` Windows: tampered, wrong entropy and no entropy -> `0x0000000d` (`ERROR_INVALID_DATA`) |
-| u    | Another user cannot unwrap                  | not run      | not run        | PASS             | `goopother`: `CryptUnprotectData failed: GetLastError 0x8009000b` (`NTE_BAD_KEY_STATE`); owner `goop` opened the same blob                                                                                           |
+| u    | Another user cannot unwrap                  | not run      | not run        | INCONCLUSIVE     | `goopother`: `CryptUnprotectData failed: GetLastError 0x8009000b` (`NTE_BAD_KEY_STATE`); owner `goop` opened the same blob                                                                                           |
 | r    | Recovery key round trip                     | PASS         | PASS           | PASS             | Typed form (lowercase, spaces, `o` for `0`) accepted; wrong key and tamper rejected                                                                                                                                  |
 | p    | Passphrase fallback                         | PASS         | PASS           | PASS             | scrypt `N=2^17 r=8 p=1`: ~335-360 ms per derivation on Linux, 271 ms on Windows; wrong passphrase and tamper rejected                                                                                                |
 
@@ -125,3 +125,4 @@ The S# text is unchanged. This note and the ADR record the design.
 - **`GetLastError` is read in a separate FFI call.** Bun could in theory overwrite the code between the two calls. The observed codes were consistent.
 - **One systemd version.** Only v262 was run. Older versions cannot read v262 credentials (finding 6), and a TPM clear or an OS reinstall was not tried.
 - **Timings are single runs.** They come from the spike output, not from a benchmark.
+- **Windows code drift.** The VM ran the executable built from `219fbbd`. The later changes to `dpapi.ts` (`9e5b40e`, zero and free in a `finally`) and `check-windows.ts` (`411134f`, reject a mode without its folder) were not in that executable, so the recorded Windows run does not cover them.
