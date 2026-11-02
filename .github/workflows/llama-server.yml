@@ -2,7 +2,8 @@ name: llama-server build
 
 # Spike (T12): build a minimal llama-server (CPU + Vulkan, no TLS, no web UI)
 # from a pinned llama.cpp commit for Linux x64 and Windows x64, then package,
-# checksum and attest it. Runs by hand, or when this workflow file changes.
+# checksum it. Runs by hand, or when this workflow file changes. Only a run on
+# main signs the archives, after the owner approves the `release` environment.
 on:
   workflow_dispatch:
   pull_request:
@@ -31,10 +32,9 @@ jobs:
     # The oldest supported runner keeps the required glibc low.
     runs-on: ubuntu-22.04
     timeout-minutes: 90
+    # Builds run on pull requests too, so they get no signing permission.
     permissions:
       contents: read
-      id-token: write
-      attestations: write
     env:
       ARCHIVE: llama-server-v0.8.0-linux-x64-vulkan.tar.gz
       # LunarG publishes versioned Ubuntu repositories up to 1.4.313
@@ -169,18 +169,13 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-path: dist/${{ env.ARCHIVE }}
-
   windows:
     name: Build llama-server (windows-x64-vulkan)
     runs-on: windows-2025
     timeout-minutes: 120
+    # Builds run on pull requests too, so they get no signing permission.
     permissions:
       contents: read
-      id-token: write
-      attestations: write
     env:
       ARCHIVE: llama-server-v0.8.0-windows-x64-vulkan.zip
       VULKAN_VERSION: 1.4.357.0
@@ -321,6 +316,33 @@ jobs:
           path: dist/
           if-no-files-found: error
 
+  attest:
+    name: Sign the llama-server archives
+    # Only code that reached main is signed: never a pull request or another branch.
+    # The `release` environment also accepts only main and waits for the owner's approval.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: llama-server-*-x64-vulkan
+          path: dist
+
+      - name: Check the archives against their SHA256SUMS
+        run: |
+          for folder in dist/*/; do
+            (cd "$folder" && sha256sum --check --strict SHA256SUMS)
+          done
+
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: dist/${{ env.ARCHIVE }}
+          subject-path: |
+            dist/llama-server-linux-x64-vulkan/llama-server-v0.8.0-linux-x64-vulkan.tar.gz
+            dist/llama-server-windows-x64-vulkan/llama-server-v0.8.0-windows-x64-vulkan.zip

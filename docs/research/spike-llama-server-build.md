@@ -43,18 +43,19 @@ One security finding changes S24: llama-server always reads config files, and ev
 
 ## Workflow
 
-The workflow runs on `workflow_dispatch` and when its own file changes (pull request, or a push to `main` or `dev`), never on every pull request (L49). Both jobs pin every action by commit SHA and ask only for `contents: read`, `id-token: write` and `attestations: write`.
+The workflow runs on `workflow_dispatch` and when its own file changes (pull request, or a push to `main` or `dev`), never on every pull request (L49). Every action is pinned by commit SHA. The two build jobs run pull-request code, so they get only `contents: read`. A third job, `attest`, signs both archives: it runs only on `main` (never on a pull request), uses the `release` environment (deployment branch `main` only, the owner as required reviewer, L51), checks each archive against its `SHA256SUMS` and only then gets `id-token: write` and `attestations: write`.
 
-| Step           | `linux` job                                                                                       | `windows` job                                                                      |
-| -------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Source         | Check out llama.cpp at the pinned commit, fail if `HEAD` differs                                  | Same                                                                               |
-| Toolchain      | Trust the LunarG key only with the pinned fingerprint, install pinned Vulkan and shaderc packages | Download the Vulkan SDK, check its sha256, install it; find `vcvarsall.bat`        |
-| Configure      | CMake + Ninja, shared libs, `$ORIGIN` rpath                                                       | CMake + Ninja Multi-Config with clang, `GGML_OPENMP_FETCH=ON`                      |
-| Options (both) | Vulkan, CPU variants as loadable backends, OpenMP; no TLS, RPC, web UI, tests, examples or app    | Same                                                                               |
-| Build          | Target `llama-server` only                                                                        | Same                                                                               |
-| Smoke check    | `--version` names the commit; `--help` TLS warning; `NEEDED` without OpenSSL; highest glibc       | `--version` names the commit; `--help` TLS warning; no TLS DLL in the folder       |
-| Package        | Reproducible tarball (sorted, `mtime` 0, owner 0) plus `LICENSE`, `SHA256SUMS`                    | Zip without `vulkan-shaders-gen.exe`, plus `LICENSE`, `SHA256SUMS` with LF endings |
-| Publish        | Upload the artifact, attest the archive                                                           | Same                                                                               |
+| Step            | `linux` job                                                                                                            | `windows` job                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Source          | Check out llama.cpp at the pinned commit, fail if `HEAD` differs                                                       | Same                                                                               |
+| Toolchain       | Trust the LunarG key only with the pinned fingerprint, install pinned Vulkan and shaderc packages                      | Download the Vulkan SDK, check its sha256, install it; find `vcvarsall.bat`        |
+| Configure       | CMake + Ninja, shared libs, `$ORIGIN` rpath                                                                            | CMake + Ninja Multi-Config with clang, `GGML_OPENMP_FETCH=ON`                      |
+| Options (both)  | Vulkan, CPU variants as loadable backends, OpenMP; no TLS, RPC, web UI, tests, examples or app                         | Same                                                                               |
+| Build           | Target `llama-server` only                                                                                             | Same                                                                               |
+| Smoke check     | `--version` names the commit; `--help` TLS warning; `NEEDED` without OpenSSL; highest glibc                            | `--version` names the commit; `--help` TLS warning; no TLS DLL in the folder       |
+| Package         | Reproducible tarball (sorted, `mtime` 0, owner 0) plus `LICENSE`, `SHA256SUMS`                                         | Zip without `vulkan-shaders-gen.exe`, plus `LICENSE`, `SHA256SUMS` with LF endings |
+| Publish         | Upload the artifact                                                                                                    | Same                                                                               |
+| Sign (`attest`) | On `main` only, after the owner approves `release`: download both artifacts, `sha256sum --check`, attest both archives | Same job                                                                           |
 
 ```mermaid
 flowchart LR
@@ -64,7 +65,9 @@ flowchart LR
     Build --> Smoke[Smoke check: version, no TLS]
     Smoke --> Pack[Archive + SHA256SUMS]
     Pack --> Upload[Upload artifact]
-    Pack --> Attest[Build provenance attestation]
+    Upload --> Gate{On main and approved in release?}
+    Gate -->|yes| Attest[Build provenance attestation]
+    Gate -->|no: pull request or other branch| Unsigned[Unsigned artifact]
 ```
 
 Each archive holds one top folder with `LICENSE`, `llama-server`, `libllama`, `libllama-common`, `libllama-server-impl`, `libmtmd`, `libggml`, `libggml-base`, `libggml-vulkan` and the CPU variants `x64`, `sse42`, `sandybridge`, `ivybridge`, `piledriver`, `haswell`, `skylakex`, `cannonlake`, `cascadelake`, `icelake`, `cooperlake`, `alderlake`, `sapphirerapids` and `zen4`. Windows ships the same files as `.dll`, plus `libomp.dll`.
@@ -79,7 +82,8 @@ sha256sum -c SHA256SUMS
 
 # Check the build provenance (prints nothing on success; add --format json to see the certificate)
 gh attestation verify llama-server-v0.8.0-linux-x64-vulkan.tar.gz \
-  --repo ztc0/goop --signer-workflow ztc0/goop/.github/workflows/llama-server.yml
+  --repo ztc0/goop --signer-workflow ztc0/goop/.github/workflows/llama-server.yml \
+  --source-ref refs/heads/main
 
 # Unpack into .local/ and list the GPUs, with an empty config folder (finding 6)
 mkdir -p .temp/scratch/empty-config
@@ -116,10 +120,9 @@ The S# text is unchanged. This note records the finding for T18.
 
 ## Limits
 
-- **The verify command accepts pull-request runs.** `--signer-workflow` pins the workflow file, not the ref, and this spike's attestations come from `refs/pull/15/merge`. T18 must also pin the ref that may sign real builds (for example `--source-ref refs/heads/main`). Found by the native review (finding R1, advisory).
-- **The Windows build did not run on a PC.** It ran only the `--version` smoke check on the CI runner, not in the goop Windows VM, and no Windows GPU was listed.
+- **Only `main` may sign, and goop must check that.** `--signer-workflow` pins the workflow file, not the ref; the native review found that pull-request runs could sign (finding R1, advisory). Now only the `attest` job signs, on `main`, through the owner-approved `release` environment, and goop verifies with `--source-ref refs/heads/main`, so a signature from any other ref is rejected. The `attest` job has not run yet: it first runs when this workflow reaches `main`.
 - **Windows was only smoke-tested on the CI runner.** The zip from run `41379281254` was not run in the goop Windows VM or on a real Windows PC with a GPU.
 - **One run per job.** Timings come from a single run, not from a benchmark.
-- **The attestation ref is a pull request merge ref.** The certificate names `refs/pull/15/merge`, not `dev` or `main`.
+- **The spike's attestations came from a pull request.** Runs `41378116178` and `41379281254` signed from `refs/pull/15/merge`, before signing moved to `main`; `--source-ref refs/heads/main` rejects them.
 - **No model was loaded.** The spike listed devices only; inference and benchmarks belong to T13.
 - **The glibc floor was read, not tested.** `GLIBC_2.34` comes from the symbol table; the build was not run on an older distribution.
