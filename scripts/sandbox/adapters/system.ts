@@ -1,5 +1,5 @@
 import { writeSync } from "node:fs";
-import type { Clock, Output, RandomSource } from "../types/windows-vm";
+import type { Clock, Output, RandomSource } from "../types/sandbox";
 
 export const systemClock: Clock = {
   now: () => Date.now(),

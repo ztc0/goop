@@ -1,4 +1,4 @@
-import type { ProcessRequest, ProcessResult, ProcessRunner } from "../types/windows-vm";
+import type { ProcessRequest, ProcessResult, ProcessRunner } from "../types/sandbox";
 
 /** Runs host programs with Bun.spawn, never through a shell. */
 export const bunProcessRunner: ProcessRunner = {

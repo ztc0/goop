@@ -8,10 +8,10 @@ import {
   scpUploadArgs,
   sshArgs,
 } from "../model/ssh-args";
-import type { GuestShell, ProcessRunner, WindowsVmPaths } from "../types/windows-vm";
+import type { GuestShell, ProcessRunner, SandboxPaths } from "../types/sandbox";
 
 /** The guest over SSH and scp, with the key generated for this VM only. */
-export function createGuestShell(runner: ProcessRunner, paths: WindowsVmPaths): GuestShell {
+export function createGuestShell(runner: ProcessRunner, paths: SandboxPaths): GuestShell {
   const ssh = (remoteCommand: string) => runner.run({ command: sshArgs(paths, remoteCommand) });
   return {
     generateKey: () => runner.run({ command: keygenArgs(paths) }),

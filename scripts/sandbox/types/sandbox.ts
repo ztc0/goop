@@ -1,5 +1,5 @@
-/** Where the Windows VM keeps everything, all inside the repo (S3). */
-export interface WindowsVmPaths {
+/** Where the sandbox keeps everything, all inside the repo (S3). */
+export interface SandboxPaths {
   root: string;
   /** Podman graph root: images and container layers. */
   containerStorage: string;
@@ -37,10 +37,13 @@ export interface RunRequest {
   command: string;
 }
 
+/** The machine a command targets, chosen with `--os`. */
+export type SandboxOs = "windows" | "debian";
+
 export type CliCommand =
-  | { kind: "install" }
-  | { kind: "status" }
-  | ({ kind: "run" } & RunRequest)
+  | { kind: "install"; os: SandboxOs }
+  | { kind: "status"; os: SandboxOs }
+  | ({ kind: "run"; os: SandboxOs } & RunRequest)
   | { kind: "usage"; error?: string };
 
 export interface OemFiles {
@@ -122,8 +125,8 @@ export interface RandomSource {
   bytes(count: number): Uint8Array;
 }
 
-export interface WindowsVmDeps {
-  paths: WindowsVmPaths;
+export interface SandboxDeps {
+  paths: SandboxPaths;
   podman: Podman;
   guest: GuestShell;
   files: FileStore;

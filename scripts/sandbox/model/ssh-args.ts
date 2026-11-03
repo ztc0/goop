@@ -1,4 +1,4 @@
-import type { WindowsVmPaths } from "../types/windows-vm";
+import type { SandboxPaths } from "../types/sandbox";
 import { GUEST_HOST, GUEST_USER, SSH_PORT } from "./vm-config";
 
 export const REACHABLE_CHECK = "echo ok";
@@ -15,7 +15,7 @@ const TARGET = `${GUEST_USER}@${GUEST_HOST}`;
  * Options shared by ssh and scp: only the VM key, host keys kept in .temp/ (every run is a
  * fresh VM), and never an interactive prompt.
  */
-function sshOptions(paths: WindowsVmPaths): string[] {
+function sshOptions(paths: SandboxPaths): string[] {
   return [
     "-i",
     paths.sshKey,
@@ -34,11 +34,11 @@ function sshOptions(paths: WindowsVmPaths): string[] {
   ];
 }
 
-export function sshArgs(paths: WindowsVmPaths, remoteCommand: string): string[] {
+export function sshArgs(paths: SandboxPaths, remoteCommand: string): string[] {
   return ["ssh", ...sshOptions(paths), "-p", String(SSH_PORT), TARGET, remoteCommand];
 }
 
-export function scpUploadArgs(paths: WindowsVmPaths, localPath: string): string[] {
+export function scpUploadArgs(paths: SandboxPaths, localPath: string): string[] {
   return [
     "scp",
     ...sshOptions(paths),
@@ -51,7 +51,7 @@ export function scpUploadArgs(paths: WindowsVmPaths, localPath: string): string[
 }
 
 export function scpDownloadArgs(
-  paths: WindowsVmPaths,
+  paths: SandboxPaths,
   guestPath: string,
   destination: string,
 ): string[] {
@@ -66,7 +66,7 @@ export function scpDownloadArgs(
   ];
 }
 
-export function keygenArgs(paths: WindowsVmPaths): string[] {
+export function keygenArgs(paths: SandboxPaths): string[] {
   return [
     "ssh-keygen",
     "-q",

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { windowsVmPaths } from "../../model/paths";
+import { sandboxPaths } from "../../model/paths";
 import {
   installContainerArgs,
   listRunningArgs,
@@ -14,7 +14,7 @@ import {
 import { WINDOWS_IMAGE } from "../../model/vm-config";
 import { describeOnLinuxHost } from "../linux-host";
 
-const paths = windowsVmPaths("/repo");
+const paths = sandboxPaths("/repo");
 
 const VM_OPTIONS = [
   "--device",

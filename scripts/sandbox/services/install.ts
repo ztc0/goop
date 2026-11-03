@@ -3,7 +3,7 @@ import { oemFiles, parsePublicKey } from "../model/oem";
 import { displayPath } from "../model/paths";
 import { formatElapsed, INSTALL_READINESS } from "../model/readiness";
 import { INSTALL_CONTAINER, WEB_URL } from "../model/vm-config";
-import type { WindowsVmDeps } from "../types/windows-vm";
+import type { SandboxDeps } from "../types/sandbox";
 import {
   guestPassword,
   prepareContainerStorage,
@@ -16,7 +16,7 @@ import {
  * the OEM script enables SSH, and the container is stopped and removed when the
  * C:\OEM\ready.txt marker exists. The base stays.
  */
-export async function installWindows(deps: WindowsVmDeps): Promise<number> {
+export async function installWindows(deps: SandboxDeps): Promise<number> {
   const { paths, files, output, podman, guest } = deps;
   if (files.exists(paths.baseDisk)) {
     output.error(
