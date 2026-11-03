@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M2 offer detail · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen: one column, no sidebar; rows = detail, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .detail { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; white-space: nowrap; }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .new { color: var(--accent); font-size: 12px; font-weight: 700; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  .chip { padding: 0 6px; }
+  .chip.warn { color: var(--background); background: var(--warning); }
+  .chip.err { color: var(--background); background: var(--error); }
+  /* Offer head: the offer row grown to a header. Same 3ch score column, title, NEW; facts below, dim. */
+  .head { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; row-gap: 2px; padding: 6px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .head .name { font-weight: 600; }
+  .head .facts { grid-column: 2 / 4; color: var(--text-muted); font-size: 13px; }
+  .head .facts b { color: var(--text); font-weight: 600; }
+  .head .verdict { grid-column: 2 / 4; font-size: 13px; }
+  /* Body: two columns at full width so lines stay short. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; padding-top: 16px; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 18px; }
+  .sec { display: flex; flex-direction: column; gap: 6px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; color: var(--text-muted); }
+  .count { color: var(--text-muted); font-size: 13px; }
+  /* Requirement rows: state glyph, requirement, what the CV says, state word. */
+  .req li { display: grid; grid-template-columns: 2ch 22ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
+  .req .from { color: var(--text-muted); font-size: 13px; }
+  .req .state { font-size: 13px; }
+  /* goop summary: a goop turn (flame marker), so it reads as goop's words, not the employer's. */
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .turn p { margin: 0; }
+  .meta { color: var(--text-muted); font-size: 13px; }
+  /* Original text: never rendered here, only a pointer to M3 (untrusted data). */
+  .source { border-left: 1px solid var(--border); padding: 2px 12px; font-size: 13px; color: var(--text-muted); }
+  .source b, .count b, .warnline b { color: var(--text); font-weight: 600; }
+  /* State (saved, applied) is a tag in the header, never a button; the offer keys live in the status line. */
+  .tag-saved { color: var(--accent); font-size: 12px; font-weight: 700; margin-left: 10px; }
+  /* Feedback after an action: a short toast with undo, and the dismiss reason picker (feeds the Learner). */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; white-space: nowrap; }
+  .toast b { color: var(--text); font-weight: 600; }
+  /* Reversible one-line ask: panel fill, 2px --accent edge, question bold --text, keys bold --text. */
+  .ask { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 8px 12px; display: grid; gap: 4px; }
+  .ask .q { color: var(--text); font-weight: 600; }
+  .ask .opts { color: var(--text-muted); white-space: nowrap; }
+  .ask .opts b { color: var(--text); font-weight: 600; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  footer b.primary { color: var(--success); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-detail::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop offer detail, full screen">
+  <article class="detail" aria-label="Offer detail">
+    <div class="title">Offers › <b>Backend Developer (Python)</b> · 1 of 8 · esc back to session 3</div>
+    <header class="head">
+      <span class="score apply">92</span><span class="name">Backend Developer (Python)</span><span><span class="new">NEW</span><span class="tag-saved">★ saved</span></span>
+      <span class="facts"><b>Acme Labs</b> · Remote (EU hours) · €42–48K / year · Greenhouse · posted Oct 30, 2 days ago</span>
+      <span class="verdict apply">✔ apply · matches 5 of 6 requirements</span>
+    </header>
+    <div class="body">
+      <div class="col">
+        <section class="sec" aria-label="Requirements">
+          <div class="sec-head"><h2>Requirements</h2><span class="count">5 of 6 · from your CV · Backend · mid · 3 yrs</span></div>
+          <ul class="req">
+            <li><span class="ok">✓</span><span>Python</span><span class="from">3 yrs · main language</span><span class="state ok">match</span></li>
+            <li><span class="ok">✓</span><span>Django</span><span class="from">2 projects · Ledgerly, Tickit</span><span class="state ok">match</span></li>
+            <li><span class="ok">✓</span><span>REST APIs</span><span class="from">designed public API at Tickit</span><span class="state ok">match</span></li>
+            <li><span class="ok">✓</span><span>PostgreSQL</span><span class="from">3 yrs</span><span class="state ok">match</span></li>
+            <li><span class="busy">~</span><span>Fluent English</span><span class="from">B2 in your profile</span><span class="state busy">partial</span></li>
+            <li><span class="check">✕</span><span>Kubernetes</span><span class="from">not in your CV · nice to have</span><span class="state check">missing</span></li>
+          </ul>
+        </section>
+        <section class="sec" aria-label="Seniority fit">
+          <div class="sec-head"><h2>Seniority</h2><span class="count ok">fits</span></div>
+          <ul class="req">
+            <li><span class="ok">✓</span><span>asks 2+ yrs</span><span class="from">you have 3 yrs as backend</span><span class="state ok">match</span></li>
+          </ul>
+        </section>
+      </div>
+      <div class="col">
+        <section class="sec" aria-label="Summary by goop">
+          <div class="sec-head"><h2>Summary</h2><span class="count">written by goop · gpt-oss-20b</span></div>
+          <div class="turn">
+            <p>Equipo de 6 personas que construye la API de pagos de Acme. Mantenés servicios en Django y diseñás endpoints REST nuevos; hay guardias una semana al mes.</p>
+            <p>Reuniones diarias en inglés con el equipo de Berlín. Contrato indefinido, 100% remoto en horario europeo, 25 días de vacaciones.</p>
+            <div class="meta">summary · 0.8s · from 1,840 words</div>
+          </div>
+        </section>
+        <section class="sec" aria-label="Original offer text">
+          <div class="sec-head"><h2>Original text</h2><span class="count"><b>f</b> full text</span></div>
+          <div class="source">1,840 words from <b>boards.greenhouse.io/acmelabs</b> · fetched 08:12<br>shown as plain text in the full view; nothing in it is run or followed</div>
+        </section>
+      </div>
+    </div>
+  </article>
+  <footer><span class="mode m-detail">detail</span><span><b class="primary">↵</b> apply · <b>s</b> unsave · <b>a</b> ask goop · <b>d</b> dismiss · <b>o</b> browser · <b>f</b> full text · <b>↑↓</b> scroll · <b>[ ]</b> prev/next offer · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="Action feedback states">
+  <div><h3>After save</h3><div class="toast"><span>✓ Saved to your list</span><span><b>ctrl+z</b> undo · 4s</span></div></div>
+  <div><h3>After apply (enter)</h3><div class="ask"><span class="q">Opened the application page. Did you apply?</span><span class="opts"><b>y</b> yes · <b>n</b> no</span></div></div>
+  <div><h3>On dismiss</h3><div class="ask"><span class="q">Why not this one? (goop learns from it)</span><span class="opts"><b>1</b> salary · <b>2</b> stack · <b>3</b> location · <b>4</b> seniority · <b>5</b> other · <b>esc</b> skip</span></div></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> enter on an offer row hides the sidebar and the chat and gives the whole width to one offer, so the requirements and goop's summary sit side by side with short lines. No key-hint line under the header: the offer keys live in the status line, next to navigation (↵ apply · s unsave · a ask goop · d dismiss · o browser · f full text · ↑↓ scroll · [ ] prev/next offer · esc back); apply is the primary action, its key green, and opens the application page, then asks whether you applied (y yes marks it applied · n no); state lives in the header as a tag (★ saved, ✓ applied) and the hint flips (s save → s unsave); ? opens help. Asks are one line on the panel color with a yellow edge and bold keys. Dismiss asks for a reason the Learner uses (numbered choices); every action shows a short toast with ctrl+z undo. Below the screen: the feedback states.</p>
+</body>
+</html>

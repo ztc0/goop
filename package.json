@@ -10,14 +10,17 @@
     "bun": ">=1.3.14"
   },
   "scripts": {
-    "dev": "bun scripts/run.ts bun --watch src/main.ts",
-    "test": "bun scripts/run.ts bun test",
-    "typecheck": "bun scripts/run.ts tsc --noEmit",
-    "lint": "bun scripts/run.ts biome check .",
-    "format": "bun scripts/run.ts biome format --write .",
-    "build": "bun scripts/run.ts bun build --compile src/main.ts --outfile dist/goop",
-    "clean": "bun scripts/clean.ts",
-    "clean:local": "bun scripts/clean.ts --local",
+    "dev": "bun scripts/dev-env/run.ts bun --watch src/main.ts",
+    "test": "bun scripts/dev-env/run.ts bun test",
+    "typecheck": "bun scripts/dev-env/run.ts tsc --noEmit",
+    "lint": "bun scripts/dev-env/run.ts biome check .",
+    "format": "bun scripts/dev-env/run.ts biome format --write .",
+    "build": "bun scripts/dev-env/run.ts bun build --compile src/main.ts --outfile dist/goop",
+    "clean": "bun scripts/dev-env/clean.ts",
+    "clean:local": "bun scripts/dev-env/clean.ts --local",
+    "windows:install": "bun scripts/dev-env/run.ts bun scripts/windows-vm/cli.ts install",
+    "windows:run": "bun scripts/dev-env/run.ts bun scripts/windows-vm/cli.ts run",
+    "windows:status": "bun scripts/dev-env/run.ts bun scripts/windows-vm/cli.ts status",
     "prepare": "husky"
   },
   "devDependencies": {

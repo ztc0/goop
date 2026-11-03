@@ -1,0 +1,14 @@
+{
+  "title": "Models (M8)",
+  "brief": "Models screen of goop (/models), local llama.cpp servers only. Title breadcrumb; no key-hint line under the header. Problems first: a banner under the title (⚠ Qwen3.5-9B not responding · restarting 2/3 · matching paused, chat still works, r restart on the right; 2px --error edge on --background-panel). Memory map like btop/nvtop: one bar for VRAM 8 GB · RX 7700S (Vulkan) (Qwen3.5-9B 5.7 · Embeddings 0.6 · free 1.7) and one for RAM 30 GB (gpt-oss-20b 12.1 · Reranker 0.6 · system 1.5 · free 15.8), labels after each bar in segment order; model segments all --secondary, separated by a one-cell gap, system --border, free --background-element. Two panes: on the left the models grouped by where they run (GPU · RX 7700S: Profile & matching Qwen3.5-9B, Embeddings Qwen3-Embedding-0.6B; CPU · RAM: Chat · Orchestrator gpt-oss-20b, Security gpt-oss-safeguard-20b, Reranker Qwen3-Reranker), two lines each (role + state: ⚠ error, ● ready, ◐ loading, ○ on demand, ↓ update 32%; then model · quant · size · tok/s · reasoning), Qwen3.5-9B selected; on the right the selected model with tabs Info · Log 48 · Benchmark (Log active; a count only on Log, the one tab that is a list): last log lines as dim plain text behind a │ gutter, what goop did as a goop turn, and an LM Studio-style estimate previewing d (move to CPU → +5.7 GB RAM · ~9 tok/s (now 41) · fits, ↵ confirm · esc cancel). One status line with the models focus mode, the hints of the focused list (↑↓ move · r restart · d device · ctrl+r reasoning · [ ] tabs · esc back) and ○ next search 09:00 │ ? help. Below the screen: the update download, the Benchmark tab results and the chat status line alert chip that leads here. Model startup never blocks the TUI.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "Problem banner, memory map and a side list grouped by device plus one tabbed detail panel with a device-switch estimate; memory pressure and where each model runs are visible at a glance, but the detail shows one model and one tab at a time, the memory map costs three rows, same-color segments need the labels, and the screen hides the chat",
+      "width": 1440,
+      "height": 1280
+    }
+  ]
+}

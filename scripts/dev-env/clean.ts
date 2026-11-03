@@ -3,12 +3,12 @@
 import { existsSync, rmSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { devLayout } from "@/shared/model/dev-layout";
-import { repoRoot } from "./repo-root";
+import { repoRoot } from "../shared/repo-root";
 
 const args = process.argv.slice(2);
 const local = args.length === 1 && args[0] === "--local";
 if (args.length > 0 && !local) {
-  process.stderr.write("Usage: bun scripts/clean.ts [--local]\n");
+  process.stderr.write("Usage: bun scripts/dev-env/clean.ts [--local]\n");
   process.exit(2);
 }
 

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M11 confirmations · 01 dialog</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  p { margin: 0; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); }
+  /* One status line, three zones: focus label | hints for the dialog | background state + help. */
+  footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-confirm::before { color: var(--error); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Level 1 (strip) stays an inline one-line ask (like M2/M6), not a dialog: panel fill, 2px yellow edge, keys bold --text. */
+  .ask { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 8px 12px; display: grid; gap: 4px; }
+  .ask .q { color: var(--text); font-weight: 600; }
+  .hints { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .hints b { color: var(--text); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast b { color: var(--text); font-weight: 600; }
+  /* Screen: the 04 session stays drawn under the dialog, dimmed and inert; only the dialog and the status line are live. */
+  main { position: relative; width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-rows: 1fr auto; }
+  .under { display: grid; grid-template-columns: 1fr 420px; min-height: 0; opacity: .3; }
+  .session { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; white-space: nowrap; }
+  .title b { color: var(--text); }
+  .msgs { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  /* goop marker: Nerd Font flame (U+F06D) drawn with an SVG mask; terminals without a Nerd Font show "●". */
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .meta { color: var(--text-muted); font-size: 13px; }
+  .composer { background: var(--background-panel); border-left: 2px solid var(--border); padding: 10px 16px; }
+  .composer .prompt { color: var(--text-muted); font-weight: 700; }
+  .placeholder { color: var(--text-muted); }
+  aside { background: var(--background-panel); border-left: 1px solid var(--border); padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 14px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; white-space: nowrap; }
+  .sec-head h2::before { content: "▾ "; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .offers li { display: grid; grid-template-columns: 3ch 1fr; column-gap: 10px; padding: 6px 8px; }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .sub { grid-column: 2; color: var(--text-muted); font-size: 13px; }
+
+  /* Confirm dialog: the command palette box, copied as is. Centered, --background-panel, 1px
+     --text-muted border on all four sides, no radius, no shadow. No esc label and no hint row:
+     the status line carries the keys. Cell = 1ch: every line inset 3 cells. */
+  .palette { background: var(--background-panel); border: 1px solid var(--text-muted); color: var(--text); font-size: 15px; line-height: 1.5; padding: 21px 0; }
+  .screen-palette { position: absolute; top: 170px; left: 420px; width: 600px; }
+  .search { padding: 0 3ch; display: flex; white-space: nowrap; }
+  .search .typed { color: var(--text); }
+  .search .placeholder { color: var(--text-muted); }
+  .cursor { display: inline-block; width: 2px; height: 18px; background: var(--user); vertical-align: -3px; margin-right: 1ch; animation: blink 1s steps(1) infinite; }
+  .typed + .cursor { margin: 0 0 0 1px; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .list { margin-top: 21px; }
+  /* Row, about 2 lines high: icon tile (2 cells), two spaces, label, muted value right-aligned. */
+  .opt { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 2ch; align-items: center; padding: 11px 3ch; white-space: nowrap; }
+  .opt .k { display: none; color: var(--text-muted); text-align: right; }
+  .opt .m { font-weight: 700; }
+  .opt.sel .label { color: var(--primary); font-weight: 700; }
+  .opt.sel .k { display: block; }
+  /* Icon tile: one Nerd Font glyph in --background on a filled cell pair; the color follows the
+     system meanings (never lavender). Without a Nerd Font the tile shows the label's first letter. */
+  .tile { display: grid; place-items: center; width: 2ch; height: 22px; color: var(--background); font-weight: 700; }
+  .tile svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .t-offers { background: var(--success); }
+  .t-search { background: var(--secondary); }
+  .t-rules { background: var(--accent); }
+  .t-agents { background: var(--primary); }
+  .t-system { background: var(--text-muted); }
+  .t-quit { background: var(--error); }
+  /* Emoji mode (icons: emoji, the default): neutral tile, same 2 cells and place, --background-element
+     fill, emoji centered; Emoji_Presentation=Yes code points only, no VS16 or ZWJ sequences. */
+  .t-emoji { background: var(--background-element); font-weight: 400; font-size: 13px; line-height: 1; }
+
+  /* Confirm-only parts, built from the palette pieces above. */
+  /* Header: a palette row whose tile says the level (--error irreversible, --accent costly), the
+     question as a bold label, and a muted subline under the label. */
+  .d-head { padding-top: 0; row-gap: 2px; }
+  .opt.d-head .label { font-weight: 700; }
+  .d-head .lead { grid-column: 2 / 4; color: var(--text-muted); font-size: 14px; }
+  /* Affected items: palette rows that always show their count. */
+  .opt.item .k { display: block; }
+  .group { padding: 0 3ch; margin-top: 10px; white-space: nowrap; }
+  .group + .list { margin-top: 0; }
+  .stays .opt { opacity: .5; }
+  .warn-line { padding: 0 3ch; margin-top: 10px; color: var(--error); font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .lead-line { padding: 0 3ch; margin-top: 4px; color: var(--text-muted); font-size: 14px; }
+  .box-hints { padding: 0 3ch; margin-top: 10px; color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .box-hints b { color: var(--text); font-weight: 600; }
+  .box-hints b.default { color: var(--success); }
+  /* Type-to-confirm: the palette search line at the bottom of the box, under a --border-subtle line. */
+  .confirm { margin-top: 21px; border-top: 1px solid var(--border-subtle); padding-top: 21px; }
+  .confirm .ask-word { margin-left: auto; color: var(--text-muted); font-size: 13px; }
+  .confirm .ask-word b { color: var(--text); font-weight: 600; }
+  .palette.only-confirm { padding-top: 0; }
+  .only-confirm .confirm { margin-top: 0; border-top: 0; }
+
+
+  /* Below the screen: the two lighter levels of the same pattern, and the matched state of this one. */
+  .strip { width: 1440px; background: var(--background); color: var(--text); padding: 18px 28px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; align-items: start; border-top: 1px solid var(--border); font: 14px/1.5 var(--mono); }
+  .strip > div { display: flex; flex-direction: column; gap: 8px; }
+  .strip h3 { margin: 0; white-space: nowrap; }
+  .strip .dim { color: var(--text-muted); font-size: 13px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+  .notes table { border-collapse: collapse; margin: 8px 0 10px; }
+  .notes th, .notes td { text-align: left; padding: 3px 18px 3px 0; vertical-align: top; }
+  .notes th { color: #f4ede6; font-weight: 600; }
+  .notes p + p { margin-top: 6px; }
+  /* Status line key states, last so they win over the generic b rules above. */
+  footer .keys b.default { color: var(--success); }
+  footer .keys .off b { color: var(--text-muted); font-weight: 400; }
+</style>
+</head>
+<body>
+<main aria-label="goop confirm dialog for deleting all data, over the dimmed session">
+  <div class="under" inert aria-hidden="true">
+    <section class="session">
+      <div class="title"><b>Backend remoto, 2 años</b> · session 3</div>
+      <div class="msgs">
+        <div class="user"><p>/privacy</p><div class="meta">you · 11:05</div></div>
+        <div class="turn">
+          <p>Abrí Privacy. Desde ahí podés exportar tus datos o borrarlos todos.</p>
+        </div>
+      </div>
+      <div class="composer"><span class="prompt">›</span> <span class="placeholder">tab to write</span></div>
+    </section>
+    <aside>
+      <div class="sec-head"><h2>Offers</h2><span class="count">8 ranked · 3 new</span></div>
+      <ul class="offers">
+        <li><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="sub">Acme Labs · Remote · ✔ apply</span></li>
+        <li><span class="score apply">85</span><span>API Engineer</span><span class="sub">Nubio · Remote EU · ✔ apply</span></li>
+        <li><span class="score maybe">71</span><span>Python Developer</span><span class="sub">Kraft · Remote · ~ maybe</span></li>
+        <li><span class="score check">—</span><span>Backend Engineer</span><span class="sub">Orbit · ⚠ suspicious text</span></li>
+      </ul>
+    </aside>
+  </div>
+
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2 4h12M6 4V2h4v2M3.5 4l1 10h7l1-10M6.5 7v4M9.5 7v4"/></symbol>
+    <symbol id="i-unfollow" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M5 8h6"/></symbol>
+    <symbol id="i-offers" viewBox="0 0 16 16"><rect x="2" y="5" width="12" height="9"/><path d="M6 5V3h4v2M2 9h12"/></symbol>
+    <symbol id="i-session" viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z"/></symbol>
+    <symbol id="i-rules" viewBox="0 0 16 16"><path d="M3 2h10v12H3zM6 6h4M6 9h4"/></symbol>
+    <symbol id="i-profile" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.8"/><path d="M2.5 14.5a5.5 5.5 0 0 1 11 0"/></symbol>
+    <symbol id="i-db" viewBox="0 0 16 16"><ellipse cx="8" cy="3.5" rx="5" ry="1.8"/><path d="M3 3.5v9c0 1 2.2 1.8 5 1.8s5-.8 5-1.8v-9M3 8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8"/></symbol>
+    <symbol id="i-models" viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8"/><path d="M6 1v3M10 1v3M6 12v3M10 12v3M1 6h3M1 10h3M12 6h3M12 10h3"/></symbol>
+    <symbol id="i-company" viewBox="0 0 16 16"><path d="M3 14V3h6v11M9 7h4v7M2 14h12M5 6h2M5 9h2"/></symbol>
+  </svg>
+
+  <section class="palette screen-palette" role="alertdialog" aria-modal="true" aria-labelledby="d-title" aria-describedby="d-warn" tabindex="-1">
+    <div class="opt d-head"><span class="tile t-quit"><svg aria-hidden="true"><use href="#i-trash"/></svg></span><span class="label" id="d-title">Delete all goop data?</span><span></span><p class="lead">From Privacy · everything goop stored on this machine</p></div>
+    <h3 class="group">Deleted</h3>
+    <ul class="list" aria-label="Deleted">
+      <li class="opt item"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Offers</span><span class="k">412</span></li>
+      <li class="opt item"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-session"/></svg></span><span class="label">Sessions</span><span class="k">7</span></li>
+      <li class="opt item"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-rules"/></svg></span><span class="label">Rules</span><span class="k">6 · 1 to review</span></li>
+      <li class="opt item"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-profile"/></svg></span><span class="label">Profile and CV</span><span class="k">cv-2026.pdf</span></li>
+      <li class="opt item"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-db"/></svg></span><span class="label">Encrypted database</span><span class="k">38 MB</span></li>
+    </ul>
+    <div class="stays">
+      <h3 class="group">Stays</h3>
+      <ul class="list" aria-label="Stays">
+        <li class="opt item"><span class="tile t-agents"><svg aria-hidden="true"><use href="#i-models"/></svg></span><span class="label">Downloaded models</span><span class="k">31 GB · reusable</span></li>
+      </ul>
+    </div>
+    <p class="warn-line" id="d-warn">This cannot be undone. goop keeps no backup.</p>
+    <div class="confirm">
+      <div class="search"><span class="typed">dele</span><span class="cursor" aria-hidden="true"></span><span class="ask-word">type <b>delete</b> to confirm</span></div>
+    </div>
+  </section>
+
+  <footer><span class="mode m-confirm">confirm</span><span class="keys">type <b>delete</b> · <span class="off"><b>↵</b> delete</span> · <b class="default">esc</b> cancel</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+
+<section class="strip" aria-label="The other confirm levels and the matched state">
+  <div>
+    <h3>1 · Reversible · one-line ask</h3>
+    <div class="ask"><span class="q">Dismiss 3 offers?</span><span class="hints"><b>y</b> yes · <b>n</b> no</span></div>
+    <p class="dim">or no ask at all: do it and offer undo</p>
+    <div class="toast"><span><span class="ok">✓</span> 3 offers dismissed</span><span><b>ctrl+z</b> undo</span></div>
+  </div>
+  <div>
+    <h3>2 · Costly · dialog with y/n</h3>
+    <section class="palette" role="alertdialog" aria-labelledby="c-title" aria-describedby="c-lead">
+      <div class="opt d-head"><span class="tile t-rules"><svg aria-hidden="true"><use href="#i-unfollow"/></svg></span><span class="label" id="c-title">Unfollow 3 companies?</span><span></span></div>
+      <ul class="list" aria-label="Companies">
+        <li class="opt item"><span class="tile t-search"><svg aria-hidden="true"><use href="#i-company"/></svg></span><span class="label">Acme Labs</span><span class="k"></span></li>
+        <li class="opt item"><span class="tile t-search"><svg aria-hidden="true"><use href="#i-company"/></svg></span><span class="label">Kraft</span><span class="k"></span></li>
+        <li class="opt item"><span class="tile t-search"><svg aria-hidden="true"><use href="#i-company"/></svg></span><span class="label">Orbit</span><span class="k"></span></li>
+      </ul>
+      <p class="lead-line" id="c-lead">They stop being searched. Their offers stay in your list.</p>
+      <p class="box-hints"><b>y</b> unfollow · <b class="default">n</b> keep</p>
+    </section>
+  </div>
+  <div>
+    <h3>3 · Irreversible · word typed</h3>
+    <section class="palette only-confirm" aria-label="Type-to-confirm line with the word matched">
+      <div class="confirm">
+        <div class="search"><span class="typed">delete</span><span class="cursor" aria-hidden="true"></span><span class="ask-word"><span class="ok">✓</span> matches</span></div>
+      </div>
+    </section>
+    <p class="dim">↵ now deletes; esc still cancels. A wrong word keeps ↵ muted, and nothing is half-deleted.</p>
+    <h3>icons: emoji (default) · Deleted rows</h3>
+    <section class="palette only-confirm" aria-label="Deleted rows with emoji icons">
+      <ul class="list" aria-label="Deleted">
+        <li class="opt item"><span class="tile t-emoji">💼</span><span class="label">Offers</span><span class="k">412</span></li>
+        <li class="opt item"><span class="tile t-emoji">💬</span><span class="label">Sessions</span><span class="k">7</span></li>
+        <li class="opt item"><span class="tile t-emoji">🔐</span><span class="label">Encrypted database</span><span class="k">38 MB</span></li>
+      </ul>
+    </section>
+  </div>
+</section>
+
+<section class="notes" aria-label="Notes">
+  <p><strong>Confirmations, three levels of one pattern.</strong> The weight of the ask follows how hard the action is to undo, so a heavy dialog always means something real:</p>
+  <table>
+    <thead><tr><th>Level</th><th>Example</th><th>Shape</th><th>Header tile</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Reversible</td><td>Dismiss 3 offers</td><td>One-line ask in place (like M2/M6), or no ask and an undo toast; not a dialog</td><td>none (inline ask on the panel color, 2px --accent edge, keys bold --text)</td><td>y</td></tr>
+      <tr><td>Costly</td><td>Unfollow 3 companies</td><td>Bordered box with the items that change and y/n</td><td>--accent</td><td>n keep</td></tr>
+      <tr><td>Irreversible</td><td>Delete all goop data (Privacy M13)</td><td>Bordered box with what goes, what stays, a pink warning and a type-to-confirm line</td><td>--error</td><td>esc cancel</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Same style as the command palette.</strong> The dialogs now share the palette's box, tiles and rows: a centered ~600px box on the panel color with a 1px muted border on all four sides, no radius and no shadow, no colored left edge and no esc label. The header is a palette row: a tile that says the level (pink trash for irreversible, yellow for costly), the question as a bold label and a muted subline. Each affected item is a palette row with its tile in the palette's colors (green offers, gray sessions and the database, yellow rules and profile, orange models, blue companies), the label and its muted count on the right (the screen shows icons: nerd; with icons: emoji, the default, the tiles turn neutral with one emoji each, 💼 offers, 💬 sessions, 🔐 database, ⛔ for the irreversible header and 🔕 for the costly one, as in the excerpt at the bottom of column 3); small uppercase Deleted and Stays labels head the groups, and the Stays row is dimmed. The type-to-confirm input is the palette's search line at the bottom of the box, under a subtle separator: typed text, lavender cursor, and the muted type delete to confirm on the right. There is no hint row inside the box: as in the palette, keys live in the status line (confirm with a pink dot, type delete · ↵ delete muted until the word matches · esc cancel as the green default). The costly box in the strip keeps a muted y unfollow · n keep line only because it is drawn as a small inline copy; in the real screen those keys sit in the status line too.</p>
+  <p><strong>Tradeoff:</strong> one box style for everything modal, so the confirm reads as part of the same family and the tiles let you see by color what the loss touches (412 offers, 38 MB) and what survives (31 GB of models you would not want to download again). Typing the word is slower than y, on purpose: ↵ stays muted until the line reads delete, and esc is the safe default, so a stray enter or a key-repeat can never delete anything. Costs: the palette's border is no longer palette-only, so the bordered box now means "modal" rather than "commands"; the danger is carried by a single pink tile and the warning line instead of a full pink edge, which is quieter; the word is English even when goop talks Spanish; and each new action needs its level chosen when it is designed.</p>
+</section>
+</body>
+</html>

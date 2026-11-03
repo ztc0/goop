@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M4 sessions · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen: one column, no sidebar; rows = sessions, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .sessions { display: flex; flex-direction: column; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); margin-bottom: 18px; }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .score { font-weight: 700; text-align: right; }
+  .apply { color: var(--success); } .maybe { color: var(--warning); } .check { color: var(--error); }
+  .ok { color: var(--success); } .idle { color: var(--text-muted); }
+  /* Filter: the composer without the info line. Blurred while the list has focus; / focuses it. */
+  .filter { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; display: flex; justify-content: space-between; }
+  .filter.blur { border-left-color: var(--border); }
+  .prompt { color: var(--user); font-weight: 700; margin-right: 1ch; }
+  .filter.blur .prompt { color: var(--text-muted); }
+  .placeholder { color: var(--text-muted); }
+  .filter .hint { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .filter .hint b { color: var(--text); font-weight: 600; }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  /* Body: list on the left, preview of the selected session on the right; a subtle line under the filter. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 560px; min-height: 0; margin-top: 12px; border-top: 1px solid var(--border-subtle); }
+  .list { display: flex; flex-direction: column; gap: 14px; padding: 16px 28px 0 0; }
+  .group { display: flex; flex-direction: column; gap: 4px; }
+  .group-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 8px; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  /* Session row: marker, title (+ current tag), then time, messages and offers in fixed columns. */
+  .row { display: grid; grid-template-columns: 2ch 1fr 7ch 9ch 9ch; column-gap: 10px; padding: 4px 8px; font-size: 14px; }
+  .row .mark { color: var(--text-muted); }
+  .row .meta, .row .num { color: var(--text-muted); font-size: 13px; text-align: right; }
+  .row .num b { color: var(--text); font-weight: 600; }
+  .row.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .row.sel .mark { color: var(--primary); }
+  .row.sel .name { font-weight: 600; }
+  .tag-current { color: var(--text-muted); font-size: 12px; font-weight: 700; margin-left: 10px; }
+  .list-foot { color: var(--text-muted); font-size: 13px; padding: 4px 8px; }
+  /* Preview: read only; your first message as a user turn, goop's last reply as a goop turn, both truncated. */
+  .preview { border-left: 1px solid var(--border); padding: 16px 0 0 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .preview .sub { color: var(--text-muted); font-size: 13px; }
+  .preview .sub b { color: var(--text); font-weight: 600; }
+  .user { background: var(--background-element); border-left: 3px solid var(--user); padding: 8px 14px; }
+  .user p::before { content: "› "; color: var(--user); font-weight: 700; }
+  .user p { margin: 0; }
+  .meta-line { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  .gap { color: var(--text-muted); font-size: 13px; padding-left: 2ch; }
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 6px; }
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .turn p { margin: 0; }
+  /* Offers the session mentions: offer rows, read only here. */
+  .offers li { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; }
+  .offers .co { color: var(--text-muted); font-size: 13px; }
+  /* Feedback states below the screen: filter, rename in place, the M11 delete box, toast without undo. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 600px 1fr; gap: 20px 28px; align-items: start; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+  .feedback .filter { padding: 6px 12px; }
+  .feedback .dim { margin: 8px 0 0; color: var(--text-muted); font-size: 13px; }
+  /* Rename in place: the row becomes a composer (lavender edge = you are typing). */
+  .rename { background: var(--background-panel); border-left: 2px solid var(--user); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .rename .opts { color: var(--text-muted); font-size: 13px; }
+  .rename .opts b { color: var(--text); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast .ok { color: var(--success); }
+  .toast .t { color: var(--text-muted); }
+  /* Delete box: the M11 irreversible confirmation (design/tui-confirm/01-dialog.html), copied with
+     scoped class names. 1px --text-muted border, no radius, no shadow; --error tile header,
+     Deleted / Stays rows, type-to-confirm line. Cell = 1ch: every line inset 3 cells. */
+  .palette { background: var(--background-panel); border: 1px solid var(--text-muted); color: var(--text); font-size: 15px; line-height: 1.5; padding: 0 0 21px; }
+  .palette .opt { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 2ch; align-items: center; padding: 11px 3ch; white-space: nowrap; }
+  .palette .opt .k { color: var(--text-muted); text-align: right; }
+  .palette .tile { display: grid; place-items: center; width: 2ch; height: 22px; color: var(--background); font-weight: 700; }
+  .palette .tile svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .t-system { background: var(--text-muted); } .t-offers { background: var(--success); } .t-quit { background: var(--error); }
+  /* Emoji mode (icons: emoji, the default): neutral tile, same 2 cells and place, --background-element
+     fill, emoji centered; Emoji_Presentation=Yes code points only, no VS16 or ZWJ sequences. */
+  .palette .t-emoji { background: var(--background-element); font-weight: 400; font-size: 13px; line-height: 1; }
+  .feedback h3.then { margin-top: 20px; }
+  .palette .d-head { padding-top: 21px; row-gap: 2px; }
+  .palette .d-head .label { font-weight: 700; }
+  .palette .d-head .lead { grid-column: 2 / 4; margin: 0; color: var(--text-muted); font-size: 14px; }
+  .palette .box-group { padding: 0 3ch; margin: 10px 0 0; white-space: nowrap; }
+  .palette .stays .opt { opacity: .5; }
+  .palette .warn-line { padding: 0 3ch; margin: 10px 0 0; color: var(--error); font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .palette .confirm { margin-top: 21px; border-top: 1px solid var(--border-subtle); padding-top: 21px; }
+  .palette .search { padding: 0 3ch; display: flex; white-space: nowrap; }
+  .palette .search .cursor { width: 2px; margin: 0 0 0 1px; }
+  .palette .ask-word { margin-left: auto; color: var(--text-muted); font-size: 13px; }
+  .palette .ask-word b { color: var(--text); font-weight: 600; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  footer b.default { color: var(--success); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-sessions::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main aria-label="goop sessions, full screen">
+  <article class="sessions" aria-label="Sessions">
+    <div class="title">Sessions › <b>Backend remoto, 2 años</b> · 2 of 7 · esc back to session 3</div>
+    <search class="filter blur">
+      <span><span class="prompt">›</span><span class="placeholder">filter sessions</span></span>
+      <span class="hint"><b>/</b> filter</span>
+    </search>
+    <div class="body">
+      <section class="list" aria-label="Session list">
+        <div class="group">
+          <div class="group-head"><h2>Today</h2><span class="count">2</span></div>
+          <ul>
+            <li class="row" aria-current="true"><span class="mark">▸</span><span class="name">Revisar CV para Django<span class="tag-current">● current</span></span><span class="meta">11:20</span><span class="num"><b>9</b> msgs</span><span class="num">no offers</span></li>
+            <li class="row sel"><span class="mark">▸</span><span class="name">Backend remoto, 2 años</span><span class="meta">09:05</span><span class="num"><b>24</b> msgs</span><span class="num"><b>3</b> offers</span></li>
+          </ul>
+        </div>
+        <div class="group">
+          <div class="group-head"><h2>Yesterday</h2><span class="count">2</span></div>
+          <ul>
+            <li class="row"><span class="mark">▸</span><span class="name">Ofertas Python en Madrid</span><span class="meta">19:30</span><span class="num"><b>31</b> msgs</span><span class="num"><b>5</b> offers</span></li>
+            <li class="row"><span class="mark">▸</span><span class="name">Por qué bajó el score de Acme</span><span class="meta">12:04</span><span class="num"><b>6</b> msgs</span><span class="num"><b>1</b> offer</span></li>
+          </ul>
+        </div>
+        <div class="group">
+          <div class="group-head"><h2>Last week</h2><span class="count">3</span></div>
+          <ul>
+            <li class="row"><span class="mark">▸</span><span class="name">Primera búsqueda: backend junior</span><span class="meta">Oct 27</span><span class="num"><b>42</b> msgs</span><span class="num"><b>8</b> offers</span></li>
+            <li class="row"><span class="mark">▸</span><span class="name">Configurar fuentes de ofertas</span><span class="meta">Oct 26</span><span class="num"><b>14</b> msgs</span><span class="num">no offers</span></li>
+            <li class="row"><span class="mark">▸</span><span class="name">Salario esperado en Europa</span><span class="meta">Oct 26</span><span class="num"><b>11</b> msgs</span><span class="num"><b>2</b> offers</span></li>
+          </ul>
+        </div>
+        <div class="list-foot">7 sessions · local · encrypted</div>
+      </section>
+      <section class="preview" aria-label="Preview of the selected session">
+        <div>
+          <h2>Preview</h2>
+          <div class="sub">started <b>today 08:51</b> · last reply 09:05 · <b>24</b> messages · gpt-oss-20b</div>
+        </div>
+        <div>
+          <div class="user"><p>Busco backend remoto con Python, tengo 2 años de experiencia. ¿Qué hay esta semana que encaje con mi CV?</p></div>
+          <div class="meta-line">you · 08:51 · first message</div>
+        </div>
+        <div class="gap">… 22 messages</div>
+        <div class="turn">
+          <p>De las 3 ofertas, Acme Labs es la que mejor encaja: pide Django y REST, y solo te falta Kubernetes, que es opcional. Te sugiero aplicar hoy, antes de que…</p>
+          <div class="meta-line">goop · 09:05 · last reply</div>
+        </div>
+        <div>
+          <h2>Offers mentioned</h2>
+          <ul class="offers">
+            <li><span class="score apply">92</span><span>Backend Developer (Python)</span><span class="co">Acme Labs</span></li>
+            <li><span class="score maybe">74</span><span>Python Engineer, Payments</span><span class="co">Fintual</span></li>
+            <li><span class="score check">41</span><span>Senior Backend (Go)</span><span class="co">Orbit</span></li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </article>
+  <footer><span class="mode m-sessions">sessions</span><span><b>↑↓</b> move · <b class="default">↵</b> open · <b>n</b> new session · <b>r</b> rename · <b>d</b> delete · <b>/</b> filter · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="Session feedback states">
+  <div><h3>Filtering (/)</h3><search class="filter"><span><span class="prompt">›</span>remoto<span class="cursor"></span></span><span class="hint"><b>2</b> of 7 · <b>esc</b> clear</span></search></div>
+  <div><h3>Rename (r)</h3><div class="rename"><span><span class="prompt">›</span>Backend remoto, Python<span class="cursor"></span></span><span class="opts"><b>↵</b> save · <b>esc</b> cancel</span></div></div>
+  <div>
+    <h3>On delete (d) · irreversible</h3>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2 4h12M6 4V2h4v2M3.5 4l1 10h7l1-10M6.5 7v4M9.5 7v4"/></symbol>
+      <symbol id="i-session" viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z"/></symbol>
+      <symbol id="i-offers" viewBox="0 0 16 16"><rect x="2" y="5" width="12" height="9"/><path d="M6 5V3h4v2M2 9h12"/></symbol>
+    </svg>
+    <section class="palette" role="alertdialog" aria-labelledby="d-title" aria-describedby="d-warn">
+      <div class="opt d-head"><span class="tile t-quit"><svg aria-hidden="true"><use href="#i-trash"/></svg></span><span class="label" id="d-title">Delete 'Backend remoto, 2 años'?</span><span></span><p class="lead">From Sessions · encrypted, removed for good</p></div>
+      <h3 class="box-group">Deleted</h3>
+      <ul aria-label="Deleted">
+        <li class="opt"><span class="tile t-system"><svg aria-hidden="true"><use href="#i-session"/></svg></span><span class="label">Session and its messages</span><span class="k">24</span></li>
+      </ul>
+      <div class="stays">
+        <h3 class="box-group">Stays</h3>
+        <ul aria-label="Stays">
+          <li class="opt"><span class="tile t-offers"><svg aria-hidden="true"><use href="#i-offers"/></svg></span><span class="label">Offers it mentions</span><span class="k">3 · in your list</span></li>
+        </ul>
+      </div>
+      <p class="warn-line" id="d-warn">This cannot be undone. goop keeps no backup.</p>
+      <div class="confirm">
+        <div class="search"><span>dele</span><span class="cursor" aria-hidden="true"></span><span class="ask-word">type <b>delete</b> to confirm</span></div>
+      </div>
+    </section>
+    <p class="dim">status line: <b>confirm</b> with a pink dot · type delete · ↵ delete muted until the word matches · esc cancel</p>
+  </div>
+  <div>
+    <h3>After delete</h3><div class="toast"><span><span class="ok">✓</span> Deleted 'Backend remoto, 2 años'</span><span class="t">4s</span></div>
+    <h3 class="then">icons: emoji (default) · delete box rows</h3>
+    <section class="palette" aria-label="Delete box rows with emoji icons">
+      <div class="opt d-head"><span class="tile t-emoji">⛔</span><span class="label">Delete 'Backend remoto, 2 años'?</span><span></span></div>
+      <ul aria-label="Deleted">
+        <li class="opt"><span class="tile t-emoji">💬</span><span class="label">Session and its messages</span><span class="k">24</span></li>
+      </ul>
+      <div class="stays">
+        <ul aria-label="Stays">
+          <li class="opt"><span class="tile t-emoji">💼</span><span class="label">Offers it mentions</span><span class="k">3 · in your list</span></li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</section>
+<p class="notes"><strong>Full screen:</strong> ctrl+x l or /resume opens the session list like opencode's: a filter at the top in the composer style, sessions grouped by day with time, messages and how many offers they mention, the current one tagged ● current (muted). There is no key-hint line under the header: the status line carries the keys of the list (↑↓ move · ↵ open in green · n new session · r rename · d delete · / filter · esc back). The list has the focus, so the filter shows blurred and single keys act on the selected row; / moves the focus into the filter (lavender edge, live count), esc clears it. The preview on the right shows your first message and goop's last reply, truncated, plus the offers the session mentions, so you recognize a conversation without opening it. Rename turns the row into a composer (panel fill, lavender edge and cursor, ↵ save · esc cancel). Delete is irreversible, so it uses the M11 confirmation box: pink trash tile, what is deleted (the session and its 24 messages) and what stays (the 3 offers it mentions stay in your list), the warning line and type delete to confirm; esc cancels. The box shows icons: nerd; with icons: emoji, the default (Settings M6), the same rows get neutral tiles (--background-element fill, same 2 cells and place) with ⛔ for the header, 💬 for the session and 💼 for the offers, drawn beside the toast. Because the session is encrypted and removed for good, the toast after it only shows its timer (4s), with no ctrl+z undo. Tradeoff: the preview takes 560px from the list, so long titles cut earlier; below ~120 columns the preview moves under the selected row.</p>
+</body>
+</html>

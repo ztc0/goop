@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M7 sources · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M2, M5 and M10: title, problem banner, summary, two panes (sources | detail), one status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; }
+  .title { padding: 20px 28px 10px; color: var(--text-muted); white-space: nowrap; }
+  .title b { color: var(--text); }
+  /* Problems first (M8): one banner under the title, 2px --error left edge on --background-panel. */
+  .banner { display: flex; justify-content: space-between; gap: 24px; margin: 0 28px 14px; padding: 6px 14px; background: var(--background-panel); border-left: 2px solid var(--error); font-size: 14px; white-space: nowrap; }
+  .banner .hint { color: var(--text-muted); font-size: 13px; }
+  /* Summary: one dim line with bold numbers, like the speed line. */
+  .summary { margin: 0 28px 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .summary b { color: var(--text); font-weight: 600; }
+  .panes { display: grid; grid-template-columns: 560px 1fr; min-height: 0; padding: 0 28px 12px; }
+  h2, h3 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .ok { color: var(--success); } .busy { color: var(--warning); } .idle { color: var(--text-muted); } .err { color: var(--error); }
+  .new { color: var(--accent); font-weight: 600; }
+  /* Left pane: every source on one line, always fully visible, problems first; 1px --border right edge. */
+  .list { display: flex; flex-direction: column; gap: 8px; padding-right: 20px; border-right: 1px solid var(--border); }
+  .list-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .src { display: grid; grid-template-columns: 2ch 13ch 14ch 1fr; column-gap: 10px; align-items: center; padding: 5px 8px; font-size: 14px; white-space: nowrap; }
+  .src .name { font-weight: 600; }
+  .src .note { justify-self: end; color: var(--text-muted); font-size: 13px; }
+  .src.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  /* Heartbeat: last 14 runs, one cell each (a solid block in the terminal), oldest left. */
+  .hb { display: flex; }
+  .hb i { display: block; width: calc(1ch - 3px); height: 12px; margin-right: 3px; background: var(--border); }
+  .hb i.o { background: var(--success); } .hb i.s { background: var(--warning); } .hb i.f { background: var(--error); }
+  .legend { color: var(--text-muted); font-size: 13px; padding: 0 8px; white-space: nowrap; }
+  /* Right pane: the selected source; tabs on one line, active one bold --text and underlined. */
+  .detail { display: flex; flex-direction: column; gap: 12px; padding-left: 24px; min-height: 0; }
+  .detail-name { font-weight: 600; white-space: nowrap; }
+  .tabs { display: flex; gap: 8px; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .tabs .on { color: var(--text); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+  .facts { color: var(--text-muted); font-size: 13px; white-space: nowrap; margin-top: -6px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+  .facts b { color: var(--text); font-weight: 600; }
+  /* Last errors: untrusted log text, quoted dim and plain behind a │ gutter, never colored or parsed into UI. */
+  .log { margin: 0; color: var(--text-muted); font: 13px/1.5 var(--mono); white-space: pre; }
+  .log .gutter { color: var(--border); }
+  .did { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .did b { color: var(--text); font-weight: 600; }
+  .privacy { margin-top: auto; color: var(--text-muted); font-size: 13px; padding-top: 8px; border-top: 1px solid var(--border-subtle); white-space: nowrap; }
+  .privacy .ok { margin-right: 6px; }
+  /* One status line, three zones: focus label | hints for the focused pane | background state + help. */
+  footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-sources::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: Companies tab, add-company composer, run-now progress. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 24px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin-bottom: 8px; }
+  .feedback .tabs { margin-bottom: 6px; }
+  .company { display: grid; grid-template-columns: 2ch 12ch 1fr auto; column-gap: 10px; padding: 2px 8px; font-size: 14px; white-space: nowrap; }
+  .company .meta, .company .act { color: var(--text-muted); font-size: 13px; }
+  .company.suggested { color: var(--text-muted); }
+  .company.suggested .act { color: var(--accent); }
+  .more-line { color: var(--text-muted); font-size: 13px; margin-top: 4px; padding: 0 8px; white-space: nowrap; }
+  .more-line b { color: var(--text); font-weight: 600; }
+  /* Add a company: a composer (lavender edge = you are typing). */
+  .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--user); font-weight: 700; }
+  .placeholder { color: var(--text-muted); }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; align-self: center; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .below { display: flex; justify-content: space-between; gap: 12px; color: var(--text-muted); font-size: 13px; margin-top: 6px; white-space: nowrap; }
+  .below b { color: var(--text); font-weight: 600; }
+  .progress { color: var(--text-muted); font-size: 13px; white-space: nowrap; padding: 6px 0; display: flex; gap: 10px; align-items: center; }
+  .progress b { color: var(--text); font-weight: 600; }
+  .meter { display: inline-block; width: 70px; height: 6px; background: var(--background-element); }
+  .meter i { display: block; height: 100%; width: 51%; background: var(--warning); }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+  /* Banner key, last so it wins over the generic b rules above. */
+  .banner .hint b { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <header class="title">Sources › <b>where goop finds offers</b> · 1 with errors · esc back to session 3</header>
+  <p class="banner" role="alert"><span><span class="err">⚠</span> Lever failing · 3 boards failed at 09:00, retry 10:15 · its other 245 boards and the 4 other sources still work</span><span class="hint"><b>r</b> run now</span></p>
+  <p class="summary"><b>5</b> sources · <b>1,240</b> companies followed · last search <b>09:00</b> · <b>312</b> found · <b>8</b> kept</p>
+
+  <div class="panes">
+    <nav class="list" aria-labelledby="list-head">
+      <div class="list-head"><h2 id="list-head">Sources</h2><span class="count">problems first</span></div>
+      <ul>
+        <li class="src sel" aria-current="true"><span class="err">⚠</span><span class="name">Lever</span><span class="hb" role="img" aria-label="last 14 runs: 12 ok, 2 failed"><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="f"></i><i class="f"></i></span><span class="note err">3 failed · retry 10:15</span></li>
+        <li class="src"><span class="busy">◐</span><span class="name">Remotive</span><span class="hb" role="img" aria-label="last 14 runs: 8 ok, 6 slow"><i class="o"></i><i class="o"></i><i class="s"></i><i class="o"></i><i class="o"></i><i class="s"></i><i class="o"></i><i class="o"></i><i class="s"></i><i class="o"></i><i class="s"></i><i class="o"></i><i class="s"></i><i class="s"></i></span><span class="note"><span class="busy">slow</span> · <span class="new">38</span> new</span></li>
+        <li class="src"><span class="ok">●</span><span class="name">Greenhouse</span><span class="hb" role="img" aria-label="last 14 runs: 14 ok"><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i></span><span class="note"><span class="new">184</span> new</span></li>
+        <li class="src"><span class="ok">●</span><span class="name">Ashby</span><span class="hb" role="img" aria-label="last 14 runs: 13 ok, 1 slow"><i class="o"></i><i class="o"></i><i class="o"></i><i class="s"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i></span><span class="note"><span class="new">71</span> new</span></li>
+        <li class="src"><span class="idle">○</span><span class="name">Common Crawl</span><span class="hb" role="img" aria-label="last 14 runs: 5 not run yet, 9 ok"><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i></span><span class="note"><span class="new">+42</span> found · Sun</span></li>
+      </ul>
+      <p class="legend">heartbeat = last 14 runs</p>
+    </nav>
+
+    <section class="detail" aria-labelledby="detail-name">
+      <p class="detail-name" id="detail-name"><span class="err">⚠</span> Lever</p>
+      <p class="tabs"><span>Companies 248</span><span aria-hidden="true">·</span><span class="on" aria-current="true">Errors 3</span><span aria-hidden="true">·</span><span>History</span></p>
+      <p class="facts">ATS board · <b>248</b> companies · last run <b>09:00</b> · daily</p>
+      <h3>Last errors · run 09:00</h3>
+<pre class="log"><span class="gutter">│</span> 09:00:41  api.lever.co/v0/postings/quanta  429 Too Many Requests
+<span class="gutter">│</span> 09:00:42  api.lever.co/v0/postings/mirelo  429 Too Many Requests
+<span class="gutter">│</span> 09:00:44  api.lever.co/v0/postings/tessel  404 Not Found</pre>
+      <h3>What goop did</h3>
+      <p class="did">backing off · next try <b>10:15</b> · <b>245</b> of <b>248</b> boards read</p>
+      <p class="privacy"><span class="ok">●</span>goop only reads public job boards; it never logs in or sends your data</p>
+    </section>
+  </div>
+
+  <footer><span class="mode m-sources">sources</span><span><b>↑↓</b> move · <b>r</b> run now · <b>p</b> pause · <b>[ ]</b> tabs · <b>tab</b> to detail · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around a source">
+  <div>
+    <h3>Companies tab ([ ])</h3>
+    <p class="tabs"><span class="on">Companies 248</span><span>·</span><span>Errors 3</span><span>·</span><span>History</span></p>
+    <ul>
+      <li class="company"><span class="ok">●</span><span>Brightwave</span><span class="meta">6 open · 2 new</span><span class="act">− unfollow</span></li>
+      <li class="company"><span class="ok">●</span><span>Nordtech</span><span class="meta">4 open · 1 new</span><span class="act">− unfollow</span></li>
+      <li class="company"><span class="err">⚠</span><span>Tessel</span><span class="meta">board not found · moved?</span><span class="act">− unfollow</span></li>
+      <li class="company suggested"><span>○</span><span>Oakline</span><span class="meta">found by Common Crawl · 3 open</span><span class="act">+ follow</span></li>
+    </ul>
+    <p class="more-line">… 244 more · <b>/</b> filter</p>
+  </div>
+  <div><h3>Add a company (a)</h3><div class="composer"><div class="line"><span class="prompt">›</span><span class="placeholder">company name or careers URL</span><span class="cursor"></span></div><div class="below"><span>goop finds its board</span><span><b>enter</b> follow · <b>esc</b> cancel</span></div></div></div>
+  <div><h3>Run now (r)</h3><p class="progress"><span class="busy">◐</span><span><b>Greenhouse</b> 312 / 612</span><span class="meter"><i></i></span><span><b>esc</b> stop</span></p></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /sources opens like M2, M5 and M10 (title breadcrumb, a dim summary line, one status line; no key-hint line under the header). Problems first, like M8: a banner right under the title says what failed and what still works (Lever failing · 3 boards failed at 09:00, retry 10:15 · its other 245 boards and the 4 other sources still work) with r run now on the right; 2px pink edge on the panel color. The summary counts today's search as 312 found · 8 kept (the 8 ranked offers). Two panes, like lazydocker: on the left all 5 sources, always fully visible and sorted problems first (Uptime Kuma), one line each: state glyph (⚠ pink failed, ◐ yellow slow, ● green ok, ○ muted weekly), name, a heartbeat of the last 14 runs (one cell per run: green ok, yellow slow, pink failed, --border not run yet, oldest left) and a short right-aligned note; new-offer counts are yellow like newsboat unread counts, things to look at. Lever is selected (fill + orange edge). On the right the selected source: its name, tabs on one line (Companies 248 · Errors 3 · History; the active one bold and underlined, [ ] switches), its facts (kind, companies, last run, schedule), then the tab content. The Errors tab quotes the last error lines as untrusted dim plain text behind a │ gutter, never parsed into UI, then what goop did about them and the privacy line. The status line hints follow the focus: on the list ↑↓ move · r run now · p pause · [ ] tabs · tab to detail · esc back; in the Companies tab f follow · x unfollow · / filter; in History ↑↓ scroll. Trades the single table for a side list plus one tabbed panel: health of every source is comparable at a glance through the heartbeats, but the detail shows one source and one tab at a time, the companies list needs its own tab, and the screen still hides the chat. Below the screen: the Companies tab (followed companies with − unfollow, one found by Common Crawl with + follow, / filter), the add-company composer and the run-now progress line.</p>
+</body>
+</html>

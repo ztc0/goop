@@ -1,0 +1,28 @@
+{
+  "title": "goop main screen",
+  "brief": "Main TUI screen of goop (layout B: chat + offer list). Shows the chat with the Orchestrator, today's offers with score, verdict and NEW badge, the answering model and background search progress. Terminal look, logo palette.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "04-opencode-session.html",
+      "title": "opencode-style session",
+      "tradeoff": "Familiar agent layout: chat + composer, collapsed tool calls, offers sidebar; smaller list, detail opens full view",
+      "width": 1440,
+      "height": 1300
+    },
+    {
+      "file": "05-home.html",
+      "title": "Home screen",
+      "tradeoff": "Quiet home: prompt, recent activity, one rotating tip and a first-run version with steps; commands sit behind ctrl+p",
+      "width": 1440,
+      "height": 1100
+    },
+    {
+      "file": "06-session-idle.html",
+      "title": "Session, nothing running",
+      "tradeoff": "Same session with no subagents running: the agents section disappears and offers keep the space",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

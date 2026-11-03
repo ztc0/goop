@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goop TUI · M5 rules · 01 full screen</title>
+<style>
+  /* Semantic theme tokens (opencode roles), copied from design/system.md. Components use only these. */
+  :root {
+    --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
+    --text: #f4ede6; --text-muted: #a89c91;
+    --primary: #ff7a2e; --accent: #ffc24a; --secondary: #7cc4ff; --user: #b9a6ff; /* lavender = you; orange = goop */
+    --success: #8fd694; --warning: #ffc24a; --error: #ff5f7a; --info: #7cc4ff;
+    --border: #3a302a; --border-active: #ff7a2e; --border-subtle: #2a231f;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; font-family: var(--mono); }
+  /* Full screen like M2 and M10: one column, no sidebar; a decision card on top, the active list below, status line. */
+  main { width: 1440px; height: 900px; background: var(--background); color: var(--text); font-size: 15px; line-height: 1.5; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .rules-view { display: flex; flex-direction: column; gap: 26px; padding: 20px 28px 12px; min-height: 0; }
+  .title { color: var(--text-muted); }
+  .title b { color: var(--text); }
+  h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  p { margin: 0; }
+  .score { font-weight: 700; text-align: right; }
+  .maybe { color: var(--warning); } .check { color: var(--error); }
+  .idle { color: var(--text-muted); }
+  /* Decision card: a pending proposal weighs more than an active rule. Panel fill, 2px yellow edge (to review), square. */
+  .card { background: var(--background-panel); border-left: 2px solid var(--accent); padding: 14px 20px 14px 18px; display: flex; flex-direction: column; gap: 14px; }
+  /* Focused card: keeps its yellow pending edge and takes the selected-row fill. */
+  .card.focused { background: var(--background-element); }
+  .card-top { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; }
+  .card-top .badge { color: var(--accent); font-weight: 700; }
+  /* A terminal has one font size: "larger" is the normal role in bold --text, everything around it is dim. */
+  .proposal { font-size: 15px; font-weight: 700; color: var(--text); margin-top: -8px; text-transform: none; letter-spacing: normal; }
+  /* Why: a goop turn opened by the flame (U+F06D in a Nerd Font, ● fallback). */
+  .turn { display: grid; grid-template-columns: 2ch 1fr; row-gap: 4px; font-size: 14px; }
+  .turn::before { content: ""; grid-row: 1; width: 11px; height: 15px; margin-top: 3px; background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'><path d='M6 0C7 3 10 5 10.5 8.5C11 12 9 16 6 16C3 16 1 13.5 1.5 10.5C2 8.5 3.5 7.5 4 6C4.5 7.5 5 8 5.5 8C5 5 5 2.5 6 0Z'/></svg>") no-repeat center / contain; }
+  .turn > * { grid-column: 2; }
+  .dim { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+  .dim b { color: var(--text); font-weight: 600; }
+  /* Preview of the effect today: the exact offers it would hide, as one-line offer rows. */
+  .preview { display: flex; flex-direction: column; gap: 4px; }
+  .preview-head { color: var(--text-muted); font-size: 13px; }
+  .preview-head b { color: var(--text); font-weight: 600; }
+  .preview li { display: grid; grid-template-columns: 3ch 30ch 1fr; column-gap: 10px; font-size: 14px; padding-left: 2ch; }
+  .preview .sub { color: var(--text-muted); font-size: 13px; }
+  /* Active rules: a simple one-line list, like saved memories; the effect sits muted on the right. */
+  .sec { display: flex; flex-direction: column; gap: 8px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-head h2::before { content: "▾ "; }
+  .count { color: var(--text-muted); font-size: 13px; }
+  .rule { display: grid; grid-template-columns: 2ch 1fr auto; column-gap: 8px; padding: 5px 8px; font-size: 14px; }
+  .rule .dot { color: var(--success); }
+  .rule .effect { color: var(--text-muted); font-size: 13px; }
+  .rule.is-paused, .rule.is-paused .dot { color: var(--text-muted); }
+  .rule.sel { background: var(--background-element); box-shadow: inset 2px 0 var(--primary); }
+  .rule .source { grid-column: 2 / -1; color: var(--text-muted); font-size: 13px; }
+  /* Status line in three zones: focus label | hints | background state + help. */
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 28px 0 0; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 13px; line-height: 28px; white-space: nowrap; }
+  footer b { color: var(--text); font-weight: 600; }
+  footer b.default { color: var(--success); }
+  .mode { padding-left: 28px; font-weight: 600; color: var(--text); }
+  .mode::before { content: "● "; }
+  .mode.m-rules::before { color: var(--secondary); }
+  .zone-right { display: flex; gap: 12px; }
+  .zone-right > span + span::before { content: "│"; color: var(--border); margin-right: 12px; }
+  /* Below the screen: the chat notice that leads here, the toast after accept, and edit in place. */
+  .feedback { width: 1440px; background: var(--background); color: var(--text); font: 14px/1.5 var(--mono); padding: 16px 28px 20px; display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 16px; border-top: 1px solid var(--border); }
+  .feedback h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  /* Chat notice: a quiet session line between turns, yellow dot = something to review. */
+  .notice { color: var(--text-muted); font-size: 13px; white-space: nowrap; padding: 6px 0; }
+  .notice .tip { color: var(--accent); }
+  .notice b { color: var(--text); font-weight: 600; }
+  .toast { background: var(--background-panel); box-shadow: inset 2px 0 var(--success); padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; }
+  .toast .ok { color: var(--success); }
+  .toast b { color: var(--text); font-weight: 600; }
+  /* Edit in place: the rule line becomes a composer (lavender edge = you are typing). */
+  .composer { background: var(--background-panel); border-left: 2px solid var(--user); padding: 10px 16px; }
+  .line { display: flex; gap: 8px; }
+  .prompt { color: var(--user); font-weight: 700; }
+  .cursor { display: inline-block; width: 9px; height: 18px; background: var(--user); vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .below { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-top: 6px; white-space: nowrap; }
+  .below b { color: var(--text); font-weight: 600; }
+  .notes { width: 1440px; margin: 0; padding: 14px 24px; color: #b3a79c; background: #0c0a09; font: 14px/1.5 system-ui, sans-serif; }
+  .notes strong { color: #f4ede6; }
+</style>
+</head>
+<body>
+<main>
+  <article class="rules-view">
+    <div class="title">Rules › <b>what goop learned</b> · 6 rules · 1 to review · esc back to session 3</div>
+
+    <section class="card focused" aria-labelledby="proposal-1">
+      <div class="card-top"><span>goop wants to learn a new rule</span><span><span class="badge">1 of 1</span> to review</span></div>
+      <h2 class="proposal" id="proposal-1">Skip offers that require Kubernetes as mandatory</h2>
+      <div class="turn">
+        <p>Descartaste 3 ofertas que pedían Kubernetes obligatorio y elegiste «stack» las 3 veces.</p>
+        <p class="dim">dismissed: <b>Quanta</b> 68 · Oct 31 · <b>Vento</b> 63 · Oct 29 · <b>Helio</b> 59 · Oct 27</p>
+      </div>
+      <div class="preview">
+        <p class="preview-head">If you accept, today it hides <b>2 of 8</b></p>
+        <ul>
+          <li><span class="score maybe">71</span><span>Python Developer</span><span class="sub">Kraft · Remote · asks Kubernetes as mandatory</span></li>
+          <li><span class="score check">49</span><span>Senior Backend Engineer</span><span class="sub">Atlas · Remote US · asks Kubernetes and Helm as mandatory</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sec" aria-labelledby="active-head">
+      <div class="sec-head"><h2 id="active-head">Active rules</h2><span class="count">6 · 1 paused · applied before ranking</span></div>
+      <ul>
+        <li class="rule"><span class="dot">●</span><span>Prefer fully remote over hybrid</span><span class="effect">ranked 5 lower this week</span></li>
+        <li class="rule"><span class="dot">●</span><span>Hide offers below €40K</span><span class="effect">hid 4 this week</span></li>
+        <li class="rule"><span class="dot">●</span><span>Skip roles that ask for 5+ years</span><span class="effect">hid 3 this week</span></li>
+        <li class="rule"><span class="dot">●</span><span>Rank Django offers higher</span><span class="effect">raised 2 this week</span></li>
+        <li class="rule"><span class="dot">●</span><span>Prefer EU working hours</span><span class="effect">raised 3 this week</span></li>
+        <li class="rule is-paused"><span class="dot">○</span><span>Skip offers posted by recruiting agencies</span><span class="effect">paused</span></li>
+      </ul>
+    </section>
+  </article>
+  <footer><span class="mode m-rules">rules</span><span><b class="default">↵</b> accept · <b>e</b> edit first · <b>x</b> reject · <b>tab</b> to active rules · <b>esc</b> back</span><span class="zone-right"><span class="idle">○ next search 09:00</span><span><b>?</b> help</span></span></footer>
+</main>
+<section class="feedback" aria-label="States around a rule">
+  <div><h3>In the chat (leads here)</h3><p class="notice"><span class="tip">●</span> <b>goop learned a rule</b> · /rules to review</p></div>
+  <div><h3>After accept (↵)</h3><div class="toast"><span><span class="ok">✓</span> Rule active · hid 2 offers</span><span><b>ctrl+z</b> undo · 4s</span></div></div>
+  <div><h3>Edit in place (e)</h3><div class="composer"><div class="line"><span class="prompt">›</span><span>Skip offers that require Kubernetes as mandatory, unless the rest scores 85+</span><span class="cursor"></span></div><div class="below"><span>editing · stays proposed until you accept</span><span><b>enter</b> save · <b>esc</b> cancel</span></div></div></div>
+</section>
+<p class="notes"><strong>Full screen:</strong> /rules opens like M2 and M10 (title breadcrumb, one status line; no key-hint line under the header or inside the panes). A proposed rule is a decision card on top, not a row: panel fill with a yellow edge (to review), the rule in bold, goop's reason as a goop turn with the dismissed offers in one dim line, and the exact offers it would hide today, so you see the effect before you accept. Active rules are a plain one-line list like saved memories under an ACTIVE RULES head, effect muted on the right, with 6 · 1 paused as the muted count (6 rules · 1 to review in the breadcrumb). A selected rule opens a single source line. Focus starts on the card while a rule is waiting: it takes the selected fill (--background-element) and keeps its yellow edge, and the status line shows its keys: ↵ accept (green), e edit first, x reject, tab to active rules, esc back. The list has no focus here, so no row is selected. tab moves focus to the list: the selected row gets the orange edge, the status line switches to the list keys (↑↓ move · p pause · e edit · x delete · tab to proposal · esc back) and the card dims back to the panel fill; ↵ accept never shows on an active rule. Costs a full screen that hides the chat, and with several proposals you review them one card at a time (1 of N). Below the screen: the chat notice that leads here, the toast after accept (ctrl+z undo · 4s), and edit in place.</p>
+</body>
+</html>

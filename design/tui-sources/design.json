@@ -1,0 +1,14 @@
+{
+  "title": "Sources (M7)",
+  "brief": "Sources screen of goop (/sources): where goop finds offers. Public ATS job boards (Greenhouse, Ashby, Lever) of followed companies, aggregators (Remotive) and Common Crawl discovery of new companies. Title breadcrumb, then the M8 problem banner for the failing source (Lever failing · 3 boards failed at 09:00, retry 10:15 · its other 245 boards and the 4 other sources still work · r run now), then one dim summary line (5 sources, 1,240 companies followed, last search, 312 found · 8 kept); no key-hint line under the header. Two panes (lazydocker): on the left all 5 sources, always fully visible and sorted problems first (Uptime Kuma), one line each with state glyph, name, a 14-cell heartbeat of the last 14 runs (green ok, yellow slow, pink failed, muted not run) and a short right-aligned note (Lever 3 failed · retry 10:15 selected, Remotive slow, new-offer counts in --accent like newsboat unread counts), and a dim legend line; on the right the selected source with tabs on one line (Companies 248 · Errors 3 · History, [ ] switches), its facts (ATS board · 248 companies · last run 09:00 · daily) and the Errors tab: last error lines as dim plain text behind a │ gutter, what goop did (backing off, next try, boards read) and the privacy line. One status line with the sources focus mode and the hints of the focused pane (list: ↑↓ move · r run now · p pause · [ ] tabs · tab to detail · esc back; Companies tab: f follow · x unfollow · / filter). Below the screen: the Companies tab, the add-company composer and the run-now progress line.",
+  "feature": "odd/tasks/goop.md",
+  "artboards": [
+    {
+      "file": "01-full-screen.html",
+      "title": "Full screen",
+      "tradeoff": "Side list of every source with a 14-run heartbeat, problems first, plus one tabbed detail panel; health is comparable at a glance, but the detail shows one source and one tab at a time, companies need their own tab, and the screen hides the chat",
+      "width": 1440,
+      "height": 1311
+    }
+  ]
+}
