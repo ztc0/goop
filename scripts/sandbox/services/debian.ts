@@ -14,7 +14,6 @@ import {
   userShell,
 } from "../model/debian-config";
 import { displayPath } from "../model/paths";
-import { manualRemoveCommand } from "../model/podman-args";
 import { formatElapsed } from "../model/readiness";
 import type { RunRequest, SandboxDeps } from "../types/sandbox";
 import { listContainers } from "./status";
@@ -25,7 +24,7 @@ import {
   waitUntilReady,
 } from "./vm-lifecycle";
 
-/** Builds the Debian image into the repo-local storage (S2); the layer cache makes a rebuild quick. */
+/** Builds the Debian image into the engine's storage (S2); the layer cache makes a rebuild quick. */
 export async function installDebian(deps: SandboxDeps): Promise<number> {
   const { paths, output, engine, clock } = deps;
   prepareContainerStorage(deps);
@@ -35,7 +34,9 @@ export async function installDebian(deps: SandboxDeps): Promise<number> {
   const startedAt = clock.now();
   const built = await engine.buildImage(DEBIAN_IMAGE, paths.debianContainerfile);
   if (built.exitCode !== 0) {
-    output.error(`Could not build the Debian image (podman build exited ${built.exitCode}).`);
+    output.error(
+      `Could not build the Debian image (${engine.name} build exited ${built.exitCode}).`,
+    );
     return 1;
   }
   output.info(`Debian image ${DEBIAN_IMAGE} is ready (${formatElapsed(clock.now() - startedAt)}).`);
@@ -83,7 +84,7 @@ export async function runInDebian(
     const removed = await engine.forceRemove(container);
     if (removed.exitCode !== 0) {
       output.error(
-        `Could not remove ${container}: ${removed.stderr.trim()}. Remove it by hand: ${manualRemoveCommand(paths, container)}`,
+        `Could not remove ${container}: ${removed.stderr.trim()}. Remove it by hand: ${engine.manualRemoveCommand(container)}`,
       );
       if (exitCode === 0) exitCode = 1;
     }

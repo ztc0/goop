@@ -99,6 +99,8 @@ export interface ExecOptions {
 
 /** The container commands the sandboxes need, whatever the engine (S4). */
 export interface ContainerEngine {
+  /** The engine's command, named in messages. */
+  name: EngineName;
   startInstall(password: string): Promise<ProcessResult>;
   createOverlay(runId: string): Promise<ProcessResult>;
   startRun(runId: string, password: string): Promise<ProcessResult>;
@@ -118,6 +120,8 @@ export interface ContainerEngine {
   copyOut(name: string, containerPath: string, localDirectory: string): Promise<ProcessResult>;
   /** Stops and deletes a container in one step. */
   forceRemove(name: string): Promise<ProcessResult>;
+  /** The command a user runs from the repo root to remove a container the sandbox could not. */
+  manualRemoveCommand(name: string): string;
 }
 
 /** The guest reached through SSH and scp. */
