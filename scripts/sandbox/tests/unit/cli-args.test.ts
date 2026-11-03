@@ -61,6 +61,40 @@ describe("parseCliArgs", () => {
     }
   });
 
+  test("--engine accepts podman and docker on every command, and rejects anything else (S3)", () => {
+    expect(parseCliArgs(["status", ...OS, "--engine", "docker"])).toEqual({
+      kind: "status",
+      os: "windows",
+      engine: "docker",
+    });
+    expect(parseCliArgs(["install", "--engine", "podman", ...OS])).toEqual({
+      kind: "install",
+      os: "windows",
+      engine: "podman",
+    });
+    expect(parseCliArgs(["run", "--engine", "podman", ...OS, "--", "Get-Date"])).toEqual({
+      kind: "run",
+      os: "windows",
+      engine: "podman",
+      copy: [],
+      fetch: [],
+      command: "Get-Date",
+    });
+    for (const command of ["install", "status", "run"]) {
+      expect(parseCliArgs([command, ...OS, "--engine", "lxc", "--", "x"])).toEqual({
+        kind: "usage",
+        error: "Unknown --engine: lxc (expected podman or docker).",
+      });
+      expect(parseCliArgs([command, ...OS, "--engine"])).toEqual({
+        kind: "usage",
+        error: "--engine needs a value.",
+      });
+      expect(
+        parseCliArgs([command, ...OS, "--engine", "podman", "--engine", "docker", "--", "x"]),
+      ).toEqual({ kind: "usage", error: "--engine is given more than once." });
+    }
+  });
+
   test("run takes the PowerShell command after --", () => {
     expect(parseCliArgs(["run", ...OS, "--", "Get-Date"])).toEqual({
       kind: "run",

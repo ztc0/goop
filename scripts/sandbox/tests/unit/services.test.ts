@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:
 import { join, resolve } from "node:path";
 import { nodeFileStore } from "../../adapters/file-store";
 import { createGuestShell } from "../../adapters/guest-shell";
-import { createPodman } from "../../adapters/podman";
+import { createPodmanEngine } from "../../adapters/podman";
 import { sandboxPaths } from "../../model/paths";
 import { installWindows } from "../../services/install";
 import { runInWindows } from "../../services/run";
@@ -61,7 +61,7 @@ function deps(runner: FakeRunner, clock: Clock, signal = new AbortController().s
   const paths = sandboxPaths(fixture);
   const result: SandboxDeps = {
     paths,
-    podman: createPodman(runner, paths),
+    engine: createPodmanEngine(runner, paths),
     guest: createGuestShell(runner, paths),
     files: nodeFileStore,
     clock,

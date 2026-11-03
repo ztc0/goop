@@ -1,5 +1,5 @@
 import { writeSync } from "node:fs";
-import type { Clock, Output, RandomSource } from "../types/sandbox";
+import type { Clock, EngineName, Output, RandomSource } from "../types/sandbox";
 
 export const systemClock: Clock = {
   now: () => Date.now(),
@@ -25,6 +25,11 @@ export const terminalOutput: Output = {
     writeSync(2, `${line}\n`);
   },
 };
+
+/** The container engines found on PATH (S3). */
+export function installedEngines(): EngineName[] {
+  return (["podman", "docker"] as const).filter((name) => Bun.which(name) !== null);
+}
 
 export const cryptoRandom: RandomSource = {
   bytes: (count) => crypto.getRandomValues(new Uint8Array(count)),

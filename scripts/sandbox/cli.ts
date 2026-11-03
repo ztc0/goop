@@ -1,15 +1,17 @@
 // Sandbox (S1, S3, S5): with --os windows, installs Windows once into .local/windows/base/
 // with dockur in Podman, then runs PowerShell commands in throwaway VMs over that base.
 // Podman storage and every file stay inside the repo. --os debian is not implemented yet.
+// The engine is --engine, else Podman, else Docker (S3); Docker is not supported yet.
 // Usage: bun scripts/sandbox/cli.ts install | status | run [--copy p] [--fetch p] -- <command>
-//        with --os windows|debian
+//        with --os windows|debian [--engine podman|docker]
 import { repoRoot } from "../shared/repo-root";
 import { nodeFileStore } from "./adapters/file-store";
 import { createGuestShell } from "./adapters/guest-shell";
-import { createPodman } from "./adapters/podman";
+import { createPodmanEngine } from "./adapters/podman";
 import { bunProcessRunner } from "./adapters/process-runner";
-import { cryptoRandom, systemClock, terminalOutput } from "./adapters/system";
+import { cryptoRandom, installedEngines, systemClock, terminalOutput } from "./adapters/system";
 import { parseCliArgs, USAGE } from "./model/cli-args";
+import { chooseEngine } from "./model/engine-choice";
 import { sandboxPaths } from "./model/paths";
 import { passwordFromBytes, runId } from "./model/vm-config";
 import { installWindows } from "./services/install";
@@ -28,6 +30,18 @@ if (command.os !== "windows") {
   );
   process.exit(2);
 }
+const choice = chooseEngine(command.engine, installedEngines());
+if ("error" in choice) {
+  process.stderr.write(`${choice.error}\n`);
+  process.exit(1);
+}
+if (choice.warning !== undefined) process.stderr.write(`${choice.warning}\n`);
+if (choice.engine === "docker") {
+  process.stderr.write(
+    "Docker is not supported yet; it arrives with the next change. Use --engine podman.\n",
+  );
+  process.exit(2);
+}
 
 // Ctrl+C aborts the wait or the guest command; the services still stop the VM and clean up.
 const interrupt = new AbortController();
@@ -37,7 +51,7 @@ process.on("SIGTERM", () => interrupt.abort());
 const paths = sandboxPaths(repoRoot());
 const deps: SandboxDeps = {
   paths,
-  podman: createPodman(bunProcessRunner, paths),
+  engine: createPodmanEngine(bunProcessRunner, paths),
   guest: createGuestShell(bunProcessRunner, paths),
   files: nodeFileStore,
   clock: systemClock,

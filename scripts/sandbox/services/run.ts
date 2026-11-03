@@ -22,7 +22,7 @@ export async function runInWindows(
   request: RunRequest,
   runId: string,
 ): Promise<number> {
-  const { paths, files, output, podman, guest } = deps;
+  const { paths, files, output, engine, guest } = deps;
   if (!files.exists(paths.baseDisk)) {
     output.error("No Windows base: run `bun run sandbox:install -- --os windows` first.");
     return 1;
@@ -45,7 +45,7 @@ export async function runInWindows(
   let started = false;
   try {
     output.info("Creating a throwaway disk over the Windows base...");
-    const overlay = await podman.createOverlay(runId);
+    const overlay = await engine.createOverlay(runId);
     if (overlay.exitCode !== 0) {
       output.error(`Could not create the throwaway disk: ${overlay.stderr.trim()}`);
       return 1;
@@ -55,7 +55,7 @@ export async function runInWindows(
     }
 
     output.info(`Starting ${container}...`);
-    const vm = await podman.startRun(runId, guestPassword(deps, false));
+    const vm = await engine.startRun(runId, guestPassword(deps, false));
     if (vm.exitCode !== 0) {
       output.error(`Could not start ${container}: ${vm.stderr.trim()}`);
       return 1;
@@ -112,7 +112,7 @@ export async function runInWindows(
   } finally {
     if (started) {
       output.info(`Stopping ${container}...`);
-      await podman.stop(container);
+      await engine.stop(container);
     }
     files.removeDirectory(runDir);
   }

@@ -42,7 +42,7 @@ export async function reportNotReady(
   policy: ReadinessPolicy,
   container: string,
 ): Promise<number> {
-  const { output, podman } = deps;
+  const { output, engine } = deps;
   if (readiness === "interrupted") {
     output.error("Interrupted.");
     return INTERRUPTED_EXIT_CODE;
@@ -50,7 +50,7 @@ export async function reportNotReady(
   output.error(
     `Windows was not ready after ${formatElapsed(policy.timeoutMs)}. Last container logs:`,
   );
-  const logs = await podman.logs(container);
+  const logs = await engine.logs(container);
   for (const line of `${logs.stdout}${logs.stderr}`.trimEnd().split("\n")) {
     output.error(line);
   }

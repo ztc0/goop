@@ -9,10 +9,10 @@ import {
   runContainerArgs,
   stopArgs,
 } from "../model/podman-args";
-import type { Podman, ProcessRunner, SandboxPaths } from "../types/sandbox";
+import type { ContainerEngine, ProcessRunner, SandboxPaths } from "../types/sandbox";
 
 /** Podman against the repo-local storage: every call carries the global flags (S3). */
-export function createPodman(runner: ProcessRunner, paths: SandboxPaths): Podman {
+export function createPodmanEngine(runner: ProcessRunner, paths: SandboxPaths): ContainerEngine {
   const podman = (args: string[], password?: string) =>
     runner.run({
       command: ["podman", ...podmanGlobalArgs(paths), ...args],

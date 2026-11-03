@@ -17,7 +17,7 @@ import {
  * C:\OEM\ready.txt marker exists. The base stays.
  */
 export async function installWindows(deps: SandboxDeps): Promise<number> {
-  const { paths, files, output, podman, guest } = deps;
+  const { paths, files, output, engine, guest } = deps;
   if (files.exists(paths.baseDisk)) {
     output.error(
       `A Windows base already exists in ${displayPath(paths, paths.base)}. Delete that folder to install again.`,
@@ -50,7 +50,7 @@ export async function installWindows(deps: SandboxDeps): Promise<number> {
   output.info(`Starting ${INSTALL_CONTAINER} (the first install takes about 25 minutes)...`);
   let exitCode: number;
   try {
-    const started = await podman.startInstall(password);
+    const started = await engine.startInstall(password);
     if (started.exitCode !== 0) {
       output.error(`Could not start ${INSTALL_CONTAINER}: ${started.stderr.trim()}`);
       return 1;
@@ -73,8 +73,8 @@ export async function installWindows(deps: SandboxDeps): Promise<number> {
     }
   } finally {
     output.info(`Stopping ${INSTALL_CONTAINER}...`);
-    await podman.stop(INSTALL_CONTAINER);
-    await podman.remove(INSTALL_CONTAINER);
+    await engine.stop(INSTALL_CONTAINER);
+    await engine.remove(INSTALL_CONTAINER);
   }
   if (exitCode === 0) {
     output.info(`Windows base installed in ${displayPath(paths, paths.base)}`);
