@@ -19,15 +19,15 @@ Branch `feat/sandbox` from `dev`. Product-grade tooling: test-first, review on h
 
 ## Tasks
 
-| ID  | Specs  | Task                                                                                                                       | Route  | Commit  |
-| --- | ------ | -------------------------------------------------------------------------------------------------------------------------- | ------ | ------- |
-| T1  | S1, S7 | Rename `scripts/windows-vm/` to `scripts/sandbox/` and the commands to `sandbox:*` with `--os windows`; behavior unchanged | inline | 5edfd06 |
-| T2  | S3, S4 | `ContainerEngine` interface, the Podman adapter behind it, and the tested engine choice with `--engine`                    | inline | 3e8223a |
-| T3  | S3, S4 | Docker adapter and a CI job that runs the sandbox with Docker                                                              | inline | -       |
-| T4  | S2, S7 | Debian container with systemd: pinned image, `--os debian` install, run and status, a real run that starts a user service  | inline | db4d484 |
-| T5  | S1-S7  | `docs/development/sandbox.md` (replaces `windows-vm.md`), AGENTS.md commands, rules that mention the old names             | inline | -       |
-| T6  | S5     | Deferred: spike a Debian VM with a software TPM                                                                            | inline | -       |
-| T7  | S5     | Deferred: Debian VM in the sandbox, if T6 says yes                                                                         | inline | -       |
+| ID  | Specs  | Task                                                                                                                       | Route  | Commit           |
+| --- | ------ | -------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------- |
+| T1  | S1, S7 | Rename `scripts/windows-vm/` to `scripts/sandbox/` and the commands to `sandbox:*` with `--os windows`; behavior unchanged | inline | 5edfd06          |
+| T2  | S3, S4 | `ContainerEngine` interface, the Podman adapter behind it, and the tested engine choice with `--engine`                    | inline | 3e8223a          |
+| T3  | S3, S4 | Docker adapter and a CI job that runs the sandbox with Docker                                                              | inline | 7b4bc74, 43502d5 |
+| T4  | S2, S7 | Debian container with systemd: pinned image, `--os debian` install, run and status, a real run that starts a user service  | inline | db4d484          |
+| T5  | S1-S7  | `docs/development/sandbox.md` (replaces `windows-vm.md`), AGENTS.md commands, rules that mention the old names             | inline | -                |
+| T6  | S5     | Deferred: spike a Debian VM with a software TPM                                                                            | inline | -                |
+| T7  | S5     | Deferred: Debian VM in the sandbox, if T6 says yes                                                                         | inline | -                |
 
 Each task is one pull request in a stacked chain on `dev`; a task over about 400 lines is split.
 
@@ -46,3 +46,4 @@ Each task is one pull request in a stacked chain on `dev`; a task over about 400
 - **L11.** T4 native review `review-2c0952212a88eeac` (risk, resilience) approved. Advisory R4-cleanup-result, to fix with T3: `runInDebian` ignores the result of the final `forceRemove`, so a failed removal leaves a container running without telling the user; it should report it and print how to remove it.
 - **L12.** "esto es nesesrio \"-- 'systemctl --version; systemctl --user is-system-running'\" anlizalo por que es mucho que tiene que escribir", then "... poedmos hacwer esto bun run sandbox:run debian uname -a". The system is now a positional word: `bun run sandbox:run debian uname -a`; `--` before the command is optional; `--os` stops with "--os was replaced: write the system right after the command, like: bun run sandbox:run debian uname -a"; `install`/`status` with a command say "install takes no command; to run one, use: bun run sandbox:run <system> <command>". 109 tests pass; real runs on Podman recorded.
 - **L13.** "dale" to the interactive shell: `bun run sandbox:run debian` with no command opens `bash -l` as `goop` in a fresh container and deletes it on `exit`; without a terminal it stops with exit 2 and "run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox:run debian uname -a". Review advisory R4-cleanup-result fixed: a failed removal prints how to remove the container by hand and turns exit 0 into 1. 117 tests; real shell run in a pseudo terminal (`running`, `goop`, exit 7, container removed).
+- **L14.** T3 done (`7b4bc74` adapter, `43502d5` CLI wiring and CI): `adapters/docker.ts` and `model/docker-args.ts` (pure, tested); `ContainerEngine` gains `name` and `manualRemoveCommand`; `--engine docker` runs for real. systemd under Docker uses `--cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw --tmpfs /run --tmpfs /run/lock --tmpfs /tmp:exec --env container=docker`, not `--privileged` (moby/moby#42275, jrei/systemd README, systemd.io/CONTAINER_INTERFACE); it lets the container write the host cgroup tree, acceptable on a throwaway CI runner, and Podman (the default) needs none of it. New CI job "Sandbox: Debian on Docker" (not required) asserts the user manager is running. Not verified on real Docker yet (none on this PC): the job's first run is the proof. Windows on Docker: arguments built and unit-tested, never run. 130 tests pass.
