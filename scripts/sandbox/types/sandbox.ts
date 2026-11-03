@@ -21,6 +21,10 @@ export interface SandboxPaths {
   /** Throwaway storage, one folder per run (S5). */
   runs: string;
   results: string;
+  /** The Debian image's build recipe (S2). */
+  debianContainerfile: string;
+  /** Files fetched from Debian runs, one folder per run. */
+  debianResults: string;
 }
 
 export interface ReadinessPolicy {
@@ -29,11 +33,11 @@ export interface ReadinessPolicy {
 }
 
 export interface RunRequest {
-  /** Repo paths uploaded to C:\goop\ before the command. */
+  /** Repo paths uploaded to C:\goop\ (Windows) or /home/goop/goop/ (Debian) before the command. */
   copy: string[];
-  /** Guest paths downloaded into .temp/windows/results/<run-id>/ after it. */
+  /** Sandbox paths downloaded into .temp/<os>/results/<run-id>/ after it. */
   fetch: string[];
-  /** PowerShell command text, piped to the guest through stdin. */
+  /** PowerShell (Windows) or bash (Debian) command text. */
   command: string;
 }
 
@@ -80,7 +84,16 @@ export interface ProcessRunner {
   run(request: ProcessRequest): Promise<ProcessResult>;
 }
 
-/** The container commands the VM needs, whatever the engine (S4). */
+/** How `exec` runs a command inside a container. */
+export interface ExecOptions {
+  user?: string;
+  workdir?: string;
+  env?: Record<string, string>;
+  /** Stream the output to the terminal instead of capturing it. */
+  stream?: boolean;
+}
+
+/** The container commands the sandboxes need, whatever the engine (S4). */
 export interface ContainerEngine {
   startInstall(password: string): Promise<ProcessResult>;
   createOverlay(runId: string): Promise<ProcessResult>;
@@ -88,7 +101,19 @@ export interface ContainerEngine {
   stop(name: string): Promise<ProcessResult>;
   remove(name: string): Promise<ProcessResult>;
   logs(name: string): Promise<ProcessResult>;
-  listRunning(): Promise<ProcessResult>;
+  /** The running containers whose name starts with the prefix, one per line. */
+  listRunning(prefix: string): Promise<ProcessResult>;
+  /** Builds an image from a Containerfile, streaming the build output. */
+  buildImage(tag: string, containerfile: string): Promise<ProcessResult>;
+  /** Prints the image size in bytes; fails when the image does not exist. */
+  imageSize(tag: string): Promise<ProcessResult>;
+  /** Starts a detached container with systemd as process 1. */
+  startSystemd(name: string, image: string): Promise<ProcessResult>;
+  exec(name: string, command: string[], options?: ExecOptions): Promise<ProcessResult>;
+  copyIn(name: string, localPath: string, containerDirectory: string): Promise<ProcessResult>;
+  copyOut(name: string, containerPath: string, localDirectory: string): Promise<ProcessResult>;
+  /** Stops and deletes a container in one step. */
+  forceRemove(name: string): Promise<ProcessResult>;
 }
 
 /** The guest reached through SSH and scp. */

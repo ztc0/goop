@@ -1,7 +1,7 @@
 import { join, relative } from "node:path";
 import type { SandboxPaths } from "../types/sandbox";
 
-/** Every path the Windows VM uses, from the repo root: nothing lives outside it (S3). */
+/** Every path the sandboxes use, from the repo root: nothing lives outside it (S3). */
 export function sandboxPaths(root: string): SandboxPaths {
   const local = join(root, ".local");
   const windows = join(local, "windows");
@@ -25,6 +25,8 @@ export function sandboxPaths(root: string): SandboxPaths {
     knownHosts: join(temp, "known_hosts"),
     runs: join(temp, "runs"),
     results: join(temp, "results"),
+    debianContainerfile: join(root, "scripts", "sandbox", "debian", "Containerfile"),
+    debianResults: join(root, ".temp", "debian", "results"),
   };
 }
 

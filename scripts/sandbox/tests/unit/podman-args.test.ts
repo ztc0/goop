@@ -132,7 +132,7 @@ describeOnLinuxHost("podman arguments", () => {
       "50",
       "goop-windows-install",
     ]);
-    expect(listRunningArgs()).toEqual([
+    expect(listRunningArgs("goop-windows")).toEqual([
       "ps",
       "--filter",
       "name=goop-windows",
