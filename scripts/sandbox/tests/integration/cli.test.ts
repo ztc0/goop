@@ -18,20 +18,28 @@ const cliScript = join(repo, "scripts", "sandbox", "cli.ts");
 const IMAGE = "docker.io/dockurr/windows:6.06";
 const FAKE_PUBLIC_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKeyForTests";
 
-const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> --os <os> [--engine <engine>]
+const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> <system> [options]
 
 Commands:
-  install    Install Windows once into .local/windows/base/ (about 25 minutes),
-             or build the Debian image (a few minutes; again to rebuild)
-  run [--copy <repo path>]... [--fetch <sandbox path>]... -- <command...>
-             Run a PowerShell command (windows) or a shell command (debian) in a
-             throwaway sandbox; it and its changes are deleted when it ends
-  status     Show the Windows base or the Debian image, and the running sandboxes
+  install <system>  Install Windows once into .local/windows/base/ (about 25 min),
+                    or build the Debian image (a few minutes; again to rebuild)
+  run <system> [--copy <repo path>]... [--fetch <sandbox path>]... [--] <command...>
+                    Run a PowerShell command (windows) or a shell command (debian)
+                    in a throwaway sandbox; it and its changes are deleted at the end
+  status <system>   Show the Windows base or the Debian image, and running sandboxes
+
+Systems:
+  windows           A Windows 11 VM
+  debian            A Debian 13 container with systemd
 
 Options:
-  --os <os>          windows (a Windows 11 VM) or debian (a Debian 13 container
-                     with systemd); required
-  --engine <engine>  podman or docker; by default Podman if installed, else Docker
+  --engine <engine> podman or docker; by default Podman if installed, else Docker
+
+Examples:
+  bun run sandbox:install debian
+  bun run sandbox:run debian uname -a
+  bun run sandbox:run windows --copy dist 'Get-ChildItem C:\\goop'
+  bun run sandbox:status windows
 `;
 
 const LOG_ARGS = `{ printf '%s' "$(basename "$0")"; for arg in "$@"; do printf '\\037%s' "$arg"; done; printf '\\n'; } >> "$FAKE_LOG"`;
@@ -276,7 +284,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
   });
 
   test("a bad run option prints the error and the usage, and exits 2", () => {
-    const result = cli(["run", "--os", "windows", "--copy"]);
+    const result = cli(["run", "windows", "--copy"]);
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
@@ -284,43 +292,72 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
     expect(calls()).toEqual([]);
   });
 
-  test("a missing --os prints the error and the usage, and exits 2 (S1)", () => {
-    const result = cli(["status"]);
+  test("a missing system prints the error and the usage, and exits 2 (S1)", () => {
+    for (const command of ["install", "status", "run"]) {
+      const result = cli([command]);
 
-    expect(result.exitCode).toBe(2);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toBe(`status needs --os windows or --os debian.\n${USAGE}`);
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(`${command} needs the system first: windows or debian.\n${USAGE}`);
+    }
     expect(calls()).toEqual([]);
   });
 
-  test("an unknown --os prints the error and the usage, and exits 2 (S1)", () => {
-    const result = cli(["install", "--os", "macos"]);
+  test("an unknown system prints the error and the usage, and exits 2 (S1)", () => {
+    const result = cli(["install", "macos"]);
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe(`Unknown --os: macos (expected windows or debian).\n${USAGE}`);
+    expect(result.stderr).toBe(`Unknown system: macos (expected windows or debian).\n${USAGE}`);
     expect(calls()).toEqual([]);
   });
 
-  test("run --os debian without a command asks for a shell command (S2)", () => {
-    const result = cli(["run", "--os", "debian"]);
+  test("--os prints how to write the system instead, and exits 2 (S1)", () => {
+    for (const args of [
+      ["run", "--os", "debian", "uname", "-a"],
+      ["status", "debian", "--os", "debian"],
+    ]) {
+      const result = cli(args);
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        `--os was replaced: write the system right after the command, like: bun run sandbox:run debian uname -a\n${USAGE}`,
+      );
+    }
+    expect(calls()).toEqual([]);
+  });
+
+  test("install and status with a command point to run, and exit 2 (S1)", () => {
+    for (const command of ["install", "status"]) {
+      const result = cli([command, "debian", "systemctl --version"]);
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        `${command} takes no command; to run one, use: bun run sandbox:run <system> <command>\n${USAGE}`,
+      );
+    }
+    expect(calls()).toEqual([]);
+  });
+
+  test("run debian without a command asks for a shell command (S2)", () => {
+    const result = cli(["run", "debian"]);
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe(`run needs a shell command after --.\n${USAGE}`);
+    expect(result.stderr).toBe(`run needs a shell command.\n${USAGE}`);
     expect(calls()).toEqual([]);
   });
 });
 
 describeOnLinuxHost("scripts/sandbox/cli.ts run", () => {
   test("without a base it exits 1 with the install hint and creates nothing", () => {
-    const result = cli(["run", "--os", "windows", "--", "Get-Date"]);
+    const result = cli(["run", "windows", "--", "Get-Date"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe(
-      "No Windows base: run `bun run sandbox:install -- --os windows` first.\n",
-    );
+    expect(result.stderr).toBe("No Windows base: run `bun run sandbox:install windows` first.\n");
     expect(readdirSync(root)).toEqual([]);
     expect(calls()).toEqual([]);
   });
@@ -328,7 +365,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts run", () => {
   test("runs on a throwaway overlay, stops the VM and deletes the run dir even when the command fails (S5)", () => {
     const base = seedBase();
 
-    const result = cli(["run", "--os", "windows", "--", "Write-Output", "hi;", "exit", "3"], {
+    const result = cli(["run", "windows", "--", "Write-Output", "hi;", "exit", "3"], {
       FAKE_SSH_EXIT: "3",
     });
 
@@ -412,7 +449,6 @@ describeOnLinuxHost("scripts/sandbox/cli.ts run", () => {
 
     const result = cli([
       "run",
-      "--os",
       "windows",
       "--copy",
       "src",
@@ -470,7 +506,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts run", () => {
   test("refuses to upload a path outside the repo before starting anything", () => {
     seedBase();
 
-    const result = cli(["run", "--os", "windows", "--copy", "../outside", "--", "Get-Date"]);
+    const result = cli(["run", "windows", "--copy", "../outside", "--", "Get-Date"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
@@ -486,7 +522,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts install", () => {
   test("refuses when a base already exists and never calls podman", () => {
     const base = seedBase();
 
-    const result = cli(["install", "--os", "windows"]);
+    const result = cli(["install", "windows"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
@@ -498,7 +534,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts install", () => {
   });
 
   test("generates the key, password and OEM files, waits for the marker, then stops and removes the container", () => {
-    const result = cli(["install", "--os", "windows"]);
+    const result = cli(["install", "windows"]);
 
     const windows = join(root, ".local", "windows");
     const password = readFileSync(join(windows, "password"), "utf8");
@@ -564,12 +600,12 @@ describeOnLinuxHost("scripts/sandbox/cli.ts install", () => {
 
 describeOnLinuxHost("scripts/sandbox/cli.ts status", () => {
   test("without a base it says so and lists the running VMs", () => {
-    const result = cli(["status", "--os", "windows"]);
+    const result = cli(["status", "windows"]);
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(
-      "Windows base: none (run `bun run sandbox:install -- --os windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+      "Windows base: none (run `bun run sandbox:install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
     );
     expect(podmanCalls()).toEqual([
       ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
@@ -579,7 +615,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts status", () => {
   test("with a base it prints its size, and none when no VM runs", () => {
     seedBase();
 
-    const result = cli(["status", "--os", "windows"], { FAKE_PS_EMPTY: "1" });
+    const result = cli(["status", "windows"], { FAKE_PS_EMPTY: "1" });
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
@@ -589,14 +625,14 @@ describeOnLinuxHost("scripts/sandbox/cli.ts status", () => {
 
 describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
   test("without --engine and only Podman installed it behaves as before, with no warning", () => {
-    const result = cli(["status", "--os", "windows"], {
+    const result = cli(["status", "windows"], {
       PATH: isolatedPath({ podman: FAKES.podman ?? "" }),
     });
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(
-      "Windows base: none (run `bun run sandbox:install -- --os windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+      "Windows base: none (run `bun run sandbox:install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
     );
     expect(podmanCalls()).toEqual([
       ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
@@ -607,7 +643,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
     const PATH = isolatedPath({ docker: FAKE_DOCKER });
     for (const args of [["install"], ["status"], ["run", "--", "Get-Date"]]) {
       const [command, ...rest] = args;
-      const result = cli([command ?? "", "--os", "windows", "--engine", "docker", ...rest], {
+      const result = cli([command ?? "", "windows", "--engine", "docker", ...rest], {
         PATH,
       });
 
@@ -629,7 +665,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
     const PATH = isolatedPath({});
     for (const args of [["install"], ["status"], ["run", "--", "Get-Date"]]) {
       const [command, ...rest] = args;
-      const result = cli([command ?? "", "--os", "windows", ...rest], { PATH });
+      const result = cli([command ?? "", "windows", ...rest], { PATH });
 
       expect(result.exitCode).toBe(1);
       expect(result.stdout).toBe("");
@@ -642,7 +678,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
   });
 
   test("an unknown --engine prints the error and the usage, and exits 2", () => {
-    const result = cli(["status", "--os", "windows", "--engine", "lxc"]);
+    const result = cli(["status", "windows", "--engine", "lxc"]);
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
@@ -671,11 +707,11 @@ function debianRun(podman: string[][]): { name: string; id: string } {
   return { name, id: name.replace("goop-debian-run-", "") };
 }
 
-describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
+describeOnLinuxHost("scripts/sandbox/cli.ts debian (S2)", () => {
   test("install builds the image from the Containerfile, again on every install", () => {
     const containerfile = join(root, "scripts", "sandbox", "debian", "Containerfile");
     for (let attempt = 1; attempt <= 2; attempt++) {
-      const result = cli(["install", "--os", "debian"]);
+      const result = cli(["install", "debian"]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe("");
@@ -700,7 +736,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
   });
 
   test("install exits 1 when the build fails", () => {
-    const result = cli(["install", "--os", "debian"], { FAKE_BUILD_EXIT: "1" });
+    const result = cli(["install", "debian"], { FAKE_BUILD_EXIT: "1" });
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe(
@@ -710,13 +746,11 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
   });
 
   test("run without the image exits 1 with the install hint and starts nothing", () => {
-    const result = cli(["run", "--os", "debian", "--", "uname"], { FAKE_NO_IMAGE: "1" });
+    const result = cli(["run", "debian", "--", "uname"], { FAKE_NO_IMAGE: "1" });
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe(
-      "No Debian image: run `bun run sandbox:install -- --os debian` first.\n",
-    );
+    expect(result.stderr).toBe("No Debian image: run `bun run sandbox:install debian` first.\n");
     expect(podmanCalls()).toEqual([["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE]]);
   });
 
@@ -726,7 +760,6 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
 
     const result = cli([
       "run",
-      "--os",
       "debian",
       "--copy",
       "src",
@@ -767,8 +800,21 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
     expect(existsSync(results)).toBe(true);
   });
 
+  test("run takes the command without --, with --engine before it (S1)", () => {
+    const result = cli(["run", "debian", "--engine", "podman", "uname", "-a"]);
+
+    const podman = podmanCalls();
+    const { name } = debianRun(podman);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(podman.slice(-2)).toEqual([
+      [...USER_EXEC, name, "bash", "-lc", "uname -a"],
+      ["rm", "--force", "--time", "10", name],
+    ]);
+  });
+
   test("run returns the command's exit code and still removes the container when it fails", () => {
-    const result = cli(["run", "--os", "debian", "--", "exit 3"], { FAKE_EXEC_EXIT: "3" });
+    const result = cli(["run", "debian", "--", "exit 3"], { FAKE_EXEC_EXIT: "3" });
 
     const podman = podmanCalls();
     const { name } = debianRun(podman);
@@ -791,7 +837,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
   });
 
   test("run refuses to copy a path outside the repo before starting anything", () => {
-    const result = cli(["run", "--os", "debian", "--copy", "../outside", "--", "uname"]);
+    const result = cli(["run", "debian", "--copy", "../outside", "--", "uname"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
@@ -803,12 +849,12 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
   });
 
   test("status without the image says so and lists no containers", () => {
-    const result = cli(["status", "--os", "debian"], { FAKE_NO_IMAGE: "1", FAKE_PS_EMPTY: "1" });
+    const result = cli(["status", "debian"], { FAKE_NO_IMAGE: "1", FAKE_PS_EMPTY: "1" });
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(
-      "Debian image: none (run `bun run sandbox:install -- --os debian`)\nRunning containers: none\n",
+      "Debian image: none (run `bun run sandbox:install debian`)\nRunning containers: none\n",
     );
     expect(podmanCalls()).toEqual([
       ["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE],
@@ -817,7 +863,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
   });
 
   test("status with the image prints its size and the running containers", () => {
-    const result = cli(["status", "--os", "debian"], { FAKE_PS_NAME: "goop-debian-run-test" });
+    const result = cli(["status", "debian"], { FAKE_PS_NAME: "goop-debian-run-test" });
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");

@@ -1,10 +1,10 @@
-// Sandbox (S1, S2, S3, S5): with --os windows, installs Windows once into .local/windows/base/
+// Sandbox (S1, S2, S3, S5): for windows, installs Windows once into .local/windows/base/
 // with dockur in Podman, then runs PowerShell commands in throwaway VMs over that base.
-// With --os debian, builds a Debian image with systemd, then runs shell commands in
+// For debian, builds a Debian image with systemd, then runs shell commands in
 // throwaway containers. Podman storage and every file stay inside the repo.
 // The engine is --engine, else Podman, else Docker (S3); Docker is not supported yet.
-// Usage: bun scripts/sandbox/cli.ts install | status | run [--copy p] [--fetch p] -- <command>
-//        with --os windows|debian [--engine podman|docker]
+// Usage: bun scripts/sandbox/cli.ts install|status <windows|debian> [--engine podman|docker]
+//        bun scripts/sandbox/cli.ts run <windows|debian> [--copy p] [--fetch p] [--] <command>
 import { repoRoot } from "../shared/repo-root";
 import { nodeFileStore } from "./adapters/file-store";
 import { createGuestShell } from "./adapters/guest-shell";

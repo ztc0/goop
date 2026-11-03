@@ -41,7 +41,7 @@ export interface RunRequest {
   command: string;
 }
 
-/** The machine a command targets, chosen with `--os`. */
+/** The machine a command targets, the word right after the command (`run debian ...`). */
 export type SandboxOs = "windows" | "debian";
 
 /** The container engine that runs the sandbox, chosen with `--engine` or detected (S3). */
