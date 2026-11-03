@@ -7,6 +7,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
@@ -17,7 +18,7 @@ const cliScript = join(repo, "scripts", "sandbox", "cli.ts");
 const IMAGE = "docker.io/dockurr/windows:6.06";
 const FAKE_PUBLIC_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKeyForTests";
 
-const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> --os <os>
+const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> --os <os> [--engine <engine>]
 
 Commands:
   install    Install Windows once into .local/windows/base/ (about 25 minutes)
@@ -27,7 +28,8 @@ Commands:
   status     Show the Windows base and the running VMs
 
 Options:
-  --os <os>  windows (a Windows 11 VM) or debian (not implemented yet); required
+  --os <os>          windows (a Windows 11 VM) or debian (not implemented yet); required
+  --engine <engine>  podman or docker; by default Podman if installed, else Docker
 `;
 
 const LOG_ARGS = `{ printf '%s' "$(basename "$0")"; for arg in "$@"; do printf '\\037%s' "$arg"; done; printf '\\n'; } >> "$FAKE_LOG"`;
@@ -117,6 +119,29 @@ function cli(args: string[], env: Record<string, string> = {}) {
     stderr: result.stderr.toString(),
   };
 }
+
+/**
+ * A PATH holding only the named fakes (and the tools the fakes call), so the real
+ * podman or docker on the host cannot be found (S3).
+ */
+function isolatedPath(fakes: Record<string, string>): string {
+  const bin = join(fixture, "isolated-bin");
+  mkdirSync(bin, { recursive: true });
+  for (const [name, body] of Object.entries(fakes)) {
+    writeFileSync(join(bin, name), body);
+    chmodSync(join(bin, name), 0o755);
+  }
+  for (const tool of ["basename", "ls"]) {
+    const real = Bun.which(tool);
+    if (real !== null) symlinkSync(real, join(bin, tool));
+  }
+  return bin;
+}
+
+const FAKE_DOCKER = `#!/bin/sh
+${LOG_ARGS}
+exit 0
+`;
 
 function readLines(path: string): string[] {
   return existsSync(path) ? readFileSync(path, "utf8").split("\n").filter(Boolean) : [];
@@ -272,7 +297,8 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
   });
 
   test("--os debian is not implemented yet: it exits 2 and touches nothing (S1)", () => {
-    for (const args of [["install"], ["status"], ["run", "--", "uname"]]) {
+    // `run` without a command too: "not implemented" wins over the Windows-only PowerShell hint.
+    for (const args of [["install"], ["status"], ["run", "--", "uname"], ["run"]]) {
       const [command, ...rest] = args;
       const result = cli([command ?? "", "--os", "debian", ...rest]);
 
@@ -559,5 +585,69 @@ describeOnLinuxHost("scripts/sandbox/cli.ts status", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe("Windows base: .local/windows/base/ (24 B)\nRunning VMs: none\n");
+  });
+});
+
+describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
+  test("without --engine and only Podman installed it behaves as before, with no warning", () => {
+    const result = cli(["status", "--os", "windows"], {
+      PATH: isolatedPath({ podman: FAKES.podman ?? "" }),
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      "Windows base: none (run `bun run sandbox:install -- --os windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+    );
+    expect(podmanCalls()).toEqual([
+      ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
+    ]);
+  });
+
+  test("--engine docker warns about Docker's storage and stops: Docker is not supported yet", () => {
+    const PATH = isolatedPath({ docker: FAKE_DOCKER });
+    for (const args of [["install"], ["status"], ["run", "--", "Get-Date"]]) {
+      const [command, ...rest] = args;
+      const result = cli([command ?? "", "--os", "windows", "--engine", "docker", ...rest], {
+        PATH,
+      });
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        [
+          "Using Docker: its images and containers live in Docker's own storage (usually /var/lib/docker), outside this repository.",
+          "Docker is not supported yet; it arrives with the next change. Use --engine podman.",
+          "",
+        ].join("\n"),
+      );
+    }
+    expect(calls()).toEqual([]);
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  test("with neither Podman nor Docker on PATH it names what to install and exits 1", () => {
+    const PATH = isolatedPath({});
+    for (const args of [["install"], ["status"], ["run", "--", "Get-Date"]]) {
+      const [command, ...rest] = args;
+      const result = cli([command ?? "", "--os", "windows", ...rest], { PATH });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        "No container engine found. Install Podman (recommended) or Docker.\n",
+      );
+    }
+    expect(calls()).toEqual([]);
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  test("an unknown --engine prints the error and the usage, and exits 2", () => {
+    const result = cli(["status", "--os", "windows", "--engine", "lxc"]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(`Unknown --engine: lxc (expected podman or docker).\n${USAGE}`);
+    expect(calls()).toEqual([]);
   });
 });

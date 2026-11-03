@@ -5,7 +5,7 @@ import { prepareContainerStorage } from "./vm-lifecycle";
 
 /** Prints whether the Windows base exists, its size, and the running goop-windows containers. */
 export async function showStatus(deps: SandboxDeps): Promise<number> {
-  const { paths, files, output, podman } = deps;
+  const { paths, files, output, engine } = deps;
   if (files.exists(paths.baseDisk)) {
     const size = files.listFiles(paths.base).reduce((total, file) => total + file.size, 0);
     output.info(`Windows base: ${displayPath(paths, paths.base)} (${formatBytes(size)})`);
@@ -14,7 +14,7 @@ export async function showStatus(deps: SandboxDeps): Promise<number> {
   }
 
   prepareContainerStorage(deps);
-  const running = await podman.listRunning();
+  const running = await engine.listRunning();
   if (running.exitCode !== 0) {
     output.error(`Could not list the containers: ${running.stderr.trim()}`);
     return 1;

@@ -40,10 +40,19 @@ export interface RunRequest {
 /** The machine a command targets, chosen with `--os`. */
 export type SandboxOs = "windows" | "debian";
 
+/** The container engine that runs the sandbox, chosen with `--engine` or detected (S3). */
+export type EngineName = "podman" | "docker";
+
+/** What every command takes: the target and, optionally, the engine. */
+export interface Target {
+  os: SandboxOs;
+  engine?: EngineName | undefined;
+}
+
 export type CliCommand =
-  | { kind: "install"; os: SandboxOs }
-  | { kind: "status"; os: SandboxOs }
-  | ({ kind: "run"; os: SandboxOs } & RunRequest)
+  | ({ kind: "install" } & Target)
+  | ({ kind: "status" } & Target)
+  | ({ kind: "run" } & Target & RunRequest)
   | { kind: "usage"; error?: string };
 
 export interface OemFiles {
@@ -71,8 +80,8 @@ export interface ProcessRunner {
   run(request: ProcessRequest): Promise<ProcessResult>;
 }
 
-/** The Podman commands the VM needs, always against the repo-local storage. */
-export interface Podman {
+/** The container commands the VM needs, whatever the engine (S4). */
+export interface ContainerEngine {
   startInstall(password: string): Promise<ProcessResult>;
   createOverlay(runId: string): Promise<ProcessResult>;
   startRun(runId: string, password: string): Promise<ProcessResult>;
@@ -127,7 +136,7 @@ export interface RandomSource {
 
 export interface SandboxDeps {
   paths: SandboxPaths;
-  podman: Podman;
+  engine: ContainerEngine;
   guest: GuestShell;
   files: FileStore;
   clock: Clock;
