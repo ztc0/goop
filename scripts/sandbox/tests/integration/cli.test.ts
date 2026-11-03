@@ -155,10 +155,8 @@ function isolatedPath(fakes: Record<string, string>): string {
   return bin;
 }
 
-const FAKE_DOCKER = `#!/bin/sh
-${LOG_ARGS}
-exit 0
-`;
+/** Docker takes the same subcommands as Podman, so the same fake answers both. */
+const FAKE_DOCKER = FAKES.podman ?? "";
 
 function readLines(path: string): string[] {
   return existsSync(path) ? readFileSync(path, "utf8").split("\n").filter(Boolean) : [];
@@ -187,6 +185,18 @@ function podmanCalls(): string[][] {
   }
   return podman.map((call) => call.slice(7));
 }
+
+/** Docker subcommands: Docker uses its own storage, so no call carries the Podman globals (S3). */
+function dockerCalls(): string[][] {
+  const docker = calls().filter((call) => call[0] === "docker");
+  for (const call of docker) {
+    expect(call).not.toContain("--root");
+  }
+  return docker.map((call) => call.slice(1));
+}
+
+const DOCKER_WARNING =
+  "Using Docker: its images and containers live in Docker's own storage (usually /var/lib/docker), outside this repository.";
 
 function sshOptions(): string[] {
   return [
@@ -659,26 +669,19 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
     ]);
   });
 
-  test("--engine docker warns about Docker's storage and stops: Docker is not supported yet", () => {
-    const PATH = isolatedPath({ docker: FAKE_DOCKER });
-    for (const args of [["install"], ["status"], ["run", "--", "Get-Date"]]) {
-      const [command, ...rest] = args;
-      const result = cli([command ?? "", "windows", "--engine", "docker", ...rest], {
-        PATH,
-      });
+  test("--engine docker runs status with Docker after the storage warning", () => {
+    const result = cli(["status", "windows", "--engine", "docker"], {
+      PATH: isolatedPath({ docker: FAKE_DOCKER }),
+    });
 
-      expect(result.exitCode).toBe(2);
-      expect(result.stdout).toBe("");
-      expect(result.stderr).toBe(
-        [
-          "Using Docker: its images and containers live in Docker's own storage (usually /var/lib/docker), outside this repository.",
-          "Docker is not supported yet; it arrives with the next change. Use --engine podman.",
-          "",
-        ].join("\n"),
-      );
-    }
-    expect(calls()).toEqual([]);
-    expect(readdirSync(root)).toEqual([]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe(`${DOCKER_WARNING}\n`);
+    expect(result.stdout).toBe(
+      "Windows base: none (run `bun run sandbox:install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+    );
+    expect(dockerCalls()).toEqual([
+      ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
+    ]);
   });
 
   test("with neither Podman nor Docker on PATH it names what to install and exits 1", () => {
@@ -720,9 +723,9 @@ const USER_EXEC = [
   "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
 ];
 
-/** The run's container name, from the `podman run` call, and its run id. */
-function debianRun(podman: string[][]): { name: string; id: string } {
-  const name = podman.find((call) => call[0] === "run")?.[3] ?? "";
+/** The run's container name, from the engine's `run` call, and its run id. */
+function debianRun(engineCalls: string[][]): { name: string; id: string } {
+  const name = engineCalls.find((call) => call[0] === "run")?.[3] ?? "";
   expect(name).toMatch(/^goop-debian-run-\d{8}-\d{6}-[0-9a-f]{4}$/);
   return { name, id: name.replace("goop-debian-run-", "") };
 }
@@ -922,5 +925,143 @@ describeOnLinuxHost("scripts/sandbox/cli.ts debian (S2)", () => {
     expect(result.stdout).toBe(
       `Debian image: ${DEBIAN_IMAGE} (117.7 MiB)\nRunning containers:\n  goop-debian-run-test\tUp 2 minutes\n`,
     );
+  });
+});
+
+const DOCKER_SYSTEMD = [
+  "--cgroupns=host",
+  "-v",
+  "/sys/fs/cgroup:/sys/fs/cgroup:rw",
+  "--tmpfs",
+  "/run",
+  "--tmpfs",
+  "/run/lock",
+  "--tmpfs",
+  "/tmp:exec",
+  "--env",
+  "container=docker",
+];
+
+describeOnLinuxHost("scripts/sandbox/cli.ts debian on Docker (S3, S4)", () => {
+  test("install --engine docker builds the image once with docker build", () => {
+    const result = cli(["install", "debian", "--engine", "docker"], {
+      PATH: isolatedPath({ docker: FAKE_DOCKER }),
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe(`${DOCKER_WARNING}\n`);
+    expect(result.stdout).toBe(
+      [
+        `Building ${DEBIAN_IMAGE} from scripts/sandbox/debian/Containerfile...`,
+        "STEP 1/4: FROM debian",
+        `Debian image ${DEBIAN_IMAGE} is ready (0m 0s).`,
+        "",
+      ].join("\n"),
+    );
+    expect(dockerCalls()).toEqual([
+      [
+        "build",
+        "--tag",
+        DEBIAN_IMAGE,
+        "--file",
+        join(root, "scripts", "sandbox", "debian", "Containerfile"),
+        join(root, "scripts", "sandbox", "debian"),
+      ],
+    ]);
+  });
+
+  test("install names docker when the build fails", () => {
+    const result = cli(["install", "debian", "--engine", "docker"], {
+      PATH: isolatedPath({ docker: FAKE_DOCKER }),
+      FAKE_BUILD_EXIT: "1",
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe(
+      `${DOCKER_WARNING}\nCould not build the Debian image (docker build exited 1).\n`,
+    );
+  });
+
+  test("--engine docker wins over an installed Podman", () => {
+    const result = cli(["status", "debian", "--engine", "docker"], {
+      PATH: isolatedPath({ podman: FAKES.podman ?? "", docker: FAKE_DOCKER }),
+      FAKE_PS_EMPTY: "1",
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(calls().map((call) => call[0])).toEqual(["docker", "docker"]);
+  });
+
+  test("run --engine docker starts systemd, waits, execs as goop, removes the container and returns the exit code", () => {
+    const result = cli(["run", "debian", "--engine", "docker", "uname", "-a"], {
+      PATH: isolatedPath({ docker: FAKE_DOCKER }),
+      FAKE_EXEC_EXIT: "3",
+    });
+
+    const docker = dockerCalls();
+    const { name } = debianRun(docker);
+    expect(result.exitCode).toBe(3);
+    expect(result.stderr).toBe(`${DOCKER_WARNING}\n`);
+    expect(result.stdout).toBe(
+      [
+        `Starting ${name}...`,
+        "Waiting for systemd...",
+        "systemd is running.",
+        "container output",
+        `Removing ${name}...`,
+        "",
+      ].join("\n"),
+    );
+    expect(docker).toEqual([
+      ["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE],
+      ["run", "-d", "--name", name, ...DOCKER_SYSTEMD, DEBIAN_IMAGE],
+      ["exec", name, "timeout", "30", "systemctl", "is-system-running", "--wait"],
+      [...USER_EXEC, name, "bash", "-lc", "uname -a"],
+      ["rm", "--force", name],
+    ]);
+  });
+
+  test("run --engine docker says how to remove the container with docker when it cannot", () => {
+    const result = cli(["run", "debian", "--engine", "docker", "uname"], {
+      PATH: isolatedPath({ docker: FAKE_DOCKER }),
+      FAKE_RM_FAIL: "1",
+    });
+
+    const { name } = debianRun(dockerCalls());
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe(
+      `${DOCKER_WARNING}\nCould not remove ${name}: Error: container is stuck. Remove it by hand: docker rm -f ${name}\n`,
+    );
+  });
+
+  test("status --engine docker prints the image size and the running containers", () => {
+    const result = cli(["status", "debian", "--engine", "docker"], {
+      PATH: isolatedPath({ docker: FAKE_DOCKER }),
+      FAKE_PS_NAME: "goop-debian-run-test",
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe(`${DOCKER_WARNING}\n`);
+    expect(result.stdout).toBe(
+      `Debian image: ${DEBIAN_IMAGE} (117.7 MiB)\nRunning containers:\n  goop-debian-run-test\tUp 2 minutes\n`,
+    );
+    expect(dockerCalls()).toEqual([
+      ["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE],
+      ["ps", "--filter", "name=goop-debian", "--format", "{{.Names}}\t{{.Status}}"],
+    ]);
+  });
+
+  test("without --engine and only Docker installed it picks Docker and prints the storage warning", () => {
+    const result = cli(["status", "debian"], {
+      PATH: isolatedPath({ docker: FAKE_DOCKER }),
+      FAKE_PS_EMPTY: "1",
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe(`${DOCKER_WARNING}\n`);
+    expect(result.stdout).toBe(
+      `Debian image: ${DEBIAN_IMAGE} (117.7 MiB)\nRunning containers: none\n`,
+    );
+    expect(calls().map((call) => call[0])).toEqual(["docker", "docker"]);
   });
 });
