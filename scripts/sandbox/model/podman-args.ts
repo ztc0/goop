@@ -1,7 +1,8 @@
-import type { SandboxPaths } from "../types/sandbox";
+import { dirname } from "node:path";
+import type { ExecOptions, SandboxPaths } from "../types/sandbox";
+import { DEBIAN_STOP_SECONDS } from "./debian-config";
 import { runDirectory } from "./paths";
 import {
-  CONTAINER_PREFIX,
   GUEST_HOST,
   GUEST_USER,
   INSTALL_CONTAINER,
@@ -132,6 +133,44 @@ export function logsArgs(name: string): string[] {
   return ["logs", "--tail", "50", name];
 }
 
-export function listRunningArgs(): string[] {
-  return ["ps", "--filter", `name=${CONTAINER_PREFIX}`, "--format", "{{.Names}}\t{{.Status}}"];
+export function listRunningArgs(prefix: string): string[] {
+  return ["ps", "--filter", `name=${prefix}`, "--format", "{{.Names}}\t{{.Status}}"];
+}
+
+/** The build context is the Containerfile's own folder, so nothing else in the repo is sent. */
+export function buildArgs(tag: string, containerfile: string): string[] {
+  return ["build", "--tag", tag, "--file", containerfile, dirname(containerfile)];
+}
+
+export function imageSizeArgs(tag: string): string[] {
+  return ["image", "inspect", "--format", "{{.Size}}", tag];
+}
+
+/** A container whose process 1 is systemd; Podman mounts /run, /tmp and the cgroups for it. */
+export function systemdContainerArgs(name: string, image: string): string[] {
+  return ["run", "-d", "--name", name, "--systemd=always", image];
+}
+
+export function execArgs(name: string, command: string[], options: ExecOptions = {}): string[] {
+  const { user, workdir, env = {} } = options;
+  return [
+    "exec",
+    ...(user === undefined ? [] : ["--user", user]),
+    ...(workdir === undefined ? [] : ["--workdir", workdir]),
+    ...Object.entries(env).flatMap(([key, value]) => ["--env", `${key}=${value}`]),
+    name,
+    ...command,
+  ];
+}
+
+export function copyInArgs(name: string, localPath: string, containerDirectory: string): string[] {
+  return ["cp", localPath, `${name}:${containerDirectory}`];
+}
+
+export function copyOutArgs(name: string, containerPath: string, localDirectory: string): string[] {
+  return ["cp", `${name}:${containerPath}`, localDirectory];
+}
+
+export function forceRemoveArgs(name: string): string[] {
+  return ["rm", "--force", "--time", String(DEBIAN_STOP_SECONDS), name];
 }

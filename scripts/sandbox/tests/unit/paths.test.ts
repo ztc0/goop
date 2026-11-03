@@ -21,6 +21,8 @@ describeOnLinuxHost("sandboxPaths", () => {
       knownHosts: "/repo/.temp/windows/known_hosts",
       runs: "/repo/.temp/windows/runs",
       results: "/repo/.temp/windows/results",
+      debianContainerfile: "/repo/scripts/sandbox/debian/Containerfile",
+      debianResults: "/repo/.temp/debian/results",
     });
   });
 

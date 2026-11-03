@@ -1,0 +1,24 @@
+# The Debian sandbox (S2): Debian 13 with systemd as process 1 and a user "goop" whose
+# user manager starts at boot, so tests can use `systemctl --user`.
+# Base: docker.io/library/debian:trixie for linux/amd64, pinned on 2026-11-03 to the amd64
+# manifest digest listed in the tag's image index (registry-1.docker.io/v2/library/debian/manifests/trixie).
+FROM docker.io/library/debian:trixie@sha256:e2914ec98e08b24b4cee3cefcb9f90dfb5519f8d215a2ccf0c9a49b10b6e43de
+
+# systemd as init, dbus for systemctl, and logind plus the user bus for user sessions.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends systemd systemd-sysv dbus dbus-user-session libpam-systemd \
+ && rm -rf /var/lib/apt/lists/*
+
+# Units that need a console or hardware a container does not have.
+RUN systemctl mask getty.target console-getty.service systemd-firstboot.service \
+      systemd-udevd.service systemd-udev-trigger.service systemd-modules-load.service
+
+# The test user: UID 1000 (model/debian-config.ts), no password, and lingering so its
+# user manager (user@1000.service) starts at boot. /home/goop/goop/ receives --copy files.
+RUN useradd --create-home --uid 1000 --shell /bin/bash goop \
+ && mkdir -p /var/lib/systemd/linger /home/goop/goop \
+ && touch /var/lib/systemd/linger/goop \
+ && chown goop:goop /home/goop/goop
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]
