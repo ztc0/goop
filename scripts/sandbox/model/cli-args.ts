@@ -3,19 +3,23 @@ import type { CliCommand, EngineName, SandboxOs, Target } from "../types/sandbox
 export const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> --os <os> [--engine <engine>]
 
 Commands:
-  install    Install Windows once into .local/windows/base/ (about 25 minutes)
-  run [--copy <repo path>]... [--fetch <guest path>]... -- <PowerShell command...>
-             Run a command in a throwaway VM over the base; the VM and its changes
-             are deleted when it ends
-  status     Show the Windows base and the running VMs
+  install    Install Windows once into .local/windows/base/ (about 25 minutes),
+             or build the Debian image (a few minutes; again to rebuild)
+  run [--copy <repo path>]... [--fetch <sandbox path>]... -- <command...>
+             Run a PowerShell command (windows) or a shell command (debian) in a
+             throwaway sandbox; it and its changes are deleted when it ends
+  status     Show the Windows base or the Debian image, and the running sandboxes
 
 Options:
-  --os <os>          windows (a Windows 11 VM) or debian (not implemented yet); required
+  --os <os>          windows (a Windows 11 VM) or debian (a Debian 13 container
+                     with systemd); required
   --engine <engine>  podman or docker; by default Podman if installed, else Docker
 `;
 
 /** An absolute drive path without spaces or quotes, safe for scp on both sides. */
 const GUEST_PATH = /^[A-Za-z]:[\\/][\w.\-\\/]*$/;
+/** An absolute POSIX path below / without spaces or quotes, for the Debian container. */
+const CONTAINER_PATH = /^\/[\w.\-/]+$/;
 
 const OSES: readonly string[] = ["windows", "debian"] satisfies SandboxOs[];
 const ENGINES: readonly string[] = ["podman", "docker"] satisfies EngineName[];
@@ -86,18 +90,25 @@ function parseRun(args: string[]): CliCommand {
       return usage(`Unknown option for run: ${option}`);
     }
     if (value === undefined || value === "--") return usage(`${option} needs a value.`);
-    if (option === "--fetch" && !GUEST_PATH.test(value)) {
-      return usage(`--fetch needs an absolute guest path like C:\\goop\\out.xml, got: ${value}`);
-    }
     (option === "--copy" ? copy : fetch).push(value);
     index += 2;
   }
   const { os, engine } = target;
   if (os === undefined) return missingOs("run");
+  // --os may come after --fetch, so the paths are checked once the target is known.
+  for (const path of fetch) {
+    if (os === "windows" && !GUEST_PATH.test(path)) {
+      return usage(`--fetch needs an absolute guest path like C:\\goop\\out.xml, got: ${path}`);
+    }
+    if (os === "debian" && !CONTAINER_PATH.test(path)) {
+      return usage(
+        `--fetch needs an absolute container path like /home/goop/goop/out.txt, got: ${path}`,
+      );
+    }
+  }
   const command = args.slice(args[index] === "--" ? index + 1 : index).join(" ");
-  // Only Windows runs commands so far; cli.ts stops --os debian before this matters (T4).
-  if (os === "windows" && command.trim() === "") {
-    return usage("run needs a PowerShell command after --.");
+  if (command.trim() === "") {
+    return usage(`run needs a ${os === "windows" ? "PowerShell" : "shell"} command after --.`);
   }
   return { kind: "run", os, engine, copy, fetch, command };
 }

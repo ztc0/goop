@@ -168,6 +168,36 @@ describe("parseCliArgs", () => {
     });
   });
 
+  test("run --os debian needs a shell command and takes absolute POSIX --fetch paths (S2)", () => {
+    const DEBIAN = ["--os", "debian"];
+    for (const args of [[], ["--"], ["--", "  "]]) {
+      expect(parseCliArgs(["run", ...DEBIAN, ...args])).toEqual({
+        kind: "usage",
+        error: "run needs a shell command after --.",
+      });
+    }
+    expect(
+      parseCliArgs(["run", "--fetch", "/home/goop/goop/out.txt", ...DEBIAN, "--", "make test"]),
+    ).toEqual({
+      kind: "run",
+      os: "debian",
+      copy: [],
+      fetch: ["/home/goop/goop/out.txt"],
+      command: "make test",
+    });
+    for (const bad of ["out.txt", "/", "/my files/out.txt", "/a';b", "C:\\goop\\out.xml"]) {
+      expect(parseCliArgs(["run", ...DEBIAN, "--fetch", bad, "--", "x"])).toEqual({
+        kind: "usage",
+        error: `--fetch needs an absolute container path like /home/goop/goop/out.txt, got: ${bad}`,
+      });
+    }
+    // The Windows check still applies when --os windows comes after --fetch.
+    expect(parseCliArgs(["run", "--fetch", "/tmp/x", ...OS, "--", "x"])).toEqual({
+      kind: "usage",
+      error: "--fetch needs an absolute guest path like C:\\goop\\out.xml, got: /tmp/x",
+    });
+  });
+
   test("--fetch only accepts an absolute guest path without spaces or quotes", () => {
     for (const bad of ["out.xml", "C:\\my files\\out.xml", "C:\\goop\\a';b", "\\\\server\\x"]) {
       expect(parseCliArgs(["run", ...OS, "--fetch", bad, "--", "x"])).toEqual({

@@ -19,9 +19,9 @@ All scripts run inside the repo-local environment (`scripts/dev-env/run.ts`).
 | `bun run build`           | Compile the single `goop` executable into `dist/`                                                     |
 | `bun run clean`           | Delete `.temp/` (never `.local/`)                                                                     |
 | `bun run clean:local`     | Delete `.local/` after an interactive confirmation                                                    |
-| `bun run sandbox:install` | Install a sandbox once (`-- --os windows`: Windows into `.local/windows/base/`, Podman, about 25 min) |
-| `bun run sandbox:run`     | Run a command in a throwaway sandbox (`-- --os windows <command>`, `--copy`, `--fetch`)               |
-| `bun run sandbox:status`  | Show the sandbox base and the running sandboxes (`-- --os windows`)                                   |
+| `bun run sandbox:install` | Install a sandbox once (`-- --os windows`: Windows, about 25 min; `--os debian`: a systemd container) |
+| `bun run sandbox:run`     | Run a command in a throwaway sandbox (`-- --os windows\|debian <command>`, `--copy`, `--fetch`)       |
+| `bun run sandbox:status`  | Show the Windows base or the Debian image, and the running sandboxes (`-- --os windows\|debian`)      |
 
 ## Golden rules
 
