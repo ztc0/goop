@@ -1,6 +1,6 @@
 # Spike: benchmark sweep on the user's PC (T13)
 
-Date: 2026-11-02. Task T13 in [`odd/tasks/goop.md`](../../odd/tasks/goop.md), spec S23. The sweep ran on the user's PC with the T12 llama-server build through [`scripts/spikes/benchmark/`](../../scripts/spikes/benchmark/). This note is the spike's proposal; the user decides the S23 settings in T18.
+Date: 2026-11-02. Task T13 in [`odd/tasks/goop.md`](../../odd/tasks/goop.md), spec S23. The sweep ran on the user's PC with the T12 llama-server build through a harness in `scripts/spikes/benchmark/`. This note is the spike's proposal; the user decides the S23 settings in T18.
 
 ## Question
 
@@ -68,6 +68,8 @@ flowchart LR
 ```
 
 ## How to run
+
+The harness was removed from the repository after the spike and can be read in git history at commit `03507e4`, path `scripts/spikes/benchmark/`, for example `git show 03507e4:scripts/spikes/benchmark/sweep.ts`. The commands below ran against it.
 
 The harness expects the T12 Linux build unpacked under `.local/build/llama-server/run-41379281254/linux/`.
 

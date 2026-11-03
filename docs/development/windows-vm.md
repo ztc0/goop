@@ -89,12 +89,11 @@ podman --root "$PWD/.local/containers/storage" --runroot "$PWD/.temp/containers/
 
 `scripts/` follows the same architecture as `src/`: one folder per feature, named after what it does.
 
-| Folder                   | What it is for                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------------ |
-| `scripts/dev-env/`       | `run.ts` (the repo-local environment for every package script) and `clean.ts`        |
-| `scripts/brand/`         | `logo-assets.ts`, which builds the logo files                                        |
-| `scripts/spikes/<name>/` | Throwaway experiments, such as `encrypted-sqlite/`                                   |
-| `scripts/windows-vm/`    | The Windows VM: `cli.ts` plus `types/`, `model/`, `services/`, `adapters/`, `tests/` |
-| `scripts/shared/`        | Code used by more than one script folder, such as `repo-root.ts`                     |
+| Folder                | What it is for                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| `scripts/dev-env/`    | `run.ts` (the repo-local environment for every package script) and `clean.ts`        |
+| `scripts/brand/`      | `logo-assets.ts`, which builds the logo files                                        |
+| `scripts/windows-vm/` | The Windows VM: `cli.ts` plus `types/`, `model/`, `services/`, `adapters/`, `tests/` |
+| `scripts/shared/`     | Code used by more than one script folder, such as `repo-root.ts`                     |
 
 Inside a feature folder, `types/` holds the interfaces, `model/` the pure logic, `services/` the steps in order, and `adapters/` the I/O (processes, files, clock). Tests use fake adapters, so they never start Podman or Windows. The rules are in [`rules/architecture.md`](rules/architecture.md).
