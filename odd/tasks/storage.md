@@ -1,0 +1,37 @@
+# storage: encrypted storage, keys and integrity (T16)
+
+T16 of [`goop.md`](goop.md): the layer that keeps goop's personal data encrypted at rest, the data key and its envelopes, and the integrity checks, following [ADR 0001](../../docs/adr/0001-encrypted-store-through-sqlite3mc-ffi.md) and [ADR 0002](../../docs/adr/0002-data-key-wrapping.md).
+Branch `feat/storage` from `dev`. Security code: test-first, native review on every high-risk unit, stacked pull requests of about 400 lines (`docs/development/rules/commits.md`). Mentor mode: each concept is explained to the user, and understood, before it is implemented (L1).
+
+## Specs
+
+- **S1.** One random 256-bit data key (DEK) encrypts the database and the files. It lives only in memory; on disk it exists only inside envelopes. Nothing written to disk can open the data on its own (L3).
+- **S2.** Every envelope is sealed with AES-256-GCM, so a changed byte, a wrong key or a wrong passphrase is refused with one clear error instead of giving a wrong DEK (L3). Envelopes carry a format version and their kind, so a later format can be read or refused clearly.
+- **S3.** The recovery envelope: the recovery key is 160 random bits, written as 32 Crockford base32 characters in 8 groups of 4. HKDF-SHA256 turns it into the AES-256-GCM key, with no slow derivation, because a random key of that size cannot be guessed (L3). The typed form is forgiving: lowercase, spaces, hyphens, and `o`/`i`/`l` for `0`/`1`/`1` are accepted. It is shown once at setup and never stored.
+- **S4.** The passphrase envelope, used instead of the OS envelope when the machine has no TPM2 or no systemd 256 or later: scrypt (`N=2^17`, `r=8`, `p=1`, about 128 MiB and 0.3-0.4 s) with a random salt, then AES-256-GCM (L3).
+- **S5.** The OS envelope on Linux: `systemd-creds --user` with host+tpm2, the DEK and the credential passed only through stdin and stdout, never argv or a file (ADR 0002).
+- **S6.** The OS envelope on Windows: DPAPI in user scope through `bun:ffi`, with `CRYPTPROTECT_UI_FORBIDDEN` and the entropy `goop-dek-v1`; the output buffer is copied, zeroed and freed (ADR 0002). A DPAPI failure (`0x5` or `0x8009000b`) is retried with backoff and never treated as a lost key.
+- **S7.** The encrypted store: features depend on an interface in `src/shared/types/`; one adapter implements it with sqlite3mc through `bun:ffi`. The key is set with `sqlite3_key` or `PRAGMA hexkey`, never as text in SQL, and verified with a read of `sqlite_master` (ADR 0001).
+- **S8.** Native libraries (sqlite3mc, sqlite-vec) are checked against sha256 values pinned at build time before every load; a mismatch stops goop with a clear error (ADR 0001).
+- **S9.** Key lifecycle: setup creates the DEK and its envelopes; start opens the OS or passphrase envelope; recovery opens the recovery envelope and writes a new OS envelope. goop never creates a new DEK over existing data.
+- **S10.** Out of scope here: the DLP filter (T24), the outbound allowlist, purge and retention (T29), and the setup screen W5 (T25).
+
+## Tasks
+
+| ID  | Specs | Task                                                                                                  | Route  | Commit |
+| --- | ----- | ----------------------------------------------------------------------------------------------------- | ------ | ------ |
+| T1  | S1-S4 | DEK, envelope format, recovery and passphrase envelopes: pure functions in `src/shared/`, unit tests  | inline | -      |
+| T2  | S5    | Linux OS envelope: `systemd-creds --user` adapter, fakes in tests, a real run with the user's consent | inline | -      |
+| T3  | S6    | Windows OS envelope: DPAPI adapter through `bun:ffi`, run in the Windows sandbox                      | inline | -      |
+| T4  | S7    | Encrypted-store interface and the sqlite3mc adapter: open with the DEK, verify the key, statements    | inline | -      |
+| T5  | S8    | Native libraries: build and pin in CI, embed, copy to the cache and verify sha256 before every load   | inline | -      |
+| T6  | S9    | Key service: setup, start, recovery; refuses to overwrite an existing DEK                             | inline | -      |
+
+Each task is explained to the user first (mentor mode), then implemented test-first. T1 to T6 each get a native review: they touch keys, stored data or the release build.
+
+## Log
+
+- **L1.** User (verbatim): `ok. vamos a delantar cul es el siguiente paso`, then, after the T16 outline: `vamos con eso pero usa la skill de mentor para que me explique antes de tu implentar`.
+- **L2.** Mentor session, concepts explained and answered by the user: why encrypt at rest (the user: keep the key "en el gestor del sistema"); envelope encryption (the OS wraps the DEK); the lost-machine case (the user: "yo" would be locked out too), hence the recovery key; why it is never stored (the user: "otras persoa puede usarla y abrila"). The user chose to start with the envelopes (part C) "por que es el simimineto que sotiene las demas".
+- **L3.** Concepts for T1 explained: scrypt is slow on purpose and its cost is a tradeoff with the user's own wait; a random recovery key needs no slow derivation; AES-GCM's tag refuses a damaged envelope instead of giving a wrong key. Values taken from the T11 spike (`docs/research/spike-key-wrapping.md`, result rows r and p). The user: `Dale` to writing this plan.
+- **L4.** Plan reviewed with the user. Two numbers given in chat were corrected from the T11 spike: scrypt uses about 128 MiB (not 64 MB), and the 160-bit recovery key is a 49-digit number (not 39). Why T6 comes last: it uses every other piece, so it is built and tested after them (bottom-up order).
