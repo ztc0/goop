@@ -1,6 +1,7 @@
-// Sandbox (S1, S3, S5): with --os windows, installs Windows once into .local/windows/base/
+// Sandbox (S1, S2, S3, S5): with --os windows, installs Windows once into .local/windows/base/
 // with dockur in Podman, then runs PowerShell commands in throwaway VMs over that base.
-// Podman storage and every file stay inside the repo. --os debian is not implemented yet.
+// With --os debian, builds a Debian image with systemd, then runs shell commands in
+// throwaway containers. Podman storage and every file stay inside the repo.
 // The engine is --engine, else Podman, else Docker (S3); Docker is not supported yet.
 // Usage: bun scripts/sandbox/cli.ts install | status | run [--copy p] [--fetch p] -- <command>
 //        with --os windows|debian [--engine podman|docker]
@@ -14,6 +15,7 @@ import { parseCliArgs, USAGE } from "./model/cli-args";
 import { chooseEngine } from "./model/engine-choice";
 import { sandboxPaths } from "./model/paths";
 import { passwordFromBytes, runId } from "./model/vm-config";
+import { installDebian, runInDebian, showDebianStatus } from "./services/debian";
 import { installWindows } from "./services/install";
 import { runInWindows } from "./services/run";
 import { showStatus } from "./services/status";
@@ -22,12 +24,6 @@ import type { SandboxDeps } from "./types/sandbox";
 const command = parseCliArgs(process.argv.slice(2));
 if (command.kind === "usage") {
   process.stderr.write(command.error === undefined ? USAGE : `${command.error}\n${USAGE}`);
-  process.exit(2);
-}
-if (command.os !== "windows") {
-  process.stderr.write(
-    `--os ${command.os} is not implemented yet; only --os windows works for now.\n`,
-  );
   process.exit(2);
 }
 const choice = chooseEngine(command.engine, installedEngines());
@@ -43,7 +39,7 @@ if (choice.engine === "docker") {
   process.exit(2);
 }
 
-// Ctrl+C aborts the wait or the guest command; the services still stop the VM and clean up.
+// Ctrl+C aborts the wait or the command; the services still stop the sandbox and clean up.
 const interrupt = new AbortController();
 process.on("SIGINT", () => interrupt.abort());
 process.on("SIGTERM", () => interrupt.abort());
@@ -60,20 +56,19 @@ const deps: SandboxDeps = {
   signal: interrupt.signal,
 };
 
+const windows = command.os === "windows";
 let exitCode: number;
 switch (command.kind) {
   case "install":
-    exitCode = await installWindows(deps);
+    exitCode = await (windows ? installWindows(deps) : installDebian(deps));
     break;
   case "status":
-    exitCode = await showStatus(deps);
+    exitCode = await (windows ? showStatus(deps) : showDebianStatus(deps));
     break;
-  case "run":
-    exitCode = await runInWindows(
-      deps,
-      command,
-      runId(new Date(), passwordFromBytes(cryptoRandom.bytes(2))),
-    );
+  case "run": {
+    const id = runId(new Date(), passwordFromBytes(cryptoRandom.bytes(2)));
+    exitCode = await (windows ? runInWindows(deps, command, id) : runInDebian(deps, command, id));
     break;
+  }
 }
 process.exit(exitCode);

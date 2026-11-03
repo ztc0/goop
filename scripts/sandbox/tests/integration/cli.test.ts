@@ -21,14 +21,16 @@ const FAKE_PUBLIC_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKeyForTests";
 const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> --os <os> [--engine <engine>]
 
 Commands:
-  install    Install Windows once into .local/windows/base/ (about 25 minutes)
-  run [--copy <repo path>]... [--fetch <guest path>]... -- <PowerShell command...>
-             Run a command in a throwaway VM over the base; the VM and its changes
-             are deleted when it ends
-  status     Show the Windows base and the running VMs
+  install    Install Windows once into .local/windows/base/ (about 25 minutes),
+             or build the Debian image (a few minutes; again to rebuild)
+  run [--copy <repo path>]... [--fetch <sandbox path>]... -- <command...>
+             Run a PowerShell command (windows) or a shell command (debian) in a
+             throwaway sandbox; it and its changes are deleted when it ends
+  status     Show the Windows base or the Debian image, and the running sandboxes
 
 Options:
-  --os <os>          windows (a Windows 11 VM) or debian (not implemented yet); required
+  --os <os>          windows (a Windows 11 VM) or debian (a Debian 13 container
+                     with systemd); required
   --engine <engine>  podman or docker; by default Podman if installed, else Docker
 `;
 
@@ -49,8 +51,12 @@ done
 case " $* " in
   *" --entrypoint qemu-img "*) printf 'overlay' > "$storage/data.qcow2" ;;
   *" run -d --rm "*) ls "$storage" >> "$FAKE_LOG.storage" ;;
-  *" ps "*) if [ -z "$FAKE_PS_EMPTY" ]; then printf 'goop-windows-run-test\\tUp 2 minutes\\n'; fi ;;
+  *" ps "*) if [ -z "$FAKE_PS_EMPTY" ]; then printf '%s\\tUp 2 minutes\\n' "\${FAKE_PS_NAME:-goop-windows-run-test}"; fi ;;
   *" logs "*) printf 'fake container log\\n' ;;
+  *" build "*) printf 'STEP 1/4: FROM debian\\n'; exit "\${FAKE_BUILD_EXIT:-0}" ;;
+  *" image inspect "*) if [ -n "$FAKE_NO_IMAGE" ]; then printf 'Error: no such image\\n' >&2; exit 125; fi; printf '123456789\\n' ;;
+  *" is-system-running "*) printf 'running\\n' ;;
+  *" bash -lc "*) printf 'container output\\n'; exit "\${FAKE_EXEC_EXIT:-0}" ;;
 esac
 exit 0
 `,
@@ -296,20 +302,13 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
     expect(calls()).toEqual([]);
   });
 
-  test("--os debian is not implemented yet: it exits 2 and touches nothing (S1)", () => {
-    // `run` without a command too: "not implemented" wins over the Windows-only PowerShell hint.
-    for (const args of [["install"], ["status"], ["run", "--", "uname"], ["run"]]) {
-      const [command, ...rest] = args;
-      const result = cli([command ?? "", "--os", "debian", ...rest]);
+  test("run --os debian without a command asks for a shell command (S2)", () => {
+    const result = cli(["run", "--os", "debian"]);
 
-      expect(result.exitCode).toBe(2);
-      expect(result.stdout).toBe("");
-      expect(result.stderr).toBe(
-        "--os debian is not implemented yet; only --os windows works for now.\n",
-      );
-    }
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(`run needs a shell command after --.\n${USAGE}`);
     expect(calls()).toEqual([]);
-    expect(readdirSync(root)).toEqual([]);
   });
 });
 
@@ -649,5 +648,181 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe(`Unknown --engine: lxc (expected podman or docker).\n${USAGE}`);
     expect(calls()).toEqual([]);
+  });
+});
+
+const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:1";
+const USER_EXEC = [
+  "exec",
+  "--user",
+  "goop",
+  "--workdir",
+  "/home/goop/goop",
+  "--env",
+  "XDG_RUNTIME_DIR=/run/user/1000",
+  "--env",
+  "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
+];
+
+/** The run's container name, from the `podman run` call, and its run id. */
+function debianRun(podman: string[][]): { name: string; id: string } {
+  const name = podman.find((call) => call[0] === "run")?.[3] ?? "";
+  expect(name).toMatch(/^goop-debian-run-\d{8}-\d{6}-[0-9a-f]{4}$/);
+  return { name, id: name.replace("goop-debian-run-", "") };
+}
+
+describeOnLinuxHost("scripts/sandbox/cli.ts --os debian (S2)", () => {
+  test("install builds the image from the Containerfile, again on every install", () => {
+    const containerfile = join(root, "scripts", "sandbox", "debian", "Containerfile");
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const result = cli(["install", "--os", "debian"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(result.stdout).toBe(
+        [
+          `Building ${DEBIAN_IMAGE} from scripts/sandbox/debian/Containerfile...`,
+          "STEP 1/4: FROM debian",
+          `Debian image ${DEBIAN_IMAGE} is ready (0m 0s).`,
+          "",
+        ].join("\n"),
+      );
+      const build = [
+        "build",
+        "--tag",
+        DEBIAN_IMAGE,
+        "--file",
+        containerfile,
+        join(root, "scripts", "sandbox", "debian"),
+      ];
+      expect(podmanCalls()).toEqual(Array(attempt).fill(build));
+    }
+  });
+
+  test("install exits 1 when the build fails", () => {
+    const result = cli(["install", "--os", "debian"], { FAKE_BUILD_EXIT: "1" });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe(
+      `Building ${DEBIAN_IMAGE} from scripts/sandbox/debian/Containerfile...\nSTEP 1/4: FROM debian\n`,
+    );
+    expect(result.stderr).toBe("Could not build the Debian image (podman build exited 1).\n");
+  });
+
+  test("run without the image exits 1 with the install hint and starts nothing", () => {
+    const result = cli(["run", "--os", "debian", "--", "uname"], { FAKE_NO_IMAGE: "1" });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(
+      "No Debian image: run `bun run sandbox:install -- --os debian` first.\n",
+    );
+    expect(podmanCalls()).toEqual([["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE]]);
+  });
+
+  test("run waits for systemd, copies, runs as goop, fetches and removes the container", () => {
+    mkdirSync(join(root, "src"));
+    writeFileSync(join(root, "src", "a.ts"), "export {};\n");
+
+    const result = cli([
+      "run",
+      "--os",
+      "debian",
+      "--copy",
+      "src",
+      "--fetch",
+      "/home/goop/goop/out.txt",
+      "--",
+      "make",
+      "test",
+    ]);
+
+    const podman = podmanCalls();
+    const { name, id } = debianRun(podman);
+    const results = join(root, ".temp", "debian", "results", id);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      [
+        `Starting ${name}...`,
+        "Waiting for systemd...",
+        "systemd is running.",
+        "Copying src to /home/goop/goop/...",
+        "container output",
+        `Fetched /home/goop/goop/out.txt into .temp/debian/results/${id}/`,
+        `Removing ${name}...`,
+        "",
+      ].join("\n"),
+    );
+    expect(podman).toEqual([
+      ["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE],
+      ["run", "-d", "--name", name, "--systemd=always", DEBIAN_IMAGE],
+      ["exec", name, "timeout", "30", "systemctl", "is-system-running", "--wait"],
+      ["cp", join(root, "src"), `${name}:/home/goop/goop/`],
+      ["exec", name, "chown", "-R", "goop:goop", "/home/goop/goop"],
+      [...USER_EXEC, name, "bash", "-lc", "make test"],
+      ["cp", `${name}:/home/goop/goop/out.txt`, `${results}/`],
+      ["rm", "--force", "--time", "10", name],
+    ]);
+    expect(existsSync(results)).toBe(true);
+  });
+
+  test("run returns the command's exit code and still removes the container when it fails", () => {
+    const result = cli(["run", "--os", "debian", "--", "exit 3"], { FAKE_EXEC_EXIT: "3" });
+
+    const podman = podmanCalls();
+    const { name } = debianRun(podman);
+    expect(result.exitCode).toBe(3);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      [
+        `Starting ${name}...`,
+        "Waiting for systemd...",
+        "systemd is running.",
+        "container output",
+        `Removing ${name}...`,
+        "",
+      ].join("\n"),
+    );
+    expect(podman.slice(-2)).toEqual([
+      [...USER_EXEC, name, "bash", "-lc", "exit 3"],
+      ["rm", "--force", "--time", "10", name],
+    ]);
+  });
+
+  test("run refuses to copy a path outside the repo before starting anything", () => {
+    const result = cli(["run", "--os", "debian", "--copy", "../outside", "--", "uname"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(
+      "Cannot copy ../outside: only existing paths inside the repo can be uploaded.\n",
+    );
+    expect(calls()).toEqual([]);
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  test("status without the image says so and lists no containers", () => {
+    const result = cli(["status", "--os", "debian"], { FAKE_NO_IMAGE: "1", FAKE_PS_EMPTY: "1" });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      "Debian image: none (run `bun run sandbox:install -- --os debian`)\nRunning containers: none\n",
+    );
+    expect(podmanCalls()).toEqual([
+      ["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE],
+      ["ps", "--filter", "name=goop-debian", "--format", "{{.Names}}\t{{.Status}}"],
+    ]);
+  });
+
+  test("status with the image prints its size and the running containers", () => {
+    const result = cli(["status", "--os", "debian"], { FAKE_PS_NAME: "goop-debian-run-test" });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      `Debian image: ${DEBIAN_IMAGE} (117.7 MiB)\nRunning containers:\n  goop-debian-run-test\tUp 2 minutes\n`,
+    );
   });
 });

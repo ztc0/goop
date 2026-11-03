@@ -41,6 +41,7 @@ export async function reportNotReady(
   readiness: Readiness,
   policy: ReadinessPolicy,
   container: string,
+  machine = "Windows",
 ): Promise<number> {
   const { output, engine } = deps;
   if (readiness === "interrupted") {
@@ -48,7 +49,7 @@ export async function reportNotReady(
     return INTERRUPTED_EXIT_CODE;
   }
   output.error(
-    `Windows was not ready after ${formatElapsed(policy.timeoutMs)}. Last container logs:`,
+    `${machine} was not ready after ${formatElapsed(policy.timeoutMs)}. Last container logs:`,
   );
   const logs = await engine.logs(container);
   for (const line of `${logs.stdout}${logs.stderr}`.trimEnd().split("\n")) {
