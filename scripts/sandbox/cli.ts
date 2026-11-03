@@ -5,6 +5,7 @@
 // The engine is --engine, else Podman, else Docker (S3); Docker is not supported yet.
 // Usage: bun scripts/sandbox/cli.ts install|status <windows|debian> [--engine podman|docker]
 //        bun scripts/sandbox/cli.ts run <windows|debian> [--copy p] [--fetch p] [--] <command>
+//        bun scripts/sandbox/cli.ts run debian [--copy p] [--fetch p]  (an interactive shell)
 import { repoRoot } from "../shared/repo-root";
 import { nodeFileStore } from "./adapters/file-store";
 import { createGuestShell } from "./adapters/guest-shell";
@@ -54,6 +55,7 @@ const deps: SandboxDeps = {
   output: terminalOutput,
   random: cryptoRandom,
   signal: interrupt.signal,
+  terminal: process.stdin.isTTY === true && process.stdout.isTTY === true,
 };
 
 const windows = command.os === "windows";

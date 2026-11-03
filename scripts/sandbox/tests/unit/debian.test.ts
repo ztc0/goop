@@ -6,6 +6,7 @@ import {
   isSystemdUp,
   SYSTEMD_READY_CHECK,
   userCommand,
+  userShell,
 } from "../../model/debian-config";
 import { sandboxPaths } from "../../model/paths";
 import {
@@ -16,6 +17,7 @@ import {
   forceRemoveArgs,
   imageSizeArgs,
   listRunningArgs,
+  manualRemoveCommand,
   systemdContainerArgs,
 } from "../../model/podman-args";
 import { describeOnLinuxHost } from "../linux-host";
@@ -98,6 +100,9 @@ describeOnLinuxHost("Debian sandbox (S2)", () => {
       "/repo/.temp/debian/results/x/",
     ]);
     expect(forceRemoveArgs("c")).toEqual(["rm", "--force", "--time", "10", "c"]);
+    expect(manualRemoveCommand(paths, "c")).toBe(
+      "bun scripts/dev-env/run.ts podman --root .local/containers/storage --runroot .temp/containers/run rm -f c",
+    );
     expect(listRunningArgs("goop-debian")).toEqual([
       "ps",
       "--filter",
@@ -118,6 +123,33 @@ describeOnLinuxHost("Debian sandbox (S2)", () => {
           DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
         },
         stream: true,
+      },
+    });
+  });
+
+  test("an interactive exec attaches a terminal with -it", () => {
+    expect(execArgs("c", ["bash", "-l"], { user: "goop", interactive: true })).toEqual([
+      "exec",
+      "-it",
+      "--user",
+      "goop",
+      "c",
+      "bash",
+      "-l",
+    ]);
+  });
+
+  test("the shell is a bash login shell as goop, with the same folder and runtime dir as a command", () => {
+    expect(userShell()).toEqual({
+      command: ["bash", "-l"],
+      options: {
+        user: "goop",
+        workdir: "/home/goop/goop",
+        env: {
+          XDG_RUNTIME_DIR: "/run/user/1000",
+          DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
+        },
+        interactive: true,
       },
     });
   });

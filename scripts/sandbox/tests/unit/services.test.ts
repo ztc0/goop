@@ -5,6 +5,7 @@ import { nodeFileStore } from "../../adapters/file-store";
 import { createGuestShell } from "../../adapters/guest-shell";
 import { createPodmanEngine } from "../../adapters/podman";
 import { sandboxPaths } from "../../model/paths";
+import { runInDebian } from "../../services/debian";
 import { installWindows } from "../../services/install";
 import { runInWindows } from "../../services/run";
 import type {
@@ -57,7 +58,12 @@ afterEach(() => {
   rmSync(fixture, { recursive: true, force: true });
 });
 
-function deps(runner: FakeRunner, clock: Clock, signal = new AbortController().signal) {
+function deps(
+  runner: FakeRunner,
+  clock: Clock,
+  signal = new AbortController().signal,
+  terminal = false,
+) {
   const paths = sandboxPaths(fixture);
   const result: SandboxDeps = {
     paths,
@@ -71,6 +77,7 @@ function deps(runner: FakeRunner, clock: Clock, signal = new AbortController().s
     },
     random: { bytes: (count) => new Uint8Array(count).fill(7) },
     signal,
+    terminal,
   };
   return result;
 }
@@ -158,5 +165,83 @@ describe("runInWindows", () => {
     expect(runner.podman().at(-1)).toEqual(["stop", "-t", "120", "goop-windows-run-r2"]);
     expect(lines).toContain("err: Interrupted.");
     expect(existsSync(join(fixture, ".temp", "windows", "runs", "r2"))).toBe(false);
+  });
+});
+
+describe("runInDebian without a command (S2)", () => {
+  const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:1";
+  const NAME = "goop-debian-run-r3";
+
+  test("with a terminal it opens a login shell as goop, fetches, removes the container and returns the shell's exit code", async () => {
+    mkdirSync(join(fixture, "src"));
+    writeFileSync(join(fixture, "src", "a.ts"), "export {};\n");
+    const runner = new FakeRunner((request) => {
+      if (request.command.includes("is-system-running")) return { stdout: "running\n" };
+      if (request.command.includes("-it")) return { exitCode: 7 };
+      return {};
+    });
+
+    const code = await runInDebian(
+      deps(runner, new FakeClock(), undefined, true),
+      { copy: ["src"], fetch: ["/home/goop/goop/out.txt"], command: "" },
+      "r3",
+    );
+
+    const results = join(fixture, ".temp", "debian", "results", "r3");
+    expect(code).toBe(7);
+    expect(runner.podman()).toEqual([
+      ["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE],
+      ["run", "-d", "--name", NAME, "--systemd=always", DEBIAN_IMAGE],
+      ["exec", NAME, "timeout", "30", "systemctl", "is-system-running", "--wait"],
+      ["cp", join(fixture, "src"), `${NAME}:/home/goop/goop/`],
+      ["exec", NAME, "chown", "-R", "goop:goop", "/home/goop/goop"],
+      [
+        "exec",
+        "-it",
+        "--user",
+        "goop",
+        "--workdir",
+        "/home/goop/goop",
+        "--env",
+        "XDG_RUNTIME_DIR=/run/user/1000",
+        "--env",
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
+        NAME,
+        "bash",
+        "-l",
+      ],
+      ["cp", `${NAME}:/home/goop/goop/out.txt`, `${results}/`],
+      ["rm", "--force", "--time", "10", NAME],
+    ]);
+    // The shell gets the user's terminal: stdin, stdout and stderr are attached, not captured.
+    const shell = runner.calls.find((call) => call.command.includes("-it"));
+    expect(shell?.interactive).toBe(true);
+    expect(shell?.stdin).toBeUndefined();
+    expect(lines).toEqual([
+      `out: Starting ${NAME}...`,
+      "out: Waiting for systemd...",
+      "out: systemd is running.",
+      "out: Copying src to /home/goop/goop/...",
+      "out: Opening a shell as goop in /home/goop/goop; type exit to leave and delete the container.",
+      "out: Fetched /home/goop/goop/out.txt into .temp/debian/results/r3/",
+      `out: Removing ${NAME}...`,
+    ]);
+  });
+
+  test("without a terminal it exits 2 with a hint before starting anything", async () => {
+    const runner = new FakeRunner(() => ({}));
+
+    const code = await runInDebian(
+      deps(runner, new FakeClock(), undefined, false),
+      { copy: [], fetch: [], command: "" },
+      "r4",
+    );
+
+    expect(code).toBe(2);
+    expect(runner.calls).toEqual([]);
+    expect(lines).toEqual([
+      "err: run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox:run debian uname -a",
+    ]);
+    expect(readdirSync(fixture)).toEqual([]);
   });
 });

@@ -202,14 +202,30 @@ describe("parseCliArgs", () => {
     });
   });
 
-  test("run debian needs a shell command and takes absolute POSIX --fetch paths (S2)", () => {
+  test("run debian without a command asks for a shell, with --copy and --fetch kept (S2)", () => {
     const DEBIAN = ["debian"];
     for (const args of [[], ["--"], ["--", "  "]]) {
       expect(parseCliArgs(["run", ...DEBIAN, ...args])).toEqual({
-        kind: "usage",
-        error: "run needs a shell command.",
+        kind: "run",
+        os: "debian",
+        copy: [],
+        fetch: [],
+        command: "",
       });
     }
+    expect(
+      parseCliArgs(["run", ...DEBIAN, "--copy", "src", "--fetch", "/home/goop/goop/out.txt"]),
+    ).toEqual({
+      kind: "run",
+      os: "debian",
+      copy: ["src"],
+      fetch: ["/home/goop/goop/out.txt"],
+      command: "",
+    });
+  });
+
+  test("run debian takes absolute POSIX --fetch paths (S2)", () => {
+    const DEBIAN = ["debian"];
     expect(
       parseCliArgs(["run", ...DEBIAN, "--fetch", "/home/goop/goop/out.txt", "--", "make test"]),
     ).toEqual({

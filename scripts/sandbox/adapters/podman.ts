@@ -20,11 +20,12 @@ import type { ContainerEngine, ProcessRunner, SandboxPaths } from "../types/sand
 
 /** Podman against the repo-local storage: every call carries the global flags (S3). */
 export function createPodmanEngine(runner: ProcessRunner, paths: SandboxPaths): ContainerEngine {
-  const podman = (args: string[], password?: string, stream?: boolean) =>
+  const podman = (args: string[], password?: string, stream?: boolean, interactive?: boolean) =>
     runner.run({
       command: ["podman", ...podmanGlobalArgs(paths), ...args],
       env: podmanEnvironment(paths, password),
       ...(stream ? { stream } : {}),
+      ...(interactive ? { interactive } : {}),
     });
   return {
     startInstall: (password) => podman(installContainerArgs(paths), password),
@@ -38,7 +39,7 @@ export function createPodmanEngine(runner: ProcessRunner, paths: SandboxPaths): 
     imageSize: (tag) => podman(imageSizeArgs(tag)),
     startSystemd: (name, image) => podman(systemdContainerArgs(name, image)),
     exec: (name, command, options) =>
-      podman(execArgs(name, command, options), undefined, options?.stream),
+      podman(execArgs(name, command, options), undefined, options?.stream, options?.interactive),
     copyIn: (name, localPath, directory) => podman(copyInArgs(name, localPath, directory)),
     copyOut: (name, containerPath, directory) =>
       podman(copyOutArgs(name, containerPath, directory)),

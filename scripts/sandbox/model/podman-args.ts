@@ -1,4 +1,4 @@
-import { dirname } from "node:path";
+import { dirname, relative } from "node:path";
 import type { ExecOptions, SandboxPaths } from "../types/sandbox";
 import { DEBIAN_STOP_SECONDS } from "./debian-config";
 import { runDirectory } from "./paths";
@@ -152,9 +152,10 @@ export function systemdContainerArgs(name: string, image: string): string[] {
 }
 
 export function execArgs(name: string, command: string[], options: ExecOptions = {}): string[] {
-  const { user, workdir, env = {} } = options;
+  const { user, workdir, env = {}, interactive } = options;
   return [
     "exec",
+    ...(interactive ? ["-it"] : []),
     ...(user === undefined ? [] : ["--user", user]),
     ...(workdir === undefined ? [] : ["--workdir", workdir]),
     ...Object.entries(env).flatMap(([key, value]) => ["--env", `${key}=${value}`]),
@@ -173,4 +174,17 @@ export function copyOutArgs(name: string, containerPath: string, localDirectory:
 
 export function forceRemoveArgs(name: string): string[] {
   return ["rm", "--force", "--time", String(DEBIAN_STOP_SECONDS), name];
+}
+
+/** The command a user runs from the repo root to remove a container the sandbox could not. */
+export function manualRemoveCommand(paths: SandboxPaths, name: string): string {
+  return [
+    "bun scripts/dev-env/run.ts podman",
+    "--root",
+    relative(paths.root, paths.containerStorage),
+    "--runroot",
+    relative(paths.root, paths.containerRunRoot),
+    "rm -f",
+    name,
+  ].join(" ");
 }

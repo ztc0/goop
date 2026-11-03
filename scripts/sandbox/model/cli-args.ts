@@ -5,9 +5,10 @@ export const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> <system> [opti
 Commands:
   install <system>  Install Windows once into .local/windows/base/ (about 25 min),
                     or build the Debian image (a few minutes; again to rebuild)
-  run <system> [--copy <repo path>]... [--fetch <sandbox path>]... [--] <command...>
+  run <system> [--copy <repo path>]... [--fetch <sandbox path>]... [--] [<command...>]
                     Run a PowerShell command (windows) or a shell command (debian)
-                    in a throwaway sandbox; it and its changes are deleted at the end
+                    in a throwaway sandbox; it and its changes are deleted at the end;
+                    debian without a command opens a shell in it until you type exit
   status <system>   Show the Windows base or the Debian image, and running sandboxes
 
 Systems:
@@ -19,6 +20,7 @@ Options:
 
 Examples:
   bun run sandbox:install debian
+  bun run sandbox:run debian           # opens a shell; exit deletes the container
   bun run sandbox:run debian uname -a
   bun run sandbox:run windows --copy dist 'Get-ChildItem C:\\goop'
   bun run sandbox:status windows
@@ -119,12 +121,14 @@ function parseRun(args: string[]): CliCommand {
   }
   const command = args.slice(args[index] === "--" ? index + 1 : index).join(" ");
   if (command.trim() === "") {
-    return usage(`run needs a ${os === "windows" ? "PowerShell" : "shell"} command.`);
+    // Debian without a command opens an interactive shell (an empty command).
+    if (os === "debian") return { kind: "run", os, engine, copy, fetch, command: "" };
+    return usage("run needs a PowerShell command.");
   }
   return { kind: "run", os, engine, copy, fetch, command };
 }
 
-/** The command line: `install <system>`, `status <system>` or `run <system> [--copy p]... [--fetch p]... [--] command`, each with an optional `--engine`. */
+/** The command line: `install <system>`, `status <system>` or `run <system> [--copy p]... [--fetch p]... [--] [command]`, each with an optional `--engine`. */
 export function parseCliArgs(argv: string[]): CliCommand {
   const [command, ...rest] = argv;
   switch (command) {
