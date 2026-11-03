@@ -1,6 +1,6 @@
 # Spike: LangGraph on Bun with an encrypted checkpointer and tool calling (T14)
 
-Date: 2026-11-02. Task T14 in [`odd/tasks/goop.md`](../../odd/tasks/goop.md), specs S20 and S24. The spike code lives in [`scripts/spikes/langgraph/`](../../scripts/spikes/langgraph/): `checkpoint/` for the saver and `tools/` for tool calling. This note is the spike's proposal; the product code is written in T16, T18, T21 and T24.
+Date: 2026-11-02. Task T14 in [`odd/tasks/goop.md`](../../odd/tasks/goop.md), specs S20 and S24. The spike code was in `scripts/spikes/langgraph/`: `checkpoint/` for the saver and `tools/` for tool calling. This note is the spike's proposal; the product code is written in T16, T18, T21 and T24.
 
 ## Question
 
@@ -122,6 +122,8 @@ flowchart LR
 No server errors in 60 runs.
 
 ## How to run
+
+The spike code was removed from the repository after the spike and can be read in git history at commit `03507e4`, path `scripts/spikes/langgraph/`, for example `git show 03507e4:scripts/spikes/langgraph/checkpoint/saver.ts`. The commands below ran against it.
 
 Both checks expect the T10 `libsqlite3mc.so` under `.local/build/sqlite/`; the tool check also expects the T12 Linux build and the T13 models under `.local/`.
 

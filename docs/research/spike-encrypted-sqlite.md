@@ -44,7 +44,7 @@ One trap was found: `vec0.so` must never be loaded into both SQLite copies in th
 
 ## Spike code
 
-All of it lives in [`scripts/spikes/encrypted-sqlite/`](../../scripts/spikes/encrypted-sqlite/). It is spike code, not product code.
+It was spike code, not product code. It was removed from the repository after the spike and can be read in git history at commit `03507e4`, path `scripts/spikes/encrypted-sqlite/`, for example `git show 03507e4:scripts/spikes/encrypted-sqlite/sqlite3mc.ts`. The commands below ran against that code.
 
 | File                 | Role                                                                                                                                                                                                                               |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -30,6 +30,15 @@ When a change touches existing shared code (options, parsers, helpers), add one 
 | SQLite and sqlite-vec             | A real temporary database                                            |
 | TUI                               | The OpenTUI test renderer                                            |
 
+## Spikes
+
+A spike answers one technical question in a timebox, with the least code that answers it. The workflow follows the `spikes` skill.
+
+- The code lives only in `.temp/spikes/<name>/`. It is never committed or pushed, has no tests and no review, and is deleted when the spike ends.
+- The deliverable is `docs/research/spike-<name>.md`, plus an ADR when it decides something and an entry in the plan Log.
+- The code is gone, so the report holds the evidence: versions, pinned hashes, exact commands and verbatim outputs.
+- Product code in `src/` is rewritten test-first. It is never copied from a spike.
+
 ## Quality evaluation
 
 `eval/` measures whether goop chooses well (verdict accuracy, ranking quality) with real models and synthetic profiles. It is slow and run by hand when a prompt, model or retrieval setting changes. It never uses a real CV.

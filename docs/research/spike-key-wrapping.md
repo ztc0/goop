@@ -38,7 +38,7 @@ Two costs were found. On Linux, the first use creates a system file, `/var/lib/s
 
 ## Spike code
 
-All of it lives in [`scripts/spikes/key-wrapping/`](../../scripts/spikes/key-wrapping/). It is spike code, not product code.
+It was spike code, not product code. It was removed from the repository after the spike and can be read in git history at commit `03507e4`, path `scripts/spikes/key-wrapping/`, for example `git show 03507e4:scripts/spikes/key-wrapping/dpapi.ts`. The commands below ran against that code.
 
 | File                 | Role                                                                                                  |
 | -------------------- | ----------------------------------------------------------------------------------------------------- |
