@@ -95,7 +95,10 @@ function parseRun(args: string[]): CliCommand {
   const { os, engine } = target;
   if (os === undefined) return missingOs("run");
   const command = args.slice(args[index] === "--" ? index + 1 : index).join(" ");
-  if (command.trim() === "") return usage("run needs a PowerShell command after --.");
+  // Only Windows runs commands so far; cli.ts stops --os debian before this matters (T4).
+  if (os === "windows" && command.trim() === "") {
+    return usage("run needs a PowerShell command after --.");
+  }
   return { kind: "run", os, engine, copy, fetch, command };
 }
 

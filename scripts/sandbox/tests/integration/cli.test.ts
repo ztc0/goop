@@ -297,7 +297,8 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
   });
 
   test("--os debian is not implemented yet: it exits 2 and touches nothing (S1)", () => {
-    for (const args of [["install"], ["status"], ["run", "--", "uname"]]) {
+    // `run` without a command too: "not implemented" wins over the Windows-only PowerShell hint.
+    for (const args of [["install"], ["status"], ["run", "--", "uname"], ["run"]]) {
       const [command, ...rest] = args;
       const result = cli([command ?? "", "--os", "debian", ...rest]);
 
