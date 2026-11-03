@@ -41,5 +41,6 @@ export function resultsDirectory(paths: SandboxPaths, runId: string): string {
 
 /** A folder as shown to the user: relative to the repo root, with a trailing slash. */
 export function displayPath(paths: SandboxPaths, directory: string): string {
-  return `${relative(paths.root, directory)}/`;
+  // Messages use forward slashes on every system, so they read the same on Windows.
+  return `${relative(paths.root, directory).replaceAll("\\", "/")}/`;
 }
