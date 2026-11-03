@@ -49,4 +49,15 @@ describe("sealing with fresh randomness", () => {
     expect(envelope).toHaveLength(78);
     expect(await openPassphraseEnvelope(envelope, "tortilla de patatas")).toEqual(dek);
   });
+
+  test("a passphrase typed in another Unicode form opens the same envelope", async () => {
+    const dek = newDataKey();
+    // "é" as one character (NFC) and as "e" plus a combining accent (NFD).
+    const composed = "caf\u00e9 con leche";
+    const decomposed = "cafe\u0301 con leche";
+    expect(composed).not.toBe(decomposed);
+
+    const envelope = await sealWithPassphrase(dek, composed);
+    expect(await openPassphraseEnvelope(envelope, decomposed)).toEqual(dek);
+  });
 });
