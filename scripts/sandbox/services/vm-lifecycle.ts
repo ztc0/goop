@@ -1,6 +1,6 @@
 import { formatElapsed, readinessDecision } from "../model/readiness";
 import { passwordFromBytes } from "../model/vm-config";
-import type { ReadinessPolicy, WindowsVmDeps } from "../types/windows-vm";
+import type { ReadinessPolicy, SandboxDeps } from "../types/sandbox";
 
 export type Readiness = "ready" | "timeout" | "interrupted";
 
@@ -8,7 +8,7 @@ export type Readiness = "ready" | "timeout" | "interrupted";
 export const INTERRUPTED_EXIT_CODE = 130;
 
 /** Podman needs its repo-local graph root, runroot and tmpdir before any call (S3). */
-export function prepareContainerStorage(deps: WindowsVmDeps): void {
+export function prepareContainerStorage(deps: SandboxDeps): void {
   const { paths, files } = deps;
   for (const directory of [paths.containerStorage, paths.containerRunRoot, paths.containerTmp]) {
     files.makeDirectory(directory);
@@ -17,7 +17,7 @@ export function prepareContainerStorage(deps: WindowsVmDeps): void {
 
 /** Polls the probe until it passes, the policy's deadline passes or Ctrl+C. */
 export async function waitUntilReady(
-  deps: WindowsVmDeps,
+  deps: SandboxDeps,
   policy: ReadinessPolicy,
   probe: () => Promise<boolean>,
   onWaiting: (elapsedMs: number) => void,
@@ -37,7 +37,7 @@ export async function waitUntilReady(
 
 /** Reports a readiness failure, with the tail of the container logs on timeout. */
 export async function reportNotReady(
-  deps: WindowsVmDeps,
+  deps: SandboxDeps,
   readiness: Readiness,
   policy: ReadinessPolicy,
   container: string,
@@ -58,7 +58,7 @@ export async function reportNotReady(
 }
 
 /** The guest password, generated once and kept in .local/ with mode 0600. */
-export function guestPassword(deps: WindowsVmDeps, create: boolean): string {
+export function guestPassword(deps: SandboxDeps, create: boolean): string {
   const { paths, files } = deps;
   if (files.exists(paths.password)) return files.readText(paths.password).trim();
   if (!create) return "";

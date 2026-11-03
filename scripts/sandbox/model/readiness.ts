@@ -1,4 +1,4 @@
-import type { ReadinessPolicy } from "../types/windows-vm";
+import type { ReadinessPolicy } from "../types/sandbox";
 
 /** The first install downloads and installs Windows: about 25 min, so allow 60. */
 export const INSTALL_READINESS: ReadinessPolicy = { intervalMs: 10_000, timeoutMs: 3_600_000 };

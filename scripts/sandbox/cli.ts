@@ -1,7 +1,8 @@
-// Windows test VM (S1, S3, S5): installs Windows once into .local/windows/base/ with dockur
-// in Podman, then runs PowerShell commands in throwaway VMs over that base. Podman storage
-// and every file stay inside the repo.
-// Usage: bun scripts/windows-vm/cli.ts install | status | run [--copy p] [--fetch p] -- <command>
+// Sandbox (S1, S3, S5): with --os windows, installs Windows once into .local/windows/base/
+// with dockur in Podman, then runs PowerShell commands in throwaway VMs over that base.
+// Podman storage and every file stay inside the repo. --os debian is not implemented yet.
+// Usage: bun scripts/sandbox/cli.ts install | status | run [--copy p] [--fetch p] -- <command>
+//        with --os windows|debian
 import { repoRoot } from "../shared/repo-root";
 import { nodeFileStore } from "./adapters/file-store";
 import { createGuestShell } from "./adapters/guest-shell";
@@ -9,16 +10,22 @@ import { createPodman } from "./adapters/podman";
 import { bunProcessRunner } from "./adapters/process-runner";
 import { cryptoRandom, systemClock, terminalOutput } from "./adapters/system";
 import { parseCliArgs, USAGE } from "./model/cli-args";
-import { windowsVmPaths } from "./model/paths";
+import { sandboxPaths } from "./model/paths";
 import { passwordFromBytes, runId } from "./model/vm-config";
 import { installWindows } from "./services/install";
 import { runInWindows } from "./services/run";
 import { showStatus } from "./services/status";
-import type { WindowsVmDeps } from "./types/windows-vm";
+import type { SandboxDeps } from "./types/sandbox";
 
 const command = parseCliArgs(process.argv.slice(2));
 if (command.kind === "usage") {
   process.stderr.write(command.error === undefined ? USAGE : `${command.error}\n${USAGE}`);
+  process.exit(2);
+}
+if (command.os !== "windows") {
+  process.stderr.write(
+    `--os ${command.os} is not implemented yet; only --os windows works for now.\n`,
+  );
   process.exit(2);
 }
 
@@ -27,8 +34,8 @@ const interrupt = new AbortController();
 process.on("SIGINT", () => interrupt.abort());
 process.on("SIGTERM", () => interrupt.abort());
 
-const paths = windowsVmPaths(repoRoot());
-const deps: WindowsVmDeps = {
+const paths = sandboxPaths(repoRoot());
+const deps: SandboxDeps = {
   paths,
   podman: createPodman(bunProcessRunner, paths),
   guest: createGuestShell(bunProcessRunner, paths),

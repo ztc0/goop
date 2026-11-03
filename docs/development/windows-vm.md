@@ -1,6 +1,6 @@
 # Windows test VM
 
-goop ships for Linux and Windows. Some checks only mean something on real Windows, such as native DLLs, file paths and the compiled `.exe`. `scripts/windows-vm/` runs them on a Windows 11 virtual machine. The VM runs inside a rootless Podman container, so nothing is installed on the host, and every file stays inside the repo.
+goop ships for Linux and Windows. Some checks only mean something on real Windows, such as native DLLs, file paths and the compiled `.exe`. `scripts/sandbox/` runs them (with `--os windows`) on a Windows 11 virtual machine. The VM runs inside a rootless Podman container, so nothing is installed on the host, and every file stays inside the repo.
 
 ## Requirements
 
@@ -12,25 +12,25 @@ Docker, a host QEMU and root are not needed.
 
 ## Commands
 
-| Command                   | What it does                                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------ |
-| `bun run windows:install` | Installs Windows once into `.local/windows/base/`; about 13 minutes on the first run |
-| `bun run windows:run`     | Boots a throwaway VM over the base, runs one PowerShell command, deletes the VM      |
-| `bun run windows:status`  | Shows the base and its size, and any VM still running                                |
+| Command                                   | What it does                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `bun run sandbox:install -- --os windows` | Installs Windows once into `.local/windows/base/`; about 13 minutes on the first run |
+| `bun run sandbox:run -- --os windows`     | Boots a throwaway VM over the base, runs one PowerShell command, deletes the VM      |
+| `bun run sandbox:status -- --os windows`  | Shows the base and its size, and any VM still running                                |
 
-`windows:run` takes options first, then the command:
+`sandbox:run` takes options first, then the command:
 
 ```sh
-bun run windows:run -- 'Get-ComputerInfo | Select-Object OsName; exit 3'
+bun run sandbox:run -- --os windows 'Get-ComputerInfo | Select-Object OsName; exit 3'
 
-bun run windows:run -- --copy .local/build/sqlite/windows/goop-spike-check.exe \
+bun run sandbox:run -- --os windows --copy .local/build/sqlite/windows/goop-spike-check.exe \
   --fetch 'C:\goop\result.txt' -- \
   '& C:\goop\goop-spike-check.exe 2>&1 | Tee-Object -FilePath C:\goop\result.txt; exit $LASTEXITCODE'
 ```
 
 - `--copy <repo path>` uploads a file or folder from the repo to `C:\goop\` before the command. Paths outside the repo are refused.
 - `--fetch <guest path>` downloads a file to `.temp/windows/results/<run id>/` after the command. It must be an absolute path without spaces or quotes. A failed fetch turns a successful run into exit code 1.
-- The exit code of the PowerShell command becomes the exit code of `windows:run`.
+- The exit code of the PowerShell command becomes the exit code of `sandbox:run`.
 - `bun run` drops the first `--`, so the command after the options also works without it.
 
 While a VM runs, its screen is visible in a browser at `http://127.0.0.1:8006`. SSH listens on `127.0.0.1:2222`. Both bind to loopback only.
@@ -41,7 +41,7 @@ Windows is installed once. Each run starts from that base on a new, empty disk l
 
 ```mermaid
 sequenceDiagram
-    participant Dev as windows:run
+    participant Dev as sandbox:run
     participant Podman
     participant VM as Windows VM
     Dev->>Dev: create .temp/windows/runs/<id>/ with a qcow2 layer over the base
@@ -89,11 +89,11 @@ podman --root "$PWD/.local/containers/storage" --runroot "$PWD/.temp/containers/
 
 `scripts/` follows the same architecture as `src/`: one folder per feature, named after what it does.
 
-| Folder                | What it is for                                                                       |
-| --------------------- | ------------------------------------------------------------------------------------ |
-| `scripts/dev-env/`    | `run.ts` (the repo-local environment for every package script) and `clean.ts`        |
-| `scripts/brand/`      | `logo-assets.ts`, which builds the logo files                                        |
-| `scripts/windows-vm/` | The Windows VM: `cli.ts` plus `types/`, `model/`, `services/`, `adapters/`, `tests/` |
-| `scripts/shared/`     | Code used by more than one script folder, such as `repo-root.ts`                     |
+| Folder             | What it is for                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `scripts/dev-env/` | `run.ts` (the repo-local environment for every package script) and `clean.ts`                          |
+| `scripts/brand/`   | `logo-assets.ts`, which builds the logo files                                                          |
+| `scripts/sandbox/` | The sandbox (Windows VM for now): `cli.ts` plus `types/`, `model/`, `services/`, `adapters/`, `tests/` |
+| `scripts/shared/`  | Code used by more than one script folder, such as `repo-root.ts`                                       |
 
 Inside a feature folder, `types/` holds the interfaces, `model/` the pure logic, `services/` the steps in order, and `adapters/` the I/O (processes, files, clock). Tests use fake adapters, so they never start Podman or Windows. The rules are in [`rules/architecture.md`](rules/architecture.md).

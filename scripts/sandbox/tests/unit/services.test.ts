@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { nodeFileStore } from "../../adapters/file-store";
 import { createGuestShell } from "../../adapters/guest-shell";
 import { createPodman } from "../../adapters/podman";
-import { windowsVmPaths } from "../../model/paths";
+import { sandboxPaths } from "../../model/paths";
 import { installWindows } from "../../services/install";
 import { runInWindows } from "../../services/run";
 import type {
@@ -12,8 +12,8 @@ import type {
   ProcessRequest,
   ProcessResult,
   ProcessRunner,
-  WindowsVmDeps,
-} from "../../types/windows-vm";
+  SandboxDeps,
+} from "../../types/sandbox";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
 
@@ -48,7 +48,7 @@ let fixture: string;
 let lines: string[];
 
 beforeEach(() => {
-  fixture = join(repo, ".temp", "tests", `windows-vm-services-${crypto.randomUUID()}`);
+  fixture = join(repo, ".temp", "tests", `sandbox-services-${crypto.randomUUID()}`);
   mkdirSync(fixture, { recursive: true });
   lines = [];
 });
@@ -58,8 +58,8 @@ afterEach(() => {
 });
 
 function deps(runner: FakeRunner, clock: Clock, signal = new AbortController().signal) {
-  const paths = windowsVmPaths(fixture);
-  const result: WindowsVmDeps = {
+  const paths = sandboxPaths(fixture);
+  const result: SandboxDeps = {
     paths,
     podman: createPodman(runner, paths),
     guest: createGuestShell(runner, paths),

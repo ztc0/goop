@@ -3,7 +3,7 @@ import { baseFilesToCopy, resolveCopyPath } from "../model/base-files";
 import { displayPath, resultsDirectory, runDirectory } from "../model/paths";
 import { RUN_READINESS } from "../model/readiness";
 import { runContainerName, SSH_PORT, WEB_URL } from "../model/vm-config";
-import type { RunRequest, WindowsVmDeps } from "../types/windows-vm";
+import type { RunRequest, SandboxDeps } from "../types/sandbox";
 import {
   guestPassword,
   INTERRUPTED_EXIT_CODE,
@@ -18,13 +18,13 @@ import {
  * run ends, even on failure or Ctrl+C. Returns the guest command's exit code.
  */
 export async function runInWindows(
-  deps: WindowsVmDeps,
+  deps: SandboxDeps,
   request: RunRequest,
   runId: string,
 ): Promise<number> {
   const { paths, files, output, podman, guest } = deps;
   if (!files.exists(paths.baseDisk)) {
-    output.error("No Windows base: run `bun run windows:install` first.");
+    output.error("No Windows base: run `bun run sandbox:install -- --os windows` first.");
     return 1;
   }
   const uploads: string[] = [];

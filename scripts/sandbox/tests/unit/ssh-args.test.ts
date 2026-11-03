@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { windowsVmPaths } from "../../model/paths";
+import { sandboxPaths } from "../../model/paths";
 import {
   GUEST_COMMAND,
   keygenArgs,
@@ -12,7 +12,7 @@ import {
 } from "../../model/ssh-args";
 import { describeOnLinuxHost } from "../linux-host";
 
-const paths = windowsVmPaths("/repo");
+const paths = sandboxPaths("/repo");
 
 const OPTIONS = [
   "-i",

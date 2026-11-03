@@ -1,16 +1,16 @@
 import { formatBytes } from "../model/base-files";
 import { displayPath } from "../model/paths";
-import type { WindowsVmDeps } from "../types/windows-vm";
+import type { SandboxDeps } from "../types/sandbox";
 import { prepareContainerStorage } from "./vm-lifecycle";
 
 /** Prints whether the Windows base exists, its size, and the running goop-windows containers. */
-export async function showStatus(deps: WindowsVmDeps): Promise<number> {
+export async function showStatus(deps: SandboxDeps): Promise<number> {
   const { paths, files, output, podman } = deps;
   if (files.exists(paths.baseDisk)) {
     const size = files.listFiles(paths.base).reduce((total, file) => total + file.size, 0);
     output.info(`Windows base: ${displayPath(paths, paths.base)} (${formatBytes(size)})`);
   } else {
-    output.info("Windows base: none (run `bun run windows:install`)");
+    output.info("Windows base: none (run `bun run sandbox:install -- --os windows`)");
   }
 
   prepareContainerStorage(deps);

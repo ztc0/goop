@@ -1,4 +1,4 @@
-import type { WindowsVmPaths } from "../types/windows-vm";
+import type { SandboxPaths } from "../types/sandbox";
 import { runDirectory } from "./paths";
 import {
   CONTAINER_PREFIX,
@@ -13,7 +13,7 @@ import {
 } from "./vm-config";
 
 /** Global flags that keep images, containers and temporary files inside the repo (S3). */
-export function podmanGlobalArgs(paths: WindowsVmPaths): string[] {
+export function podmanGlobalArgs(paths: SandboxPaths): string[] {
   return [
     "--root",
     paths.containerStorage,
@@ -28,10 +28,7 @@ export function podmanGlobalArgs(paths: WindowsVmPaths): string[] {
  * Environment of every podman call. The password travels here, read by `-e PASSWORD`,
  * so it never appears in argv.
  */
-export function podmanEnvironment(
-  paths: WindowsVmPaths,
-  password?: string,
-): Record<string, string> {
+export function podmanEnvironment(paths: SandboxPaths, password?: string): Record<string, string> {
   return password === undefined
     ? { TMPDIR: paths.containerTmp }
     : { TMPDIR: paths.containerTmp, PASSWORD: password };
@@ -68,7 +65,7 @@ function vmOptions(): string[] {
 }
 
 /** The install container: kept after it stops, writing straight into the base. */
-export function installContainerArgs(paths: WindowsVmPaths): string[] {
+export function installContainerArgs(paths: SandboxPaths): string[] {
   return [
     "run",
     "-d",
@@ -84,7 +81,7 @@ export function installContainerArgs(paths: WindowsVmPaths): string[] {
 }
 
 /** A run: `--rm` container over the throwaway storage, with the base read-only (S5). */
-export function runContainerArgs(paths: WindowsVmPaths, runId: string): string[] {
+export function runContainerArgs(paths: SandboxPaths, runId: string): string[] {
   return [
     "run",
     "-d",
@@ -101,7 +98,7 @@ export function runContainerArgs(paths: WindowsVmPaths, runId: string): string[]
 }
 
 /** qemu-img from the same image creates the overlay; its backing path resolves at /base. */
-export function overlayArgs(paths: WindowsVmPaths, runId: string): string[] {
+export function overlayArgs(paths: SandboxPaths, runId: string): string[] {
   return [
     "run",
     "--rm",

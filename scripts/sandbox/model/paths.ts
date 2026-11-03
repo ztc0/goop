@@ -1,8 +1,8 @@
 import { join, relative } from "node:path";
-import type { WindowsVmPaths } from "../types/windows-vm";
+import type { SandboxPaths } from "../types/sandbox";
 
 /** Every path the Windows VM uses, from the repo root: nothing lives outside it (S3). */
-export function windowsVmPaths(root: string): WindowsVmPaths {
+export function sandboxPaths(root: string): SandboxPaths {
   const local = join(root, ".local");
   const windows = join(local, "windows");
   const base = join(windows, "base");
@@ -29,15 +29,15 @@ export function windowsVmPaths(root: string): WindowsVmPaths {
 }
 
 /** The throwaway storage of one run, deleted when the run ends (S5). */
-export function runDirectory(paths: WindowsVmPaths, runId: string): string {
+export function runDirectory(paths: SandboxPaths, runId: string): string {
   return join(paths.runs, runId);
 }
 
-export function resultsDirectory(paths: WindowsVmPaths, runId: string): string {
+export function resultsDirectory(paths: SandboxPaths, runId: string): string {
   return join(paths.results, runId);
 }
 
 /** A folder as shown to the user: relative to the repo root, with a trailing slash. */
-export function displayPath(paths: WindowsVmPaths, directory: string): string {
+export function displayPath(paths: SandboxPaths, directory: string): string {
   return `${relative(paths.root, directory)}/`;
 }

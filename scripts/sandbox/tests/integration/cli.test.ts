@@ -13,11 +13,11 @@ import { join, resolve } from "node:path";
 import { describeOnLinuxHost } from "../linux-host";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
-const cliScript = join(repo, "scripts", "windows-vm", "cli.ts");
+const cliScript = join(repo, "scripts", "sandbox", "cli.ts");
 const IMAGE = "docker.io/dockurr/windows:6.06";
 const FAKE_PUBLIC_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKeyForTests";
 
-const USAGE = `Usage: bun scripts/windows-vm/cli.ts <command>
+const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> --os <os>
 
 Commands:
   install    Install Windows once into .local/windows/base/ (about 25 minutes)
@@ -25,6 +25,9 @@ Commands:
              Run a command in a throwaway VM over the base; the VM and its changes
              are deleted when it ends
   status     Show the Windows base and the running VMs
+
+Options:
+  --os <os>  windows (a Windows 11 VM) or debian (not implemented yet); required
 `;
 
 const LOG_ARGS = `{ printf '%s' "$(basename "$0")"; for arg in "$@"; do printf '\\037%s' "$arg"; done; printf '\\n'; } >> "$FAKE_LOG"`;
@@ -80,7 +83,7 @@ let root: string;
 let log: string;
 
 beforeEach(() => {
-  fixture = join(repo, ".temp", "tests", `windows-vm-cli-${crypto.randomUUID()}`);
+  fixture = join(repo, ".temp", "tests", `sandbox-cli-${crypto.randomUUID()}`);
   root = join(fixture, "repo");
   log = join(fixture, "calls.log");
   const bin = join(fixture, "bin");
@@ -223,7 +226,7 @@ function expectBaseUnchanged(base: string): void {
   }
 }
 
-describeOnLinuxHost("scripts/windows-vm/cli.ts usage", () => {
+describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
   test("without a command it prints the usage to stderr and exits 2", () => {
     const result = cli([]);
 
@@ -242,22 +245,57 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts usage", () => {
   });
 
   test("a bad run option prints the error and the usage, and exits 2", () => {
-    const result = cli(["run", "--copy"]);
+    const result = cli(["run", "--os", "windows", "--copy"]);
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe(`--copy needs a value.\n${USAGE}`);
     expect(calls()).toEqual([]);
   });
+
+  test("a missing --os prints the error and the usage, and exits 2 (S1)", () => {
+    const result = cli(["status"]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(`status needs --os windows or --os debian.\n${USAGE}`);
+    expect(calls()).toEqual([]);
+  });
+
+  test("an unknown --os prints the error and the usage, and exits 2 (S1)", () => {
+    const result = cli(["install", "--os", "macos"]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(`Unknown --os: macos (expected windows or debian).\n${USAGE}`);
+    expect(calls()).toEqual([]);
+  });
+
+  test("--os debian is not implemented yet: it exits 2 and touches nothing (S1)", () => {
+    for (const args of [["install"], ["status"], ["run", "--", "uname"]]) {
+      const [command, ...rest] = args;
+      const result = cli([command ?? "", "--os", "debian", ...rest]);
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        "--os debian is not implemented yet; only --os windows works for now.\n",
+      );
+    }
+    expect(calls()).toEqual([]);
+    expect(readdirSync(root)).toEqual([]);
+  });
 });
 
-describeOnLinuxHost("scripts/windows-vm/cli.ts run", () => {
+describeOnLinuxHost("scripts/sandbox/cli.ts run", () => {
   test("without a base it exits 1 with the install hint and creates nothing", () => {
-    const result = cli(["run", "--", "Get-Date"]);
+    const result = cli(["run", "--os", "windows", "--", "Get-Date"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("No Windows base: run `bun run windows:install` first.\n");
+    expect(result.stderr).toBe(
+      "No Windows base: run `bun run sandbox:install -- --os windows` first.\n",
+    );
     expect(readdirSync(root)).toEqual([]);
     expect(calls()).toEqual([]);
   });
@@ -265,7 +303,9 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts run", () => {
   test("runs on a throwaway overlay, stops the VM and deletes the run dir even when the command fails (S5)", () => {
     const base = seedBase();
 
-    const result = cli(["run", "--", "Write-Output", "hi;", "exit", "3"], { FAKE_SSH_EXIT: "3" });
+    const result = cli(["run", "--os", "windows", "--", "Write-Output", "hi;", "exit", "3"], {
+      FAKE_SSH_EXIT: "3",
+    });
 
     const podman = podmanCalls();
     const name = podman[1]?.[4] ?? "";
@@ -347,6 +387,8 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts run", () => {
 
     const result = cli([
       "run",
+      "--os",
+      "windows",
       "--copy",
       "src",
       "--fetch",
@@ -403,7 +445,7 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts run", () => {
   test("refuses to upload a path outside the repo before starting anything", () => {
     seedBase();
 
-    const result = cli(["run", "--copy", "../outside", "--", "Get-Date"]);
+    const result = cli(["run", "--os", "windows", "--copy", "../outside", "--", "Get-Date"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
@@ -415,11 +457,11 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts run", () => {
   });
 });
 
-describeOnLinuxHost("scripts/windows-vm/cli.ts install", () => {
+describeOnLinuxHost("scripts/sandbox/cli.ts install", () => {
   test("refuses when a base already exists and never calls podman", () => {
     const base = seedBase();
 
-    const result = cli(["install"]);
+    const result = cli(["install", "--os", "windows"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
@@ -431,7 +473,7 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts install", () => {
   });
 
   test("generates the key, password and OEM files, waits for the marker, then stops and removes the container", () => {
-    const result = cli(["install"]);
+    const result = cli(["install", "--os", "windows"]);
 
     const windows = join(root, ".local", "windows");
     const password = readFileSync(join(windows, "password"), "utf8");
@@ -495,14 +537,14 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts install", () => {
   });
 });
 
-describeOnLinuxHost("scripts/windows-vm/cli.ts status", () => {
+describeOnLinuxHost("scripts/sandbox/cli.ts status", () => {
   test("without a base it says so and lists the running VMs", () => {
-    const result = cli(["status"]);
+    const result = cli(["status", "--os", "windows"]);
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(
-      "Windows base: none (run `bun run windows:install`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+      "Windows base: none (run `bun run sandbox:install -- --os windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
     );
     expect(podmanCalls()).toEqual([
       ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
@@ -512,7 +554,7 @@ describeOnLinuxHost("scripts/windows-vm/cli.ts status", () => {
   test("with a base it prints its size, and none when no VM runs", () => {
     seedBase();
 
-    const result = cli(["status"], { FAKE_PS_EMPTY: "1" });
+    const result = cli(["status", "--os", "windows"], { FAKE_PS_EMPTY: "1" });
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");

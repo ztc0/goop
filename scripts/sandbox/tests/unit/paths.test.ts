@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { displayPath, resultsDirectory, runDirectory, windowsVmPaths } from "../../model/paths";
+import { displayPath, resultsDirectory, runDirectory, sandboxPaths } from "../../model/paths";
 import { describeOnLinuxHost } from "../linux-host";
 
-describeOnLinuxHost("windowsVmPaths", () => {
+describeOnLinuxHost("sandboxPaths", () => {
   test("keeps Podman, the Windows base and the runs inside the repo (S3)", () => {
-    expect(windowsVmPaths("/repo")).toEqual({
+    expect(sandboxPaths("/repo")).toEqual({
       root: "/repo",
       containerStorage: "/repo/.local/containers/storage",
       containerRunRoot: "/repo/.temp/containers/run",
@@ -25,7 +25,7 @@ describeOnLinuxHost("windowsVmPaths", () => {
   });
 
   test("gives each run its own throwaway storage and results folder", () => {
-    const paths = windowsVmPaths("/repo");
+    const paths = sandboxPaths("/repo");
 
     expect(runDirectory(paths, "20261101-090503-a1b2")).toBe(
       "/repo/.temp/windows/runs/20261101-090503-a1b2",
@@ -36,7 +36,7 @@ describeOnLinuxHost("windowsVmPaths", () => {
   });
 
   test("shows folders relative to the repo root with a trailing slash", () => {
-    const paths = windowsVmPaths("/repo");
+    const paths = sandboxPaths("/repo");
 
     expect(displayPath(paths, paths.base)).toBe(".local/windows/base/");
     expect(displayPath(paths, resultsDirectory(paths, "x"))).toBe(".temp/windows/results/x/");
