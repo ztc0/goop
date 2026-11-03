@@ -18,14 +18,14 @@ Branch `feat/storage` from `dev`. Security code: test-first, native review on ev
 
 ## Tasks
 
-| ID  | Specs | Task                                                                                                  | Route  | Commit |
-| --- | ----- | ----------------------------------------------------------------------------------------------------- | ------ | ------ |
-| T1  | S1-S4 | DEK, envelope format, recovery and passphrase envelopes: pure functions in `src/shared/`, unit tests  | inline | -      |
-| T2  | S5    | Linux OS envelope: `systemd-creds --user` adapter, fakes in tests, a real run with the user's consent | inline | -      |
-| T3  | S6    | Windows OS envelope: DPAPI adapter through `bun:ffi`, run in the Windows sandbox                      | inline | -      |
-| T4  | S7    | Encrypted-store interface and the sqlite3mc adapter: open with the DEK, verify the key, statements    | inline | -      |
-| T5  | S8    | Native libraries: build and pin in CI, embed, copy to the cache and verify sha256 before every load   | inline | -      |
-| T6  | S9    | Key service: setup, start, recovery; refuses to overwrite an existing DEK                             | inline | -      |
+| ID  | Specs | Task                                                                                                  | Route  | Commit           |
+| --- | ----- | ----------------------------------------------------------------------------------------------------- | ------ | ---------------- |
+| T1  | S1-S4 | DEK, envelope format, recovery and passphrase envelopes: pure functions in `src/shared/`, unit tests  | inline | d99bd97, b03dd8d |
+| T2  | S5    | Linux OS envelope: `systemd-creds --user` adapter, fakes in tests, a real run with the user's consent | inline | -                |
+| T3  | S6    | Windows OS envelope: DPAPI adapter through `bun:ffi`, run in the Windows sandbox                      | inline | -                |
+| T4  | S7    | Encrypted-store interface and the sqlite3mc adapter: open with the DEK, verify the key, statements    | inline | -                |
+| T5  | S8    | Native libraries: build and pin in CI, embed, copy to the cache and verify sha256 before every load   | inline | -                |
+| T6  | S9    | Key service: setup, start, recovery; refuses to overwrite an existing DEK                             | inline | -                |
 
 Each task is explained to the user first (mentor mode), then implemented test-first. T1 to T6 each get a native review: they touch keys, stored data or the release build.
 
