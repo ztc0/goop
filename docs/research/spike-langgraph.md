@@ -121,6 +121,8 @@ flowchart LR
 
 No server errors in 60 runs.
 
+The `two_rounds` row is weaker than it looks: a run passed when `get_offer` was called with any of the three valid ids, while the prompt asked for the first result, and the final answer was never checked for the company name. Its 5/5 may be inflated (native review, finding R3-two-rounds).
+
 ## How to run
 
 The spike code was removed from the repository after the spike and can be read in git history at commit `03507e4`, path `scripts/spikes/langgraph/`, for example `git show 03507e4:scripts/spikes/langgraph/checkpoint/saver.ts`. The commands below ran against it.
@@ -156,7 +158,7 @@ The S# text is unchanged. What the next tasks inherit:
 - **T16 (storage):** the saver moves to product code on the T16 store. The spike wrapper sets the key with `PRAGMA key` as text; ADR 0001 wants `sqlite3_key` or a hex key.
 - **T18 (models):** `--jinja` is passed explicitly; the server path is duplicated from `bench.ts` and belongs in the model manager.
 - **T21 (Validator):** keep returning the compact zod error as the tool message; put code-only checks in `.refine()` or after parsing.
-- **T24 (Orchestrator):** set a recursion limit (finding 2); keep sending gpt-oss `reasoning_content` back; wrap tool results as untrusted; move the system prompt from `tools/check.ts` to `prompts/` (prompts.md).
+- **T24 (Orchestrator):** set a recursion limit (finding 2); keep sending gpt-oss `reasoning_content` back; wrap tool results as untrusted, and make the wrapper hold against case and spacing variants of the tag (the spike escaped only the exact lowercase `</tool_result`, and its test checked only that form; findings R1-001 and R3-delimiter-test); force LangSmith tracing off, because `@langchain/core` ships `langsmith`, which sends traces when `LANGSMITH_TRACING` or `LANGCHAIN_TRACING_V2` is set in the user's environment (raised while reading review finding R1-004 on `package.json`); move the system prompt from `tools/check.ts` to `prompts/` (prompts.md).
 
 ## Limits
 
@@ -165,4 +167,5 @@ The S# text is unchanged. What the next tasks inherit:
 - **AsyncLocalStorage, partly.** Streams, EventEmitter and workers were not tested (finding 6).
 - **Saver, partly.** No pre-v4 migration, no `getDeltaChannelHistory`; `list` filters in JS after a full scan of the thread.
 - **One machine.** Linux only, no Windows run; the contract tests are skipped in CI.
+- **`two_rounds` criterion.** It did not check that the first result was opened or that the answer named the company; T24's eval must.
 - **Quality was not measured.** The scenarios check tool names and arguments, not answer quality; T28 judges that.
