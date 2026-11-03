@@ -43,4 +43,10 @@ describeOnLinuxHost("sandboxPaths", () => {
     expect(displayPath(paths, paths.base)).toBe(".local/windows/base/");
     expect(displayPath(paths, resultsDirectory(paths, "x"))).toBe(".temp/windows/results/x/");
   });
+
+  test("uses forward slashes even when the system separator is a backslash, as on Windows", () => {
+    const paths = sandboxPaths("/repo");
+
+    expect(displayPath(paths, "/repo/.temp\\debian\\results\\r3")).toBe(".temp/debian/results/r3/");
+  });
 });
