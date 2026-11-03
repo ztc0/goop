@@ -8,6 +8,7 @@ import {
   installContainerArgs,
   listRunningArgs,
   logsArgs,
+  manualRemoveCommand,
   overlayArgs,
   podmanEnvironment,
   podmanGlobalArgs,
@@ -28,6 +29,7 @@ export function createPodmanEngine(runner: ProcessRunner, paths: SandboxPaths): 
       ...(interactive ? { interactive } : {}),
     });
   return {
+    name: "podman",
     startInstall: (password) => podman(installContainerArgs(paths), password),
     createOverlay: (runId) => podman(overlayArgs(paths, runId)),
     startRun: (runId, password) => podman(runContainerArgs(paths, runId), password),
@@ -44,5 +46,6 @@ export function createPodmanEngine(runner: ProcessRunner, paths: SandboxPaths): 
     copyOut: (name, containerPath, directory) =>
       podman(copyOutArgs(name, containerPath, directory)),
     forceRemove: (name) => podman(forceRemoveArgs(name)),
+    manualRemoveCommand: (name) => manualRemoveCommand(paths, name),
   };
 }
