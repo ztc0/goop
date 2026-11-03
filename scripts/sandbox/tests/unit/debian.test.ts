@@ -101,7 +101,7 @@ describeOnLinuxHost("Debian sandbox (S2)", () => {
     ]);
     expect(forceRemoveArgs("c")).toEqual(["rm", "--force", "--time", "10", "c"]);
     expect(manualRemoveCommand(paths, "c")).toBe(
-      "bun scripts/dev-env/run.ts podman --root .local/containers/storage --runroot .temp/containers/run rm -f c",
+      "bun scripts/dev-env/run.ts podman --root /repo/.local/containers/storage --runroot /repo/.temp/containers/run rm -f c",
     );
     expect(listRunningArgs("goop-debian")).toEqual([
       "ps",

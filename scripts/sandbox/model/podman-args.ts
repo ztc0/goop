@@ -1,4 +1,4 @@
-import { dirname, relative } from "node:path";
+import { dirname } from "node:path";
 import type { ExecOptions, SandboxPaths } from "../types/sandbox";
 import { DEBIAN_STOP_SECONDS } from "./debian-config";
 import { runDirectory } from "./paths";
@@ -176,14 +176,17 @@ export function forceRemoveArgs(name: string): string[] {
   return ["rm", "--force", "--time", String(DEBIAN_STOP_SECONDS), name];
 }
 
-/** The command a user runs from the repo root to remove a container the sandbox could not. */
+/**
+ * The command a user runs from the repo root to remove a container the sandbox could not.
+ * The storage paths are absolute: Podman rejects relative ones with "database configuration mismatch".
+ */
 export function manualRemoveCommand(paths: SandboxPaths, name: string): string {
   return [
     "bun scripts/dev-env/run.ts podman",
     "--root",
-    relative(paths.root, paths.containerStorage),
+    paths.containerStorage,
     "--runroot",
-    relative(paths.root, paths.containerRunRoot),
+    paths.containerRunRoot,
     "rm -f",
     name,
   ].join(" ");
