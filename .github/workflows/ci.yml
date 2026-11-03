@@ -47,3 +47,24 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
+
+  sandbox-debian-docker:
+    # The Debian sandbox on Docker (S4): the maintainer's PC has only Podman, so Docker is
+    # exercised here. Not a required check.
+    name: "Sandbox: Debian on Docker"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run sandbox:install debian --engine docker
+      # The system manager may report degraded in a container; the user manager must be running.
+      - run: bun run sandbox:run debian --engine docker 'systemctl is-system-running; systemctl --user is-system-running && id -un'
+      - run: bun run sandbox:status debian --engine docker

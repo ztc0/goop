@@ -1,12 +1,13 @@
 // Sandbox (S1, S2, S3, S5): for windows, installs Windows once into .local/windows/base/
-// with dockur in Podman, then runs PowerShell commands in throwaway VMs over that base.
+// with dockur in a container, then runs PowerShell commands in throwaway VMs over that base.
 // For debian, builds a Debian image with systemd, then runs shell commands in
 // throwaway containers. Podman storage and every file stay inside the repo.
-// The engine is --engine, else Podman, else Docker (S3); Docker is not supported yet.
+// The engine is --engine, else Podman, else Docker with a storage warning (S3, S4).
 // Usage: bun scripts/sandbox/cli.ts install|status <windows|debian> [--engine podman|docker]
 //        bun scripts/sandbox/cli.ts run <windows|debian> [--copy p] [--fetch p] [--] <command>
 //        bun scripts/sandbox/cli.ts run debian [--copy p] [--fetch p]  (an interactive shell)
 import { repoRoot } from "../shared/repo-root";
+import { createDockerEngine } from "./adapters/docker";
 import { nodeFileStore } from "./adapters/file-store";
 import { createGuestShell } from "./adapters/guest-shell";
 import { createPodmanEngine } from "./adapters/podman";
@@ -33,12 +34,6 @@ if ("error" in choice) {
   process.exit(1);
 }
 if (choice.warning !== undefined) process.stderr.write(`${choice.warning}\n`);
-if (choice.engine === "docker") {
-  process.stderr.write(
-    "Docker is not supported yet; it arrives with the next change. Use --engine podman.\n",
-  );
-  process.exit(2);
-}
 
 // Ctrl+C aborts the wait or the command; the services still stop the sandbox and clean up.
 const interrupt = new AbortController();
@@ -48,7 +43,10 @@ process.on("SIGTERM", () => interrupt.abort());
 const paths = sandboxPaths(repoRoot());
 const deps: SandboxDeps = {
   paths,
-  engine: createPodmanEngine(bunProcessRunner, paths),
+  engine:
+    choice.engine === "docker"
+      ? createDockerEngine(bunProcessRunner, paths)
+      : createPodmanEngine(bunProcessRunner, paths),
   guest: createGuestShell(bunProcessRunner, paths),
   files: nodeFileStore,
   clock: systemClock,
