@@ -19,15 +19,15 @@ Branch `feat/sandbox` from `dev`. Product-grade tooling: test-first, review on h
 
 ## Tasks
 
-| ID  | Specs  | Task                                                                                                                       | Route  | Commit |
-| --- | ------ | -------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| T1  | S1, S7 | Rename `scripts/windows-vm/` to `scripts/sandbox/` and the commands to `sandbox:*` with `--os windows`; behavior unchanged | inline | -      |
-| T2  | S3, S4 | `ContainerEngine` interface, the Podman adapter behind it, and the tested engine choice with `--engine`                    | inline | -      |
-| T3  | S3, S4 | Docker adapter and a CI job that runs the sandbox with Docker                                                              | inline | -      |
-| T4  | S2, S7 | Debian container with systemd: pinned image, `--os debian` install, run and status, a real run that starts a user service  | inline | -      |
-| T5  | S1-S7  | `docs/development/sandbox.md` (replaces `windows-vm.md`), AGENTS.md commands, rules that mention the old names             | inline | -      |
-| T6  | S5     | Deferred: spike a Debian VM with a software TPM                                                                            | inline | -      |
-| T7  | S5     | Deferred: Debian VM in the sandbox, if T6 says yes                                                                         | inline | -      |
+| ID  | Specs  | Task                                                                                                                       | Route  | Commit  |
+| --- | ------ | -------------------------------------------------------------------------------------------------------------------------- | ------ | ------- |
+| T1  | S1, S7 | Rename `scripts/windows-vm/` to `scripts/sandbox/` and the commands to `sandbox:*` with `--os windows`; behavior unchanged | inline | 5edfd06 |
+| T2  | S3, S4 | `ContainerEngine` interface, the Podman adapter behind it, and the tested engine choice with `--engine`                    | inline | -       |
+| T3  | S3, S4 | Docker adapter and a CI job that runs the sandbox with Docker                                                              | inline | -       |
+| T4  | S2, S7 | Debian container with systemd: pinned image, `--os debian` install, run and status, a real run that starts a user service  | inline | -       |
+| T5  | S1-S7  | `docs/development/sandbox.md` (replaces `windows-vm.md`), AGENTS.md commands, rules that mention the old names             | inline | -       |
+| T6  | S5     | Deferred: spike a Debian VM with a software TPM                                                                            | inline | -       |
+| T7  | S5     | Deferred: Debian VM in the sandbox, if T6 says yes                                                                         | inline | -       |
 
 Each task is one pull request in a stacked chain on `dev`; a task over about 400 lines is split.
 
@@ -39,3 +39,4 @@ Each task is one pull request in a stacked chain on `dev`; a task over about 400
 - **L4.** "y si en el sandbox usamos compuse que te parese": recommended against Compose (S6).
 - **L5.** "ok y vamos hacer un cambio mas que detecte que app de contenedor usa y automaticamnete usar eso como docker o podman y por defecto usa docker". Docker as the default would store images in `/var/lib/docker`, leave root-owned files under `.local/` (cleanup would need `sudo`), make systemd in a container more fragile, and the maintainer's PC has only Podman 6.1.4. The user asked "como me recomiendas"; the recommendation was Podman first, Docker when it is the only engine (S3).
 - **L6.** "dale con todo. y tambien ya mergea a dev -> main": all recommendations accepted, including replacing the old `windows:*` commands (S1) and deferring the VM (S5).
+- **L7.** T1 done: `scripts/windows-vm/` is `scripts/sandbox/`; `sandbox:install|run|status` take a required `--os windows|debian` (`debian` exits 2 with "not implemented yet" until T4); `WindowsVmPaths`/`WindowsVmDeps` are `SandboxPaths`/`SandboxDeps`; the data folders `.local/windows/` and `.temp/windows/` keep their names (the 10 GB base lives there). The research reports keep the `windows:run` commands that were actually run. 75 tests pass; `bun run sandbox:status -- --os windows` ran for real.
