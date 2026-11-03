@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { parseCliArgs } from "../../model/cli-args";
 
-const OS = ["--os", "windows"];
+const OS = ["windows"];
 
 describe("parseCliArgs", () => {
   test("a missing or unknown command asks for the usage", () => {
@@ -10,55 +10,73 @@ describe("parseCliArgs", () => {
     expect(parseCliArgs(["--help"])).toEqual({ kind: "usage" });
   });
 
-  test("install and status take only --os", () => {
+  test("install and status take the system and nothing else (S1)", () => {
     expect(parseCliArgs(["install", ...OS])).toEqual({ kind: "install", os: "windows" });
     expect(parseCliArgs(["status", ...OS])).toEqual({ kind: "status", os: "windows" });
-    expect(parseCliArgs(["install", "now"])).toEqual({
+    expect(parseCliArgs(["install", "debian"])).toEqual({ kind: "install", os: "debian" });
+    expect(parseCliArgs(["status", "debian"])).toEqual({ kind: "status", os: "debian" });
+    expect(parseCliArgs(["install", "debian", "systemctl --version"])).toEqual({
       kind: "usage",
-      error: "install takes no arguments.",
+      error: "install takes no command; to run one, use: bun run sandbox:run <system> <command>",
     });
-    expect(parseCliArgs(["status", ...OS, "-v"])).toEqual({
+    expect(parseCliArgs(["status", ...OS, "--engine", "podman", "-v"])).toEqual({
       kind: "usage",
-      error: "status takes no arguments.",
+      error: "status takes no command; to run one, use: bun run sandbox:run <system> <command>",
     });
   });
 
-  test("install, run and status require --os (S1)", () => {
-    for (const command of ["install", "status"]) {
-      expect(parseCliArgs([command])).toEqual({
-        kind: "usage",
-        error: `${command} needs --os windows or --os debian.`,
-      });
+  test("install, run and status need the system first (S1)", () => {
+    for (const command of ["install", "status", "run"]) {
+      for (const rest of [[], ["--engine", "podman", "debian"]]) {
+        expect(parseCliArgs([command, ...rest])).toEqual({
+          kind: "usage",
+          error: `${command} needs the system first: windows or debian.`,
+        });
+      }
     }
     expect(parseCliArgs(["run", "--", "Get-Date"])).toEqual({
       kind: "usage",
-      error: "run needs --os windows or --os debian.",
+      error: "run needs the system first: windows or debian.",
     });
   });
 
-  test("--os accepts windows and debian, and rejects anything else (S1)", () => {
-    expect(parseCliArgs(["install", "--os", "debian"])).toEqual({ kind: "install", os: "debian" });
-    expect(parseCliArgs(["run", "--os", "debian", "--", "uname"])).toEqual({
+  test("the system is windows or debian, and anything else is rejected (S1)", () => {
+    expect(parseCliArgs(["run", "debian", "uname", "-a"])).toEqual({
       kind: "run",
       os: "debian",
       copy: [],
       fetch: [],
-      command: "uname",
+      command: "uname -a",
     });
     for (const command of ["install", "status", "run"]) {
-      expect(parseCliArgs([command, "--os", "macos", "--", "x"])).toEqual({
+      expect(parseCliArgs([command, "macos", "--", "x"])).toEqual({
         kind: "usage",
-        error: "Unknown --os: macos (expected windows or debian).",
-      });
-      expect(parseCliArgs([command, "--os"])).toEqual({
-        kind: "usage",
-        error: "--os needs a value.",
-      });
-      expect(parseCliArgs([command, ...OS, "--os", "debian", "--", "x"])).toEqual({
-        kind: "usage",
-        error: "--os is given more than once.",
+        error: "Unknown system: macos (expected windows or debian).",
       });
     }
+  });
+
+  test("--os is rejected with the new form, wherever it is among the options (S1)", () => {
+    const error =
+      "--os was replaced: write the system right after the command, like: bun run sandbox:run debian uname -a";
+    for (const command of ["install", "status", "run"]) {
+      for (const args of [
+        ["--os", "debian"],
+        ["--os"],
+        ["debian", "--os", "debian"],
+        ["debian", "--engine", "podman", "--os", "debian", "--", "x"],
+      ]) {
+        expect(parseCliArgs([command, ...args])).toEqual({ kind: "usage", error });
+      }
+    }
+    // After the command starts, --os is part of the command text.
+    expect(parseCliArgs(["run", "debian", "tool", "--os", "x"])).toEqual({
+      kind: "run",
+      os: "debian",
+      copy: [],
+      fetch: [],
+      command: "tool --os x",
+    });
   });
 
   test("--engine accepts podman and docker on every command, and rejects anything else (S3)", () => {
@@ -67,12 +85,12 @@ describe("parseCliArgs", () => {
       os: "windows",
       engine: "docker",
     });
-    expect(parseCliArgs(["install", "--engine", "podman", ...OS])).toEqual({
+    expect(parseCliArgs(["install", ...OS, "--engine", "podman"])).toEqual({
       kind: "install",
       os: "windows",
       engine: "podman",
     });
-    expect(parseCliArgs(["run", "--engine", "podman", ...OS, "--", "Get-Date"])).toEqual({
+    expect(parseCliArgs(["run", ...OS, "--engine", "podman", "--", "Get-Date"])).toEqual({
       kind: "run",
       os: "windows",
       engine: "podman",
@@ -95,6 +113,22 @@ describe("parseCliArgs", () => {
     }
   });
 
+  test("run takes the command after -- or without it, with --engine before it (S1)", () => {
+    for (const args of [
+      ["uname", "-a"],
+      ["--", "uname", "-a"],
+    ]) {
+      expect(parseCliArgs(["run", "debian", "--engine", "podman", ...args])).toEqual({
+        kind: "run",
+        os: "debian",
+        engine: "podman",
+        copy: [],
+        fetch: [],
+        command: "uname -a",
+      });
+    }
+  });
+
   test("run takes the PowerShell command after --", () => {
     expect(parseCliArgs(["run", ...OS, "--", "Get-Date"])).toEqual({
       kind: "run",
@@ -113,7 +147,7 @@ describe("parseCliArgs", () => {
       fetch: [],
       command: "Write-Output hi; exit 3",
     });
-    expect(parseCliArgs(["run", "--copy", "dist", ...OS, "Get-ChildItem C:\\goop"])).toEqual({
+    expect(parseCliArgs(["run", ...OS, "--copy", "dist", "Get-ChildItem C:\\goop"])).toEqual({
       kind: "run",
       os: "windows",
       copy: ["dist"],
@@ -152,11 +186,11 @@ describe("parseCliArgs", () => {
   test("run rejects a missing command, missing values and unknown options", () => {
     expect(parseCliArgs(["run", ...OS])).toEqual({
       kind: "usage",
-      error: "run needs a PowerShell command after --.",
+      error: "run needs a PowerShell command.",
     });
     expect(parseCliArgs(["run", ...OS, "--"])).toEqual({
       kind: "usage",
-      error: "run needs a PowerShell command after --.",
+      error: "run needs a PowerShell command.",
     });
     expect(parseCliArgs(["run", ...OS, "--copy"])).toEqual({
       kind: "usage",
@@ -168,16 +202,16 @@ describe("parseCliArgs", () => {
     });
   });
 
-  test("run --os debian needs a shell command and takes absolute POSIX --fetch paths (S2)", () => {
-    const DEBIAN = ["--os", "debian"];
+  test("run debian needs a shell command and takes absolute POSIX --fetch paths (S2)", () => {
+    const DEBIAN = ["debian"];
     for (const args of [[], ["--"], ["--", "  "]]) {
       expect(parseCliArgs(["run", ...DEBIAN, ...args])).toEqual({
         kind: "usage",
-        error: "run needs a shell command after --.",
+        error: "run needs a shell command.",
       });
     }
     expect(
-      parseCliArgs(["run", "--fetch", "/home/goop/goop/out.txt", ...DEBIAN, "--", "make test"]),
+      parseCliArgs(["run", ...DEBIAN, "--fetch", "/home/goop/goop/out.txt", "--", "make test"]),
     ).toEqual({
       kind: "run",
       os: "debian",
@@ -191,8 +225,8 @@ describe("parseCliArgs", () => {
         error: `--fetch needs an absolute container path like /home/goop/goop/out.txt, got: ${bad}`,
       });
     }
-    // The Windows check still applies when --os windows comes after --fetch.
-    expect(parseCliArgs(["run", "--fetch", "/tmp/x", ...OS, "--", "x"])).toEqual({
+    // A Debian path is not a Windows guest path.
+    expect(parseCliArgs(["run", ...OS, "--fetch", "/tmp/x", "--", "x"])).toEqual({
       kind: "usage",
       error: "--fetch needs an absolute guest path like C:\\goop\\out.xml, got: /tmp/x",
     });

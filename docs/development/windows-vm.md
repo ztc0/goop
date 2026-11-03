@@ -1,6 +1,6 @@
 # Windows test VM
 
-goop ships for Linux and Windows. Some checks only mean something on real Windows, such as native DLLs, file paths and the compiled `.exe`. `scripts/sandbox/` runs them (with `--os windows`) on a Windows 11 virtual machine. The VM runs inside a rootless Podman container, so nothing is installed on the host, and every file stays inside the repo.
+goop ships for Linux and Windows. Some checks only mean something on real Windows, such as native DLLs, file paths and the compiled `.exe`. `scripts/sandbox/` runs them (with `windows` as the system) on a Windows 11 virtual machine. The VM runs inside a rootless Podman container, so nothing is installed on the host, and every file stays inside the repo.
 
 ## Requirements
 
@@ -12,18 +12,18 @@ Docker, a host QEMU and root are not needed.
 
 ## Commands
 
-| Command                                   | What it does                                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------------------------ |
-| `bun run sandbox:install -- --os windows` | Installs Windows once into `.local/windows/base/`; about 13 minutes on the first run |
-| `bun run sandbox:run -- --os windows`     | Boots a throwaway VM over the base, runs one PowerShell command, deletes the VM      |
-| `bun run sandbox:status -- --os windows`  | Shows the base and its size, and any VM still running                                |
+| Command                           | What it does                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| `bun run sandbox:install windows` | Installs Windows once into `.local/windows/base/`; about 13 minutes on the first run |
+| `bun run sandbox:run windows`     | Boots a throwaway VM over the base, runs one PowerShell command, deletes the VM      |
+| `bun run sandbox:status windows`  | Shows the base and its size, and any VM still running                                |
 
-`sandbox:run` takes options first, then the command:
+`sandbox:run` takes the system first, then the options, then the command:
 
 ```sh
-bun run sandbox:run -- --os windows 'Get-ComputerInfo | Select-Object OsName; exit 3'
+bun run sandbox:run windows 'Get-ComputerInfo | Select-Object OsName; exit 3'
 
-bun run sandbox:run -- --os windows --copy .local/build/sqlite/windows/goop-spike-check.exe \
+bun run sandbox:run windows --copy .local/build/sqlite/windows/goop-spike-check.exe \
   --fetch 'C:\goop\result.txt' -- \
   '& C:\goop\goop-spike-check.exe 2>&1 | Tee-Object -FilePath C:\goop\result.txt; exit $LASTEXITCODE'
 ```
@@ -31,7 +31,7 @@ bun run sandbox:run -- --os windows --copy .local/build/sqlite/windows/goop-spik
 - `--copy <repo path>` uploads a file or folder from the repo to `C:\goop\` before the command. Paths outside the repo are refused.
 - `--fetch <guest path>` downloads a file to `.temp/windows/results/<run id>/` after the command. It must be an absolute path without spaces or quotes. A failed fetch turns a successful run into exit code 1.
 - The exit code of the PowerShell command becomes the exit code of `sandbox:run`.
-- `bun run` drops the first `--`, so the command after the options also works without it.
+- The `--` before the command is optional: the command starts at the first word that is not an option. Write it when the command itself starts with `--`.
 
 While a VM runs, its screen is visible in a browser at `http://127.0.0.1:8006`. SSH listens on `127.0.0.1:2222`. Both bind to loopback only.
 
