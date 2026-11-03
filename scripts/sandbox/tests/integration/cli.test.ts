@@ -23,9 +23,10 @@ const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> <system> [options]
 Commands:
   install <system>  Install Windows once into .local/windows/base/ (about 25 min),
                     or build the Debian image (a few minutes; again to rebuild)
-  run <system> [--copy <repo path>]... [--fetch <sandbox path>]... [--] <command...>
+  run <system> [--copy <repo path>]... [--fetch <sandbox path>]... [--] [<command...>]
                     Run a PowerShell command (windows) or a shell command (debian)
-                    in a throwaway sandbox; it and its changes are deleted at the end
+                    in a throwaway sandbox; it and its changes are deleted at the end;
+                    debian without a command opens a shell in it until you type exit
   status <system>   Show the Windows base or the Debian image, and running sandboxes
 
 Systems:
@@ -37,6 +38,7 @@ Options:
 
 Examples:
   bun run sandbox:install debian
+  bun run sandbox:run debian           # opens a shell; exit deletes the container
   bun run sandbox:run debian uname -a
   bun run sandbox:run windows --copy dist 'Get-ChildItem C:\\goop'
   bun run sandbox:status windows
@@ -65,6 +67,7 @@ case " $* " in
   *" image inspect "*) if [ -n "$FAKE_NO_IMAGE" ]; then printf 'Error: no such image\\n' >&2; exit 125; fi; printf '123456789\\n' ;;
   *" is-system-running "*) printf 'running\\n' ;;
   *" bash -lc "*) printf 'container output\\n'; exit "\${FAKE_EXEC_EXIT:-0}" ;;
+  *" rm --force "*) if [ -n "$FAKE_RM_FAIL" ]; then printf 'Error: container is stuck\\n' >&2; exit 125; fi ;;
 esac
 exit 0
 `,
@@ -341,12 +344,29 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
     expect(calls()).toEqual([]);
   });
 
-  test("run debian without a command asks for a shell command (S2)", () => {
-    const result = cli(["run", "debian"]);
+  test("run debian without a command and without a terminal asks for a command, and exits 2 (S2)", () => {
+    for (const args of [
+      ["run", "debian"],
+      ["run", "debian", "--"],
+    ]) {
+      const result = cli(args);
+
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        "run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox:run debian uname -a\n",
+      );
+    }
+    expect(calls()).toEqual([]);
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  test("run windows without a command still asks for a PowerShell command, and exits 2", () => {
+    const result = cli(["run", "windows"]);
 
     expect(result.exitCode).toBe(2);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe(`run needs a shell command.\n${USAGE}`);
+    expect(result.stderr).toBe(`run needs a PowerShell command.\n${USAGE}`);
     expect(calls()).toEqual([]);
   });
 });
@@ -834,6 +854,38 @@ describeOnLinuxHost("scripts/sandbox/cli.ts debian (S2)", () => {
       [...USER_EXEC, name, "bash", "-lc", "exit 3"],
       ["rm", "--force", "--time", "10", name],
     ]);
+  });
+
+  test("run says how to remove the container by hand when it cannot, and exits 1 instead of 0", () => {
+    const result = cli(["run", "debian", "uname"], { FAKE_RM_FAIL: "1" });
+
+    const podman = podmanCalls();
+    const { name } = debianRun(podman);
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe(
+      [
+        `Starting ${name}...`,
+        "Waiting for systemd...",
+        "systemd is running.",
+        "container output",
+        `Removing ${name}...`,
+        "",
+      ].join("\n"),
+    );
+    expect(result.stderr).toBe(
+      `Could not remove ${name}: Error: container is stuck. Remove it by hand: bun scripts/dev-env/run.ts podman --root .local/containers/storage --runroot .temp/containers/run rm -f ${name}\n`,
+    );
+    expect(podman.at(-1)).toEqual(["rm", "--force", "--time", "10", name]);
+  });
+
+  test("run keeps a failed command's exit code when the removal fails too", () => {
+    const result = cli(["run", "debian", "exit 3"], { FAKE_EXEC_EXIT: "3", FAKE_RM_FAIL: "1" });
+
+    const { name } = debianRun(podmanCalls());
+    expect(result.exitCode).toBe(3);
+    expect(result.stderr).toBe(
+      `Could not remove ${name}: Error: container is stuck. Remove it by hand: bun scripts/dev-env/run.ts podman --root .local/containers/storage --runroot .temp/containers/run rm -f ${name}\n`,
+    );
   });
 
   test("run refuses to copy a path outside the repo before starting anything", () => {

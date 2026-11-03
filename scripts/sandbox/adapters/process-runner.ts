@@ -5,11 +5,16 @@ export const bunProcessRunner: ProcessRunner = {
   async run(request: ProcessRequest): Promise<ProcessResult> {
     let child: ReturnType<typeof Bun.spawn>;
     try {
+      const attached = request.stream || request.interactive;
       child = Bun.spawn(request.command, {
         env: { ...process.env, ...request.env },
-        stdin: request.stdin === undefined ? "ignore" : new Blob([request.stdin]),
-        stdout: request.stream ? "inherit" : "pipe",
-        stderr: request.stream ? "inherit" : "pipe",
+        stdin: request.interactive
+          ? "inherit"
+          : request.stdin === undefined
+            ? "ignore"
+            : new Blob([request.stdin]),
+        stdout: attached ? "inherit" : "pipe",
+        stderr: attached ? "inherit" : "pipe",
       });
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);

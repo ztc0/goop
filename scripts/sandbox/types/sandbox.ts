@@ -37,7 +37,7 @@ export interface RunRequest {
   copy: string[];
   /** Sandbox paths downloaded into .temp/<os>/results/<run-id>/ after it. */
   fetch: string[];
-  /** PowerShell (Windows) or bash (Debian) command text. */
+  /** PowerShell (Windows) or bash (Debian) command text; empty on Debian for an interactive shell. */
   command: string;
 }
 
@@ -72,6 +72,8 @@ export interface ProcessRequest {
   stdin?: string;
   /** Stream stdout and stderr to the terminal instead of capturing them. */
   stream?: boolean;
+  /** Attach stdin, stdout and stderr to the user's terminal, for an interactive program. */
+  interactive?: boolean;
 }
 
 export interface ProcessResult {
@@ -91,6 +93,8 @@ export interface ExecOptions {
   env?: Record<string, string>;
   /** Stream the output to the terminal instead of capturing it. */
   stream?: boolean;
+  /** Run with `-it`, attached to the user's terminal. */
+  interactive?: boolean;
 }
 
 /** The container commands the sandboxes need, whatever the engine (S4). */
@@ -169,4 +173,6 @@ export interface SandboxDeps {
   random: RandomSource;
   /** Aborted on Ctrl+C, so the services still clean up. */
   signal: AbortSignal;
+  /** stdin and stdout are a terminal, which the Debian shell needs. */
+  terminal: boolean;
 }

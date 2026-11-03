@@ -33,18 +33,24 @@ export function isSystemdUp(output: string): boolean {
 }
 
 /**
- * The user's command: bash as goop in the copy folder. `podman exec` opens no login session,
- * so the runtime dir and bus of goop's lingering user manager are set by hand for `systemctl --user`.
+ * As goop in the copy folder. `podman exec` opens no login session, so the runtime dir and
+ * bus of goop's lingering user manager are set by hand for `systemctl --user`.
  */
-export function userCommand(command: string): { command: string[]; options: ExecOptions } {
+function userOptions(): ExecOptions {
   const runtime = `/run/user/${DEBIAN_UID}`;
   return {
-    command: ["bash", "-lc", command],
-    options: {
-      user: DEBIAN_USER,
-      workdir: DEBIAN_WORKDIR,
-      env: { XDG_RUNTIME_DIR: runtime, DBUS_SESSION_BUS_ADDRESS: `unix:path=${runtime}/bus` },
-      stream: true,
-    },
+    user: DEBIAN_USER,
+    workdir: DEBIAN_WORKDIR,
+    env: { XDG_RUNTIME_DIR: runtime, DBUS_SESSION_BUS_ADDRESS: `unix:path=${runtime}/bus` },
   };
+}
+
+/** The user's command: `bash -lc` as goop, its output streamed to the terminal. */
+export function userCommand(command: string): { command: string[]; options: ExecOptions } {
+  return { command: ["bash", "-lc", command], options: { ...userOptions(), stream: true } };
+}
+
+/** The interactive shell of `run debian` without a command: a bash login shell as goop. */
+export function userShell(): { command: string[]; options: ExecOptions } {
+  return { command: ["bash", "-l"], options: { ...userOptions(), interactive: true } };
 }
