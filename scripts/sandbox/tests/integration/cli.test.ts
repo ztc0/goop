@@ -876,7 +876,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts debian (S2)", () => {
       ].join("\n"),
     );
     expect(result.stderr).toBe(
-      `Could not remove ${name}: Error: container is stuck. Remove it by hand: bun scripts/dev-env/run.ts podman --root .local/containers/storage --runroot .temp/containers/run rm -f ${name}\n`,
+      `Could not remove ${name}: Error: container is stuck. Remove it by hand: bun scripts/dev-env/run.ts podman --root ${join(root, ".local", "containers", "storage")} --runroot ${join(root, ".temp", "containers", "run")} rm -f ${name}\n`,
     );
     expect(podman.at(-1)).toEqual(["rm", "--force", "--time", "10", name]);
   });
@@ -887,7 +887,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts debian (S2)", () => {
     const { name } = debianRun(podmanCalls());
     expect(result.exitCode).toBe(3);
     expect(result.stderr).toBe(
-      `Could not remove ${name}: Error: container is stuck. Remove it by hand: bun scripts/dev-env/run.ts podman --root .local/containers/storage --runroot .temp/containers/run rm -f ${name}\n`,
+      `Could not remove ${name}: Error: container is stuck. Remove it by hand: bun scripts/dev-env/run.ts podman --root ${join(root, ".local", "containers", "storage")} --runroot ${join(root, ".temp", "containers", "run")} rm -f ${name}\n`,
     );
   });
 
