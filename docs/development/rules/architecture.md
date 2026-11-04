@@ -23,9 +23,16 @@ Inside a feature, create only the layers it needs, when it needs them:
 - Used by two or more features: it moves to `src/shared/`.
 - Tests that span several features live in the root `tests/integration/` or `tests/e2e/`.
 
+### Shared modules
+
+- `src/shared/` is a library of modules, each named for what it does: `keys`, `keystore`, `storage`, `native`, `dev`, `brand`.
+- Each module has only the layers it needs (the table above) and its own `index.ts` as its only public entry.
+- Features and other modules import a module only through `@/shared/<module>`, never its internals; modules never import each other in a cycle.
+- There is no `src/shared/index.ts`.
+
 ## Imports
 
-- Use the `@/` alias for imports from `src/`: `import { devLayout } from "@/shared/model/dev-layout"`.
+- Use the `@/` alias for imports from `src/`: `import { devLayout } from "@/shared/dev"`.
 - Another feature is imported only through its `index.ts`: `@/offers`, never `@/offers/model/dedupe`.
 - Inside a feature, relative imports are fine.
 
