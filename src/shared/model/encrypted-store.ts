@@ -79,6 +79,17 @@ export function checkStoreKey(key: Uint8Array): void {
   }
 }
 
+/**
+ * Whether sqlite3mc took the cipher. `sqlite3mc_cipher_index` gives -1 for an unknown name, and
+ * `sqlite3mc_config` then only reads the current cipher instead of failing, so the index and the
+ * value it reports are both checked (`sqlite3mc_config` in sqlite3mc 2.6.1).
+ */
+export function checkCipher(name: string, index: number, configured: number): void {
+  if (index < 1 || configured !== index) {
+    throw new StoreError("open", "error", `the ${name} cipher is not available`);
+  }
+}
+
 export function checkParameterCount(expected: number, given: number): void {
   if (expected !== given) {
     throw new StoreError(

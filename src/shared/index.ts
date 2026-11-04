@@ -31,6 +31,7 @@ export type {
   EncryptedStoreEngine,
   StoreRow,
   StoreValue,
+  SyncWork,
 } from "./types/encrypted-store";
 export type { Bytes, DataKey, EnvelopeKind } from "./types/key-envelope";
 export type {

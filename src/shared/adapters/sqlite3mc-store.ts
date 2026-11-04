@@ -4,6 +4,7 @@
 import { type Pointer, ptr, toArrayBuffer } from "bun:ffi";
 import {
   bindingOf,
+  checkCipher,
   checkParameterCount,
   checkStoreKey,
   integerValue,
@@ -42,6 +43,12 @@ export interface Sqlite3mcOptions {
 
 const cstr = (text: string) => Buffer.from(`${text}\0`, "utf8");
 
+/** A thenable result: its later work would run after the transaction ended. */
+const isThenable = (value: unknown) =>
+  (typeof value === "object" || typeof value === "function") &&
+  value !== null &&
+  typeof (value as { then?: unknown }).then === "function";
+
 function readRow(native: Sqlite3mcNative, stmt: Pointer): StoreRow {
   const row: StoreRow = {};
   const count: number = native.column_count(stmt);
@@ -61,7 +68,13 @@ function readRow(native: Sqlite3mcNative, stmt: Pointer): StoreRow {
       if (type === COLUMN.blob) value = bytes ?? new Uint8Array(0);
       else value = bytes ? new TextDecoder().decode(bytes) : "";
     }
-    row[name] = value;
+    // Defined, not assigned: `row["__proto__"] = 1` would hit the prototype setter instead.
+    Object.defineProperty(row, name, {
+      value,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
   }
   return row;
 }
@@ -126,9 +139,8 @@ function openStore(native: Sqlite3mcNative, path: string, key: DataKey): Encrypt
   let ready = false;
   try {
     if (opened !== SQLITE_OK) throw new StoreError("open", resultCodeName(opened));
-    if (native.mc_config(db, cstr("cipher"), native.mc_cipher_index(cstr(CIPHER))) < 1) {
-      throw new StoreError("open", "error", `the ${CIPHER} cipher is not available`);
-    }
+    const cipher: number = native.mc_cipher_index(cstr(CIPHER));
+    checkCipher(CIPHER, cipher, native.mc_config(db, cstr("cipher"), cipher));
     const keyed: number = native.key(db, key, key.length);
     if (keyed !== SQLITE_OK) throw new StoreError("set the key", resultCodeName(keyed));
     // A wrong key is only noticed on the first read (T10 finding 6): prove it now.
@@ -140,6 +152,11 @@ function openStore(native: Sqlite3mcNative, path: string, key: DataKey): Encrypt
       }
       throw error;
     }
+    // sqlite3mc does not encrypt temporary files: temporary tables, sort data and transient
+    // databases (header comment of sqlite3mc_amalgamation.c 2.6.1), and its `encrypt_temp_db`
+    // covers only the temporary database. So they stay in memory, set once the key is proven and
+    // before any caller's statement.
+    execute(native, db, "PRAGMA temp_store = MEMORY", []);
     ready = true;
   } finally {
     // open_v2 gives a handle even when it fails; it is closed on every failed path.
@@ -170,8 +187,9 @@ function openStore(native: Sqlite3mcNative, path: string, key: DataKey): Encrypt
       inTransaction = true;
       try {
         const result = work();
-        if (result instanceof Promise) {
-          result.catch(() => {});
+        if (isThenable(result)) {
+          // A rejected promise would be unhandled; any other thenable is never called.
+          if (result instanceof Promise) result.catch(() => {});
           throw new StoreError("commit", "async", "the transaction work must be synchronous");
         }
         run("COMMIT");
