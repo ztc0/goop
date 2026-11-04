@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>goop TUI · design system</title>
 <style>
-  /* Derived from the approved artboards (design/tui-main/04, 05, 06) and src/shared/model/logo.ts.
+  /* Derived from the approved artboards (design/tui-main/04, 05, 06) and src/shared/brand/model/logo.ts.
      Component CSS is copied from them; board-only rules reuse their tokens and spacing. */
   :root {
     --background: #14110f; --background-panel: #1b1714; --background-element: #251e19;
@@ -237,7 +237,7 @@
 <main class="board" aria-label="goop TUI design system">
   <header class="intro">
     <h1>goop · TUI design system</h1>
-    <p>Derived from the approved artboards design/tui-main/04, 05, 06, the full screens M2-M14, the command palette and src/shared/model/logo.ts. The terminal chooses the font: one monospace cell grid.</p>
+    <p>Derived from the approved artboards design/tui-main/04, 05, 06, the full screens M2-M14, the command palette and src/shared/brand/model/logo.ts. The terminal chooses the font: one monospace cell grid.</p>
   </header>
 
   <section class="block" aria-label="Color tokens">
@@ -260,7 +260,7 @@
       <div class="sw"><i style="background: var(--border-active)"></i><b>--border-active</b><span>#ff7a2e · chat scrollbar thumb</span></div>
       <div class="sw"><i style="background: var(--border-subtle)"></i><b>--border-subtle</b><span>#2a231f · separators, status line edge</span></div>
     </div>
-    <h2>Logo palette · src/shared/model/logo.ts</h2>
+    <h2>Logo palette · src/shared/brand/model/logo.ts</h2>
     <div class="swatches">
       <div class="sw"><i style="background: #ff5f7a"></i><b>pink</b><span>#ff5f7a · = --error</span></div>
       <div class="sw"><i style="background: #ff7a2e"></i><b>orange</b><span>#ff7a2e · = --primary</span></div>
@@ -499,7 +499,7 @@
   </section>
 </main>
 <script>
-  // The implemented logo grid (src/shared/model/logo.ts), 24x29.
+  // The implemented logo grid (src/shared/brand/model/logo.ts), 24x29.
   const FLAME = ["........................","........................","............Y...........","...........YYY..........","...........YYY..........","...........YYYY.........","..........YYYYYY........","..........OOOOOOO.......","..........OOOOOOOO......","..........OOOOOOOO......",".........OOOOOOOOOO.....",".........OOOOOOOOOOO....","......O..OOOOOOOOOOO....",".....OOO.OOOOOOOOOOOO...","....OOOO.OOOOOOOOOOOO...","....OOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...OOOOOOOOOOOOOOOOOO...","...PPPPPPPPPPPPPPPPPP...","....PPPPPPPPPPPPPPPP....","....PPPPPPPPPPPPPPPP....",".....PPPPPPPPPPPPPP.....",".....PPPPPPPPPPPPP......",".......PPPPPPPPPP.......",".........PPPPPP.........","........................"];
   const C = { O: "#ff7a2e", Y: "#ffc24a", P: "#ff5f7a", W: "#fffaf3", K: "#1a1412" };
   const grid = FLAME.map((row) => [...row]);
