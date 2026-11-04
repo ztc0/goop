@@ -13,7 +13,7 @@ Branch `feat/storage` from `dev`. Security code: test-first, native review on ev
 - **S6.** The OS envelope on Windows: DPAPI in user scope through `bun:ffi`, with `CRYPTPROTECT_UI_FORBIDDEN` and the entropy `goop-dek-v1`; the output buffer is copied, zeroed and freed (ADR 0002). A DPAPI failure (`0x5` or `0x8009000b`) is retried with backoff and never treated as a lost key.
 - **S7.** The encrypted store: features depend on an interface in `src/shared/types/`; one adapter implements it with sqlite3mc through `bun:ffi`. The key is set with `sqlite3_key` or `PRAGMA hexkey`, never as text in SQL, and verified with a read of `sqlite_master` (ADR 0001).
 - **S8.** Native libraries (sqlite3mc, sqlite-vec) are checked against sha256 values pinned at build time before every load; a mismatch stops goop with a clear error (ADR 0001).
-- **S9.** Key lifecycle: setup creates the DEK and its envelopes; start opens the OS or passphrase envelope; recovery opens the recovery envelope and writes a new OS envelope. goop never creates a new DEK over existing data.
+- **S9.** Key lifecycle: setup creates the DEK and its envelopes; start opens the OS or passphrase envelope; recovery opens the recovery envelope and writes a new OS envelope, or a new passphrase envelope when the OS envelope is unavailable (S4). goop never creates a new DEK over existing data.
 - **S10.** Out of scope here: the DLP filter (T24), the outbound allowlist, purge and retention (T29), and the setup screen W5 (T25).
 
 ## Tasks
