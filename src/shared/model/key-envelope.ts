@@ -69,6 +69,12 @@ export function formatRecoveryKey(bits: Bytes): string {
 /** The 160 bits of a typed recovery key. Spaces and hyphens are ignored. */
 export function parseRecoveryKey(typed: string): Bytes {
   const chars = [...typed.replace(/[\s-]/g, "")];
+  // Checked before parsing: each BigInt shift copies the value, so a long paste would be slow.
+  if (chars.length !== RECOVERY_CHARS) {
+    throw new KeyInputError(
+      `The recovery key has ${chars.length} characters; it needs ${RECOVERY_CHARS}.`,
+    );
+  }
   let number = 0n;
   for (const char of chars) {
     const value = TYPED_VALUES.get(char);
@@ -76,11 +82,6 @@ export function parseRecoveryKey(typed: string): Bytes {
       throw new KeyInputError(`The recovery key contains "${char}", which it never uses.`);
     }
     number = (number << 5n) | BigInt(value);
-  }
-  if (chars.length !== RECOVERY_CHARS) {
-    throw new KeyInputError(
-      `The recovery key has ${chars.length} characters; it needs ${RECOVERY_CHARS}.`,
-    );
   }
   const bits = new Uint8Array(RECOVERY_BYTES);
   for (let index = 0; index < RECOVERY_BYTES; index++) {
