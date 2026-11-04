@@ -1,11 +1,16 @@
 import type { Bytes, DataKey } from "./key-envelope";
 
-/** Why this machine cannot use its OS key store. The caller then uses the passphrase envelope (S4). */
+/**
+ * Why this machine cannot use its OS key store. The caller then uses the passphrase envelope
+ * (S4), except for `busy`: the key store works but did not answer for a while (DPAPI after
+ * another user's logon), so the caller tries again later.
+ */
 export type OsEnvelopeUnavailableReason =
   | "unsupported-platform"
   | "missing-tool"
   | "old-version"
-  | "no-tpm2";
+  | "no-tpm2"
+  | "busy";
 
 export interface OsEnvelopeUnavailable {
   available: false;
