@@ -197,6 +197,11 @@ describe("recovery key text", () => {
         "The recovery key has 33 characters; it needs 32.",
       ],
       [
+        // The length is checked first, so a long paste is refused before any parsing.
+        "u".repeat(40),
+        "The recovery key has 40 characters; it needs 32.",
+      ],
+      [
         "0123-4567-89AB-CDEF-GHJK-MNPQ-RSTu-WXYZ",
         'The recovery key contains "u", which it never uses.',
       ],
