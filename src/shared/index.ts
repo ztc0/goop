@@ -1,6 +1,7 @@
 // Shared: building blocks used by two or more features.
 
-// The data key and its envelopes (odd/tasks/storage.md, S1-S5). Sealing is exported only
+export { dpapiEnvelope } from "./adapters/dpapi-envelope";
+// The data key and its envelopes (odd/tasks/storage.md, S1-S6). Sealing is exported only
 // with fresh randomness; the fixed-input seals stay inside the model for its tests. The OS
 // envelopes share one interface, `OsKeyEnvelope`; T6 picks one or the passphrase.
 export {
