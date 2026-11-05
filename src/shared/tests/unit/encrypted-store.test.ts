@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   bindingOf,
+  checkCipher,
   checkParameterCount,
   checkStoreKey,
   integerValue,
@@ -57,6 +58,24 @@ describe("store key", () => {
       expect(error).toBeInstanceOf(StoreError);
       expect(error.message).toBe("The encrypted store could not open: the key is not 32 bytes.");
       expect(error.message).not.toContain("ab");
+    }
+  });
+});
+
+describe("store cipher", () => {
+  test("the cipher counts as set only when it is known and the setting took it", () => {
+    expect(() => checkCipher("chacha20", 4, 4)).not.toThrow();
+    // An unknown name is index -1, and sqlite3mc_config then only reads the current cipher.
+    for (const [index, configured] of [
+      [-1, 4],
+      [4, -1],
+      [4, 2],
+    ] as const) {
+      const error = thrown(() => checkCipher("chacha20", index, configured));
+      expect(error).toBeInstanceOf(StoreError);
+      expect(error.message).toBe(
+        "The encrypted store could not open: the chacha20 cipher is not available.",
+      );
     }
   });
 });

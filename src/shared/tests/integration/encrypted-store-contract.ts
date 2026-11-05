@@ -114,6 +114,66 @@ export function encryptedStoreContract(engine: () => EncryptedStoreEngine) {
     expect(store.query("SELECT body FROM notes")).toEqual([{ body: "kept" }]);
   });
 
+  test("an async transaction is refused and rolled back", () => {
+    const store = openStore(newDataKey());
+    store.run("CREATE TABLE notes (body TEXT)");
+
+    const error = thrown(() =>
+      // @ts-expect-error the work must be synchronous
+      store.transaction(async () => {
+        store.run("INSERT INTO notes VALUES (?)", ["lost"]);
+      }),
+    );
+
+    expect(error).toBeInstanceOf(StoreError);
+    expect((error as StoreError).code).toBe("async");
+    expect(error.message).toBe(
+      "The encrypted store could not commit: the transaction work must be synchronous.",
+    );
+    expect(store.query("SELECT count(*) AS n FROM notes")).toEqual([{ n: 0 }]);
+  });
+
+  test("a transaction whose work returns a thenable is refused and rolled back", () => {
+    const store = openStore(newDataKey());
+    store.run("CREATE TABLE notes (body TEXT)");
+    let thenCalls = 0;
+
+    const error = thrown(() =>
+      // @ts-expect-error a thenable is not a synchronous result
+      store.transaction(() => {
+        store.run("INSERT INTO notes VALUES (?)", ["lost"]);
+        return {
+          // biome-ignore lint/suspicious/noThenProperty: the thenable is what this test refuses.
+          then() {
+            thenCalls++;
+          },
+        };
+      }),
+    );
+
+    expect(error).toBeInstanceOf(StoreError);
+    expect((error as StoreError).code).toBe("async");
+    expect(store.query("SELECT count(*) AS n FROM notes")).toEqual([{ n: 0 }]);
+    expect(thenCalls).toBe(0);
+  });
+
+  test("any column name is an own property of the row, __proto__ and constructor included", () => {
+    const store = openStore(newDataKey());
+
+    const [row] = store.query('SELECT 1 AS "__proto__", 2 AS "constructor", 3 AS "id"');
+
+    expect(row).toBeDefined();
+    const read = row as Record<string, unknown>;
+    expect(Object.entries(read)).toEqual([
+      ["__proto__", 1],
+      ["constructor", 2],
+      ["id", 3],
+    ]);
+    expect(Object.hasOwn(read, "__proto__")).toBe(true);
+    expect(read.__proto__).toBe(1);
+    expect(Object.getPrototypeOf(read)).toBe(Object.prototype);
+  });
+
   test("parameters are stored literally, quotes and SQL included", () => {
     const store = openStore(newDataKey());
     store.run("CREATE TABLE notes (body TEXT)");
