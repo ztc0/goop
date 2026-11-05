@@ -10,7 +10,10 @@ export {
   sealWithPassphrase,
   sealWithRecoveryKey,
 } from "./adapters/random-keys";
+// The encrypted store (S7): features depend on `EncryptedStore`; sqlite3mc is one engine.
+export { type Sqlite3mcOptions, sqlite3mcEngine } from "./adapters/sqlite3mc-store";
 export { systemdCredsEnvelope } from "./adapters/systemd-creds-envelope";
+export { StoreError, StoreLibraryError, StoreOpenError } from "./model/encrypted-store";
 export {
   EnvelopeFormatError,
   EnvelopeOpenError,
@@ -23,6 +26,12 @@ export {
   OsEnvelopeSealError,
   OsEnvelopeUnavailableError,
 } from "./model/os-key-envelope";
+export type {
+  EncryptedStore,
+  EncryptedStoreEngine,
+  StoreRow,
+  StoreValue,
+} from "./types/encrypted-store";
 export type { Bytes, DataKey, EnvelopeKind } from "./types/key-envelope";
 export type {
   OsEnvelopeAvailability,
