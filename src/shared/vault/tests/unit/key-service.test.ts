@@ -135,8 +135,9 @@ function fakeVault() {
         data.set(name, new Uint8Array(0));
         throw new StoreError("open", "io-error");
       }
-      if (existing && hex(existing) !== hex(key)) throw new StoreOpenError();
-      if (!existing) data.set(name, new Uint8Array(key));
+      // Like SQLite, an empty file is a new database: it takes the key it is first opened with.
+      if (existing?.length && hex(existing) !== hex(key)) throw new StoreOpenError();
+      if (!existing?.length) data.set(name, new Uint8Array(key));
       const record = { key: hex(key), closed: false };
       opened.push(record);
       const store: EncryptedStore = {
@@ -342,6 +343,21 @@ describe("setup", () => {
     expect(error).toBeInstanceOf(VaultFileError);
     expect(error.message).toBe("The vault file data-key.recovery already exists.");
     expect(h.vault.snapshot()).toEqual({ [RECOVERY]: "09" });
+  });
+
+  test("a store that appears during setup is never opened nor removed", async () => {
+    const h = harness();
+    h.vault.hooks.beforeWrite = (name) => {
+      // Restored from a backup while setup writes the recovery envelope.
+      if (name === RECOVERY) h.vault.data.set(STORE, new Uint8Array([7, 7]));
+    };
+
+    const error = await rejection(h.service().setup({}));
+
+    expect(error).toBeInstanceOf(VaultFileError);
+    expect(error.message).toBe("The vault file goop.db already exists.");
+    expect(h.vault.snapshot()).toEqual({ [STORE]: "0707" });
+    expect(h.vault.opened).toEqual([]);
   });
 });
 
