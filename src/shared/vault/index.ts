@@ -13,6 +13,12 @@ export {
   vaultState,
 } from "./model/vault-state";
 export * from "./native";
+export {
+  type KeyService,
+  type KeyServiceOptions,
+  keyService,
+  type SetupResult,
+} from "./services/key-service";
 export * from "./storage";
 export type {
   VaultFileName,
