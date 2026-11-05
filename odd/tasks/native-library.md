@@ -27,10 +27,11 @@ Branch from `refactor/remove-native`. Test-first, native review on high-risk uni
 | T6  | S6     | `bun run build` embeds the library and manifest; goop extracts to `<GOOP_HOME>/lib/native/<sha256>/`       | inline | -      |
 | T7  | S9     | CI job: run the script, enforce pins, upload and attest; test jobs use the artifact                        | inline | -      |
 
-Open question, for the maintainer: the script's folder name (S8 keeps it independent of `scripts/sandbox/`). Proposed: `scripts/sqlite3mc/`, named for what it builds.
+The script lives in `scripts/native-libs/`, one subfolder per library (`sqlite3mc/` now, `sqlite-vec/` later), each with its pins and recipe (L4).
 
 ## Log
 
 - **L1.** The maintainer (verbatim): `y si usamos un srcipts para descargar y compilar ya que eso se genera simpre y lo hacemos en .locla del repo y el ./src/shared/vault/ compuruve la firma y el uso del binario. la preguta como lo va a usar el binario`; then `ok eso esta bien pero el sandbox como hacemos esto para elo test vm`; then `dale` to writing this plan before any code.
 - **L2.** Context: `scripts/native/` was removed in `821ce02` (`odd/tasks/storage.md` L39). Kept findings: four builds gave `38380e83569117219e66b18175ff937a5ec738de9411444a0819c6327b55593f`; sqlite3mc v2.6.1 signs `SHA256SUMS` with Cosign keyless, identity `https://github.com/utelle/SQLite3MultipleCiphers/.github/workflows/build-reusable.yml@refs/heads/main`, issuer `https://token.actions.githubusercontent.com`; Rekor is blocked from the maintainer's host, so the full Cosign check first runs in CI. The maintainer's own research proposed a `src/shared/database/` module with the binary under `native/`; analysis: the module and single-entry rules already hold in `vault/` (`storage/`, `native/`), but a compiled binary must not live in `src/` or git (unreviewable bytes, breaks the CI chain of trust, one per platform), and sqlite3mc replaces SQLite rather than loading as an extension.
 - **L3.** Testing rule (`docs/development/rules/testing.md`, "Real systems"; the maintainer: `no me dice tu que no se puede hacer en windows`): the native tests must run in every sandbox and in CI, never skip there.
+- **L4.** The maintainer asked why `scripts/sqlite3mc/` (`porque este nombre sqlite3mc`); because sqlite-vec is the next native library (ADR 0001), the agent proposed `scripts/native-libs/` with one subfolder per library, and the maintainer approved it and the plan (`dale`). Branch `feat/native-libs` from `refactor/remove-native`.
