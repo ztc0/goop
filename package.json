@@ -21,6 +21,7 @@
     "sandbox:install": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts install",
     "sandbox:run": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts run",
     "sandbox:status": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts status",
+    "native:build": "bun scripts/dev-env/run.ts bun scripts/native/build.ts",
     "prepare": "husky"
   },
   "devDependencies": {

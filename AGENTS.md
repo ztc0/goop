@@ -8,20 +8,21 @@ This file is the entry point. It stays short on purpose: read the detailed rule 
 
 All scripts run inside the repo-local environment (`scripts/dev-env/run.ts`).
 
-| Command                   | What it does                                                                                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `bun install`             | Install dependencies (cache in `.local/cache/bun`)                                                                                   |
-| `bun run dev`             | Run goop from source and restart on file changes                                                                                     |
-| `bun run test`            | Run the test suite                                                                                                                   |
-| `bun run typecheck`       | TypeScript check, no output files                                                                                                    |
-| `bun run lint`            | Biome lint and format check                                                                                                          |
-| `bun run format`          | Apply Biome formatting                                                                                                               |
-| `bun run build`           | Compile the single `goop` executable into `dist/`                                                                                    |
-| `bun run clean`           | Delete `.temp/` (never `.local/`)                                                                                                    |
-| `bun run clean:local`     | Delete `.local/` after an interactive confirmation                                                                                   |
-| `bun run sandbox:install` | Install a sandbox once (`windows`: Windows, about 25 min; `debian`: a systemd container)                                             |
-| `bun run sandbox:run`     | Run a command in a throwaway sandbox (`windows\|debian <command>`, `--copy`, `--fetch`; `--` optional; `debian` alone opens a shell) |
-| `bun run sandbox:status`  | Show the Windows base or the Debian image, and the running sandboxes (`windows\|debian`)                                             |
+| Command                   | What it does                                                                                                                                        |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun install`             | Install dependencies (cache in `.local/cache/bun`)                                                                                                  |
+| `bun run dev`             | Run goop from source and restart on file changes                                                                                                    |
+| `bun run test`            | Run the test suite                                                                                                                                  |
+| `bun run typecheck`       | TypeScript check, no output files                                                                                                                   |
+| `bun run lint`            | Biome lint and format check                                                                                                                         |
+| `bun run format`          | Apply Biome formatting                                                                                                                              |
+| `bun run build`           | Compile the single `goop` executable into `dist/`                                                                                                   |
+| `bun run native:build`    | Build `libsqlite3mc.so` for linux-x64 in a pinned Debian container into `.local/build/native/` with its sha256 manifest (`--engine podman\|docker`) |
+| `bun run clean`           | Delete `.temp/` (never `.local/`)                                                                                                                   |
+| `bun run clean:local`     | Delete `.local/` after an interactive confirmation                                                                                                  |
+| `bun run sandbox:install` | Install a sandbox once (`windows`: Windows, about 25 min; `debian`: a systemd container)                                                            |
+| `bun run sandbox:run`     | Run a command in a throwaway sandbox (`windows\|debian <command>`, `--copy`, `--fetch`; `--` optional; `debian` alone opens a shell)                |
+| `bun run sandbox:status`  | Show the Windows base or the Debian image, and the running sandboxes (`windows\|debian`)                                                            |
 
 ## Golden rules
 
