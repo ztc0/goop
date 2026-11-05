@@ -4,6 +4,7 @@ import {
   classifyDpapiError,
   DPAPI_ENTROPY,
   DPAPI_RETRY_WAITS_MS,
+  viewOrFree,
 } from "@/shared/model/dpapi";
 
 describe("DPAPI settings", () => {
@@ -42,5 +43,34 @@ describe("DPAPI error codes", () => {
     ["ERROR_NOT_ENOUGH_MEMORY", 0x8],
   ])("%s on seal is a seal error", (_, code) => {
     expect(classifyDpapiError("protect", code)).toBe("seal-failed");
+  });
+});
+
+describe("viewOrFree", () => {
+  test("returns the view and leaves the native buffer to its caller", () => {
+    let freed = 0;
+    const view = viewOrFree(
+      () => new Uint8Array([1, 2]),
+      () => {
+        freed++;
+      },
+    );
+    expect(view).toEqual(new Uint8Array([1, 2]));
+    expect(freed).toBe(0);
+  });
+
+  test("frees the native buffer and keeps the error when the view cannot be built", () => {
+    let freed = 0;
+    expect(() =>
+      viewOrFree(
+        () => {
+          throw new RangeError("no view");
+        },
+        () => {
+          freed++;
+        },
+      ),
+    ).toThrow("no view");
+    expect(freed).toBe(1);
   });
 });

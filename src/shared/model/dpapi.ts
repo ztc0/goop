@@ -32,3 +32,16 @@ export function classifyDpapiError(action: DpapiAction, code: number): DpapiFail
 export function hexCode(code: number): string {
   return `0x${(code >>> 0).toString(16).padStart(8, "0")}`;
 }
+
+/**
+ * The view over a native output buffer, or the buffer freed when the view cannot be built: once
+ * DPAPI succeeds, its buffer (the plaintext data key on unprotect) is freed on every path (S6).
+ */
+export function viewOrFree(view: () => Uint8Array, free: () => void): Uint8Array {
+  try {
+    return view();
+  } catch (error) {
+    free();
+    throw error;
+  }
+}

@@ -1,6 +1,7 @@
 // The real DPAPI calls through `bun:ffi` (S6). The libraries load on the first call, never at
 // import, so importing `@/shared` on Linux touches no Windows symbol.
 import { dlopen, type Pointer, ptr, read, toArrayBuffer } from "bun:ffi";
+import { viewOrFree } from "../model/dpapi";
 import type { DpapiNative } from "../types/dpapi";
 import type { Bytes } from "../types/key-envelope";
 
@@ -45,7 +46,10 @@ export const dpapiFfi: DpapiNative = {
     const length = read.u32(ptr(out), 0);
     const data = read.ptr(ptr(out), 8) as Pointer;
     const free = () => void library?.LocalFree(data);
-    const bytes = length > 0 ? new Uint8Array(toArrayBuffer(data, 0, length)) : new Uint8Array(0);
+    const bytes = viewOrFree(
+      () => (length > 0 ? new Uint8Array(toArrayBuffer(data, 0, length)) : new Uint8Array(0)),
+      free,
+    );
     return { ok: true, output: { bytes, free } };
   },
 };
