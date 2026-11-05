@@ -87,6 +87,9 @@ describe("binding parameters", () => {
     expect(bindingOf(-0.5)).toEqual({ kind: "double", value: -0.5 });
     expect(bindingOf(2 ** 60)).toEqual({ kind: "double", value: 2 ** 60 });
     expect(bindingOf(2n ** 60n)).toEqual({ kind: "int64", value: 2n ** 60n });
+    // Both ends of the signed 64-bit range fit.
+    expect(bindingOf(2n ** 63n - 1n)).toEqual({ kind: "int64", value: 2n ** 63n - 1n });
+    expect(bindingOf(-(2n ** 63n))).toEqual({ kind: "int64", value: -(2n ** 63n) });
     expect(bindingOf("it's")).toEqual({ kind: "text", value: "it's" });
     const bytes = new Uint8Array([1, 2]);
     expect(bindingOf(bytes)).toEqual({ kind: "blob", value: bytes });
@@ -97,6 +100,7 @@ describe("binding parameters", () => {
       [Number.NaN, "parameter 1 is not a finite number"],
       [Number.POSITIVE_INFINITY, "parameter 1 is not a finite number"],
       [2n ** 63n, "parameter 1 does not fit in 64 bits"],
+      [-(2n ** 63n) - 1n, "parameter 1 does not fit in 64 bits"],
       [true, "parameter 1 has the unsupported type boolean"],
       [undefined, "parameter 1 has the unsupported type undefined"],
       [{ secret: "x" }, "parameter 1 has the unsupported type object"],
@@ -122,5 +126,10 @@ describe("reading integers", () => {
     expect(integerValue(7)).toBe(7);
     expect(integerValue(2n ** 60n)).toBe(2n ** 60n);
     expect(integerValue(-(2n ** 60n))).toBe(-(2n ** 60n));
+    // The boundary: the largest safe integers are numbers, one step past them is a bigint.
+    expect(integerValue(BigInt(Number.MAX_SAFE_INTEGER))).toBe(Number.MAX_SAFE_INTEGER);
+    expect(integerValue(BigInt(Number.MIN_SAFE_INTEGER))).toBe(Number.MIN_SAFE_INTEGER);
+    expect(integerValue(BigInt(Number.MAX_SAFE_INTEGER) + 1n)).toBe(2n ** 53n);
+    expect(integerValue(BigInt(Number.MIN_SAFE_INTEGER) - 1n)).toBe(-(2n ** 53n));
   });
 });
