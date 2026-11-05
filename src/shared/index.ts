@@ -1,6 +1,11 @@
 // Shared: building blocks used by two or more features.
 
 export { dpapiEnvelope } from "./adapters/dpapi-envelope";
+// Native libraries (S8): the build's pinned sha256 is checked on a cached copy before every load.
+export {
+  type NativeLibraryCacheOptions,
+  nativeLibraryCache,
+} from "./adapters/native-library-cache";
 // The data key and its envelopes (odd/tasks/storage.md, S1-S6). Sealing is exported only
 // with fresh randomness; the fixed-input seals stay inside the model for its tests. The OS
 // envelopes share one interface, `OsKeyEnvelope`; T6 picks one or the passphrase.
@@ -22,6 +27,13 @@ export {
   openRecoveryEnvelope,
 } from "./model/key-envelope";
 export {
+  NativeLibraryError,
+  NativeManifestError,
+  nativePlatform,
+  parseNativeManifest,
+  pinnedLibrary,
+} from "./model/native-library";
+export {
   OsEnvelopeOpenError,
   OsEnvelopeSealError,
   OsEnvelopeUnavailableError,
@@ -34,6 +46,13 @@ export type {
   SyncWork,
 } from "./types/encrypted-store";
 export type { Bytes, DataKey, EnvelopeKind } from "./types/key-envelope";
+export type {
+  NativeFiles,
+  NativeManifest,
+  NativePlatform,
+  PinnedFile,
+  PinnedLibrary,
+} from "./types/native-library";
 export type {
   OsEnvelopeAvailability,
   OsEnvelopeUnavailable,
