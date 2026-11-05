@@ -1,4 +1,4 @@
-import type { EngineName } from "../types/sandbox";
+import type { EngineName } from "../types/containers";
 
 export type EngineChoice = { engine: EngineName; warning?: string } | { error: string };
 

@@ -3,21 +3,24 @@ import {
   copyInArgs,
   copyOutArgs,
   execArgs,
-  forceRemoveArgs,
   imageSizeArgs,
-  installContainerArgs,
   listRunningArgs,
   logsArgs,
-  manualRemoveCommand,
-  overlayArgs,
+  type ProcessRunner,
   podmanEnvironment,
   podmanGlobalArgs,
   removeArgs,
+} from "../../shared/containers";
+import {
+  forceRemoveArgs,
+  installContainerArgs,
+  manualRemoveCommand,
+  overlayArgs,
   runContainerArgs,
   stopArgs,
   systemdContainerArgs,
 } from "../model/podman-args";
-import type { ContainerEngine, ProcessRunner, SandboxPaths } from "../types/sandbox";
+import type { ContainerEngine, SandboxPaths } from "../types/sandbox";
 
 /** Podman against the repo-local storage: every call carries the global flags (S3). */
 export function createPodmanEngine(runner: ProcessRunner, paths: SandboxPaths): ContainerEngine {

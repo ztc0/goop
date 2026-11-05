@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
+import type { ProcessRequest, ProcessResult, ProcessRunner } from "../../../shared/containers";
 import { sha256Hex } from "../../../shared/download";
 import { nodeFileStore } from "../../adapters/file-store";
 import { createGuestShell } from "../../adapters/guest-shell";
@@ -17,7 +18,7 @@ import { BUN_RELEASES, MAX_BUN_ZIP_BYTES, shasumsUrl } from "../../model/bun-rel
 import { sandboxPaths } from "../../model/paths";
 import { SUITE_PLANS, suiteCommand } from "../../model/suite";
 import { runSuite } from "../../services/suite";
-import type { ProcessRequest, ProcessResult, ProcessRunner, SuiteDeps } from "../../types/sandbox";
+import type { SuiteDeps } from "../../types/sandbox";
 import { describeOnLinuxHost } from "../linux-host";
 import { zipFixture } from "../zip-fixture";
 

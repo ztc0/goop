@@ -1,3 +1,11 @@
+import type {
+  EngineName,
+  ExecOptions,
+  Output,
+  ProcessResult,
+  ProcessRunner,
+} from "../../shared/containers";
+
 /** Where the sandbox keeps everything, all inside the repo (S3). */
 export interface SandboxPaths {
   root: string;
@@ -50,9 +58,6 @@ export interface RunRequest {
 /** The machine a command targets, the word right after the command (`run debian ...`). */
 export type SandboxOs = "windows" | "debian";
 
-/** The container engine that runs the sandbox, chosen with `--engine` or detected (S3). */
-export type EngineName = "podman" | "docker";
-
 /** What every command takes: the target and, optionally, the engine. */
 export interface Target {
   os: SandboxOs;
@@ -94,39 +99,6 @@ export interface SuitePlan {
 export interface OemFiles {
   installBat: string;
   setupPs1: string;
-}
-
-export interface ProcessRequest {
-  command: string[];
-  /** Added to the current environment. */
-  env?: Record<string, string>;
-  /** Text written to the child's stdin. */
-  stdin?: string;
-  /** Stream stdout and stderr to the terminal instead of capturing them. */
-  stream?: boolean;
-  /** Attach stdin, stdout and stderr to the user's terminal, for an interactive program. */
-  interactive?: boolean;
-}
-
-export interface ProcessResult {
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-}
-
-export interface ProcessRunner {
-  run(request: ProcessRequest): Promise<ProcessResult>;
-}
-
-/** How `exec` runs a command inside a container. */
-export interface ExecOptions {
-  user?: string;
-  workdir?: string;
-  env?: Record<string, string>;
-  /** Stream the output to the terminal instead of capturing it. */
-  stream?: boolean;
-  /** Run with `-it`, attached to the user's terminal. */
-  interactive?: boolean;
 }
 
 /** The container commands the sandboxes need, whatever the engine (S4). */
@@ -193,11 +165,6 @@ export interface Clock {
   now(): number;
   /** Resolves after the delay, or early when the signal aborts. */
   sleep(ms: number, signal: AbortSignal): Promise<void>;
-}
-
-export interface Output {
-  info(line: string): void;
-  error(line: string): void;
 }
 
 export interface RandomSource {
