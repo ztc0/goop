@@ -58,7 +58,7 @@ async function rejection(promise: Promise<unknown>): Promise<Error> {
 }
 
 describe.skipIf(missing)(
-  "key service end to end (skipped without libsqlite3mc.so under .local/build; run `bun run native:build`)",
+  "key service end to end (skipped without libsqlite3mc.so under .local/build/native/linux-x64)",
   () => {
     let root = "";
     let folder = "";

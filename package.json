@@ -22,7 +22,6 @@
     "sandbox:run": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts run",
     "sandbox:status": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts status",
     "sandbox:test": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts test",
-    "native:build": "bun scripts/dev-env/run.ts bun scripts/native/build.ts",
     "prepare": "husky"
   },
   "devDependencies": {
