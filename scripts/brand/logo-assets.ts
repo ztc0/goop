@@ -1,8 +1,8 @@
 // Regenerates assets/logo.svg and assets/favicon.svg from the logo pixel grid.
-// Run it after changing src/shared/model/logo.ts: bun scripts/brand/logo-assets.ts
+// Run it after changing src/shared/brand/model/logo.ts: bun scripts/brand/logo-assets.ts
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { logoGrid, logoSvg } from "@/shared/model/logo";
+import { logoGrid, logoSvg } from "@/shared/brand";
 import { repoRoot } from "../shared/repo-root";
 
 const assets = join(repoRoot(), "assets");
