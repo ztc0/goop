@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { sha256Hex } from "../../../shared/download";
 import {
   checkArchive,
   checkToolchain,
   MAX_ARCHIVE_BYTES,
-  sha256Hex,
   sqliteVersionOf,
 } from "../../model/checks";
 import { SQLITE3MC_ARCHIVE } from "../../model/inputs";

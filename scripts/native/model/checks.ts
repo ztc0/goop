@@ -1,19 +1,13 @@
+import { sha256Mismatch } from "../../shared/download";
 import type { PinnedArchive } from "../types/native-build";
 import { TOOLCHAIN } from "./inputs";
 
 /** The release archive is about 4 MB; anything far larger is refused while downloading. */
 export const MAX_ARCHIVE_BYTES = 16 * 1024 * 1024;
 
-export function sha256Hex(bytes: Uint8Array): string {
-  return new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
-}
-
 /** Undefined when the bytes have the pinned sha256, else the error to show. */
 export function checkArchive(archive: PinnedArchive, bytes: Uint8Array): string | undefined {
-  const actual = sha256Hex(bytes);
-  return actual === archive.sha256
-    ? undefined
-    : `sha256 mismatch for ${archive.name}: expected ${archive.sha256}, got ${actual}`;
+  return sha256Mismatch(archive.name, archive.sha256, bytes);
 }
 
 /** The first `#define SQLITE_VERSION "x.y.z"` of the amalgamation. */
