@@ -34,7 +34,7 @@ tokens or this file must be synced again.
 | `W7`      | `design/tui-onboarding/08-w7-preferences.html`  | Setup: preferences; `n` next step, skipped step              |
 | `W8`      | `design/tui-onboarding/09-w8-schedule.html`     | Setup: schedule; install disclosure block                    |
 | `W9`      | `design/tui-onboarding/10-w9-done.html`         | Setup: done; live state in zone 3                            |
-| `logo.ts` | `src/shared/model/logo.ts`                      | Logo palette and pixel grid                                  |
+| `logo.ts` | `src/shared/brand/model/logo.ts`                | Logo palette and pixel grid                                  |
 
 **Terminal:** one monospace cell grid; the app cannot choose the font, the terminal does. The CSS
 font stack in the artboards (`--mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo,

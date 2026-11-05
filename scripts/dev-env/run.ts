@@ -1,7 +1,7 @@
 // Runs a command inside the repo-local development environment (S25, S26):
 // goop, Bun, uv and Hugging Face write to .local/, temporary files go to .temp/.
 import { mkdirSync } from "node:fs";
-import { devEnvironment, devLayout, layoutDirectories } from "@/shared/model/dev-layout";
+import { devEnvironment, devLayout, layoutDirectories } from "@/shared/dev";
 import { repoRoot } from "../shared/repo-root";
 
 const command = process.argv.slice(2);
