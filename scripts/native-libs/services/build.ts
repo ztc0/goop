@@ -117,8 +117,34 @@ async function build(
   const checked = parseManifest(text);
   if ("error" in checked) return checked.error;
   const target = join(paths.output, recipe.platform, recipe.output.file);
-  files.makeDirectory(dirname(target));
-  files.replace(target, library);
-  files.replace(paths.manifest, new TextEncoder().encode(text));
-  return undefined;
+  return publish(deps, target, library, new TextEncoder().encode(text));
+}
+
+/**
+ * Writes the library, then the manifest. If the manifest cannot be written, the library goes back
+ * to what it was (or is removed), so a failed build leaves `.local/build/native/` unchanged.
+ */
+function publish(
+  { files, paths }: BuildDeps,
+  target: string,
+  library: Uint8Array,
+  manifest: Uint8Array,
+): string | undefined {
+  const failed = (path: string, error: unknown) =>
+    `Could not write ${relative(paths.root, path)} (${String(error)}).`;
+  const before = files.read(target);
+  try {
+    files.makeDirectory(dirname(target));
+    files.replace(target, library);
+  } catch (error) {
+    return failed(target, error);
+  }
+  try {
+    files.replace(paths.manifest, manifest);
+    return undefined;
+  } catch (error) {
+    if (before === undefined) files.remove(target);
+    else files.replace(target, before);
+    return failed(paths.manifest, error);
+  }
 }

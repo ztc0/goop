@@ -74,8 +74,14 @@ export class FakeFiles implements NativeLibsFiles {
     if (this.files.has(path)) throw new Error(`${path} exists`);
     this.files.set(path, mode === undefined ? { content } : { content, mode });
   }
+  /** Paths whose replacement fails, as a full disk or a read-only folder would. */
+  readonly failReplace = new Set<string>();
   replace(path: string, content: Uint8Array): void {
+    if (this.failReplace.has(path)) throw new Error(`cannot write ${path}`);
     this.files.set(path, { content });
+  }
+  remove(path: string): void {
+    this.files.delete(path);
   }
   /** Paths below a folder, sorted. */
   below(folder: string): string[] {

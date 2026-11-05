@@ -131,6 +131,34 @@ describeOnLinuxHost("buildLibrary", () => {
     ]);
   });
 
+  test("a manifest that cannot be written puts the old library back", async () => {
+    const h = harness();
+    const target = `${OUT}/${RECIPE.platform}/${RECIPE.output.file}`;
+    h.files.replace(target, bytes("old ELF"));
+    h.files.replace(`${OUT}/manifest.json`, bytes(manifestText(OTHER)));
+    h.files.failReplace.add(`${OUT}/manifest.json`);
+    expect(await failing(h)).toEqual([
+      `error: Could not write .local/build/native/manifest.json (Error: cannot write ${OUT}/manifest.json).`,
+    ]);
+  });
+
+  test("a manifest that cannot be written removes a library that was not there before", async () => {
+    const h = harness();
+    h.files.failReplace.add(`${OUT}/manifest.json`);
+    expect(await failing(h)).toHaveLength(1);
+    expect(h.files.below(OUT)).toEqual([]);
+  });
+
+  test("a library that cannot be written leaves everything as it was", async () => {
+    const h = harness();
+    const target = `${OUT}/${RECIPE.platform}/${RECIPE.output.file}`;
+    h.files.replace(`${OUT}/manifest.json`, bytes(manifestText(OTHER)));
+    h.files.failReplace.add(target);
+    expect(await failing(h)).toEqual([
+      `error: Could not write .local/build/native/${RECIPE.platform}/${RECIPE.output.file} (Error: cannot write ${target}).`,
+    ]);
+  });
+
   test("an invalid existing manifest is refused, not overwritten", async () => {
     const h = harness();
     h.files.replace(`${OUT}/manifest.json`, bytes('{"version":2}'));

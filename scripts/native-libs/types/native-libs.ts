@@ -109,6 +109,8 @@ export interface NativeLibsFiles {
   writeNew(path: string, content: Uint8Array, mode?: number): void;
   /** Writes next to the target, then renames over it, so a reader never sees half a file. */
   replace(path: string, content: Uint8Array): void;
+  /** Removes the file; nothing happens when it is already gone. */
+  remove(path: string): void;
 }
 
 export interface BuildDeps {

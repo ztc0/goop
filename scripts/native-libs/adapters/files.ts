@@ -4,6 +4,7 @@ import {
   mkdtempSync,
   readFileSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -27,5 +28,8 @@ export const nodeFiles: NativeLibsFiles = {
     const partial = `${path}.part`;
     writeFileSync(partial, content);
     renameSync(partial, path);
+  },
+  remove: (path) => {
+    rmSync(path, { force: true });
   },
 };
