@@ -173,6 +173,9 @@ export function keyService(options: KeyServiceOptions) {
             await files.write(name, bytes, { replace: false });
             created.push(name);
           }
+          // Claim the store file before opening it: an empty file, created only if none exists. A
+          // store restored meanwhile makes this fail, so it is never opened nor removed here.
+          await files.write(STORE_FILE, new Uint8Array(0), { replace: false });
           created.push(STORE_FILE);
           const store = engine.open(files.path(STORE_FILE), dek);
           try {
