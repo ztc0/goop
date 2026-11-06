@@ -5,9 +5,13 @@ import {
   APT_SNAPSHOT,
   COMPILE_FLAGS,
   DEBIAN_IMAGE,
+  SQLITE_OPTIONS,
   SQLITE3MC_LINUX,
+  SQLITE3MC_WIN32,
   sqliteVersionOf,
   TOOLCHAIN,
+  WIN32_COMPILE_FLAGS,
+  WIN32_TOOLCHAIN,
 } from "../../recipe";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..");
@@ -108,13 +112,83 @@ describe("the sqlite3mc linux-x64 recipe", () => {
   });
 });
 
-describe("the sqlite3mc Containerfile", () => {
-  const containerfile = readFileSync(join(repo, SQLITE3MC_LINUX.containerfile), "utf8");
+describe("the sqlite3mc win32-x64 recipe", () => {
+  test("takes the same verified archive, signer, clock and source check as linux-x64", () => {
+    expect(SQLITE3MC_WIN32.name).toBe("sqlite3mc");
+    expect(SQLITE3MC_WIN32.platform).toBe("win32-x64");
+    expect(SQLITE3MC_WIN32.archive).toEqual(SQLITE3MC_LINUX.archive);
+    expect(SQLITE3MC_WIN32.signed).toEqual(SQLITE3MC_LINUX.signed);
+    expect(SQLITE3MC_WIN32.environment).toEqual(SQLITE3MC_LINUX.environment);
+    expect(SQLITE3MC_WIN32.source).toEqual(SQLITE3MC_LINUX.source);
+  });
 
-  test("starts from the pinned Debian 13 digest and installs from its snapshot", () => {
-    expect(SQLITE3MC_LINUX.containerfile).toBe(
-      "scripts/native-libs/sqlite3mc/linux-x64/Containerfile",
+  test("pins the DLL that two builds from scratch gave", () => {
+    expect(SQLITE3MC_WIN32.output).toEqual({
+      file: "sqlite3mc.dll",
+      sha256: "1466035e4d07e367251880ba6c181b34696889536649c2814027863eb36b94d2",
+      sqliteVersion: "3.54.0",
+    });
+  });
+
+  test("compiles with the same SQLite options as linux-x64 and reproducible PE flags", () => {
+    expect(SQLITE_OPTIONS).toEqual([
+      "-DSQLITE3MC_USE_DISPATCH_TABLE",
+      "-DSQLITE_ENABLE_FTS5",
+      "-DSQLITE_THREADSAFE=1",
+      "-DSQLITE_TEMP_STORE=3",
+    ]);
+    const options = (flags: readonly string[]) => flags.filter((flag) => flag.startsWith("-D"));
+    expect(options(COMPILE_FLAGS)).toEqual([...SQLITE_OPTIONS]);
+    expect(options(WIN32_COMPILE_FLAGS)).toEqual([...SQLITE_OPTIONS]);
+    expect(WIN32_COMPILE_FLAGS).toEqual([
+      "-O2",
+      "-g0",
+      "-shared",
+      "-march=x86-64",
+      "-mtune=generic",
+      "-fstack-protector-strong",
+      "-ffile-prefix-map=/build/src=.",
+      "-fdebug-prefix-map=/build/src=.",
+      "-frandom-seed=sqlite3mc",
+      ...SQLITE_OPTIONS,
+      "-Wno-error=incompatible-pointer-types",
+      "-static",
+      "-Wl,--no-insert-timestamp",
+      "-Wl,--dynamicbase",
+      "-Wl,--nxcompat",
+      "-Wl,--high-entropy-va",
+      "-s",
+    ]);
+  });
+
+  test("the container cross-compiles the one member with mingw-w64 and lists the toolchain", () => {
+    expect(SQLITE3MC_WIN32.script).toBe(
+      [
+        "set -eu",
+        "unzip -p /build/input/sqlite3mc-2.6.1-sqlite-3.54.0-amalgamation.zip sqlite3mc_amalgamation.c > /build/src/sqlite3mc_amalgamation.c",
+        "cd /build/src",
+        `x86_64-w64-mingw32-gcc-win32 ${WIN32_COMPILE_FLAGS.join(" ")} -o /build/out/sqlite3mc.dll sqlite3mc_amalgamation.c`,
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal dpkg-query format
+        "dpkg-query -W -f '${Package} ${Version}\\n' gcc-mingw-w64-x86-64-win32 gcc-mingw-w64-x86-64-win32-runtime gcc-mingw-w64-base binutils-mingw-w64-x86-64 mingw-w64-x86-64-dev mingw-w64-common unzip > /build/out/toolchain.txt",
+      ].join("\n"),
     );
+  });
+});
+
+const installedBy = (containerfile: string) =>
+  [...containerfile.matchAll(/^\s+([a-z0-9.+-]+)=(\S+) \\$/gm)].map(([, name, version]) => ({
+    name,
+    version,
+  }));
+
+describe.each([
+  ["linux-x64", SQLITE3MC_LINUX, "scripts/native-libs/sqlite3mc/linux-x64/Containerfile"],
+  ["win32-x64", SQLITE3MC_WIN32, "scripts/native-libs/sqlite3mc/win32-x64/Containerfile"],
+] as const)("the sqlite3mc %s Containerfile", (_platform, recipe, path) => {
+  const containerfile = readFileSync(join(repo, path), "utf8");
+
+  test("starts from the pinned Debian 13 digest and installs its toolchain from the snapshot", () => {
+    expect(recipe.containerfile).toBe(path);
     expect(DEBIAN_IMAGE).toBe(
       "docker.io/library/debian:trixie@sha256:e2914ec98e08b24b4cee3cefcb9f90dfb5519f8d215a2ccf0c9a49b10b6e43de",
     );
@@ -122,13 +196,12 @@ describe("the sqlite3mc Containerfile", () => {
     expect(containerfile.match(/^FROM /gm)).toHaveLength(1);
     expect(containerfile).toContain(`/archive/debian/${APT_SNAPSHOT} trixie main`);
     expect(containerfile).toContain(`/archive/debian-security/${APT_SNAPSHOT} trixie-security`);
+    expect(installedBy(containerfile)).toEqual([...recipe.toolchain]);
   });
+});
 
-  test("installs exactly the pinned toolchain", () => {
-    const installed = [...containerfile.matchAll(/^\s+([a-z0-9.+-]+)=(\S+) \\$/gm)].map(
-      ([, name, version]) => ({ name, version }),
-    );
-    expect(installed).toEqual([...TOOLCHAIN]);
+describe("the sqlite3mc toolchains", () => {
+  test("linux-x64 pins gcc 14 and binutils", () => {
     expect(TOOLCHAIN).toEqual([
       { name: "gcc-14", version: "14.2.0-19" },
       { name: "cpp-14", version: "14.2.0-19" },
@@ -140,5 +213,19 @@ describe("the sqlite3mc Containerfile", () => {
     ]);
     expect(SQLITE3MC_LINUX.toolchain).toBe(TOOLCHAIN);
     expect(SQLITE3MC_LINUX.image).toBe("localhost/goop-native-libs-sqlite3mc:1");
+  });
+
+  test("win32-x64 pins mingw-w64 with the win32 thread model, in its own image", () => {
+    expect(WIN32_TOOLCHAIN).toEqual([
+      { name: "gcc-mingw-w64-x86-64-win32", version: "14.2.0-19+27+b1" },
+      { name: "gcc-mingw-w64-x86-64-win32-runtime", version: "14.2.0-19+27+b1" },
+      { name: "gcc-mingw-w64-base", version: "14.2.0-19+27+b1" },
+      { name: "binutils-mingw-w64-x86-64", version: "2.44-3+12+b1" },
+      { name: "mingw-w64-x86-64-dev", version: "12.0.0-5" },
+      { name: "mingw-w64-common", version: "12.0.0-5" },
+      { name: "unzip", version: "6.0-29+deb13u1" },
+    ]);
+    expect(SQLITE3MC_WIN32.toolchain).toBe(WIN32_TOOLCHAIN);
+    expect(SQLITE3MC_WIN32.image).toBe("localhost/goop-native-libs-sqlite3mc-win32:1");
   });
 });
