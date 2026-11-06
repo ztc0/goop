@@ -42,6 +42,12 @@ describe("native-libs:build", () => {
       stdout: "",
       stderr: `Unknown library: sqlite-vec (expected sqlite3mc).\n${USAGE}`,
     });
+    expect(run("--target", "win64")).toEqual({
+      exitCode: 2,
+      stdout: "",
+      stderr: `Unknown --target: win64 (expected linux-x64 or win32-x64).\n${USAGE}`,
+    });
+    expect(readdirSync(fixture)).toEqual(["bin"]);
   });
 
   test("without a container engine it stops before writing anything", () => {

@@ -1,7 +1,9 @@
-// Native libraries (odd/tasks/native-library.md, S1, S2): downloads each pinned library's
-// source, checks it, builds it in a fresh container from a pinned image and checks the output
-// against its pin, then writes .local/build/native/<platform>/ and its manifest.json.
-// Usage: bun scripts/native-libs/cli.ts [<library>...] [--engine podman|docker] [--verify-signature]
+// Native libraries (odd/tasks/native-library.md, S1, S2, S3): downloads each pinned library's
+// source, checks it, builds it for each target in a fresh container from a pinned image and
+// checks every output against its pin, then writes .local/build/native/<platform>/ and its
+// manifest.json.
+// Usage: bun scripts/native-libs/cli.ts [<library>...] [--target linux-x64|win32-x64]
+//   [--engine podman|docker] [--verify-signature]
 import {
   bunProcessRunner,
   chooseEngine,
@@ -16,11 +18,13 @@ import { buildEngine } from "./model/engine";
 import { nativeLibsPaths } from "./model/paths";
 import { COSIGN } from "./model/signature";
 import { buildLibrary } from "./services/build";
-import { SQLITE3MC_LINUX } from "./sqlite3mc/recipe";
+import { SQLITE3MC_LINUX, SQLITE3MC_WIN32 } from "./sqlite3mc/recipe";
 import type { BuildDeps, LibraryRecipe } from "./types/native-libs";
 
 /** Each library and the platforms this script builds it for. */
-const RECIPES: Record<string, readonly LibraryRecipe[]> = { sqlite3mc: [SQLITE3MC_LINUX] };
+const RECIPES: Record<string, readonly LibraryRecipe[]> = {
+  sqlite3mc: [SQLITE3MC_LINUX, SQLITE3MC_WIN32],
+};
 
 const command = parseBuildArgs(process.argv.slice(2), Object.keys(RECIPES));
 if (command.kind === "help") {
@@ -57,12 +61,14 @@ const deps: BuildDeps = {
   now: () => Date.now(),
   output: terminalOutput,
 };
+const { target } = command;
 for (const library of command.libraries) {
-  for (const recipe of RECIPES[library] ?? []) {
-    const exitCode = await buildLibrary(deps, recipe, {
-      verifySignature: command.verifySignature,
-      cosign: COSIGN,
-    });
-    if (exitCode !== 0) process.exit(exitCode);
-  }
+  const recipes = (RECIPES[library] ?? []).filter(
+    (recipe) => target === undefined || recipe.platform === target,
+  );
+  const exitCode = await buildLibrary(deps, recipes, {
+    verifySignature: command.verifySignature,
+    cosign: COSIGN,
+  });
+  if (exitCode !== 0) process.exit(exitCode);
 }

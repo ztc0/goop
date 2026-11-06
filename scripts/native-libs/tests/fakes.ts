@@ -13,6 +13,7 @@ export const text = (content: Uint8Array | undefined) =>
 
 export const ARCHIVE = bytes("zip bytes");
 export const LIBRARY = bytes("ELF library");
+export const DLL = bytes("PE library");
 export const SUMS = bytes(`${sha256Hex(ARCHIVE)}  test-1.0.zip\n`);
 export const COSIGN_BYTES = bytes("cosign binary");
 export const COSIGN_PIN: CosignPin = {
@@ -52,6 +53,17 @@ export const RECIPE: LibraryRecipe = {
   },
   output: { file: "libtest.so", sha256: sha256Hex(LIBRARY), sqliteVersion: "3.54.0" },
 };
+
+/** The same library's second target, with its own image and output. */
+export const RECIPE_WIN32: LibraryRecipe = {
+  ...RECIPE,
+  platform: "win32-x64",
+  image: "localhost/goop-native-libs-test-win32:1",
+  containerfile: "scripts/native-libs/testlib/win32-x64/Containerfile",
+  output: { file: "test.dll", sha256: sha256Hex(DLL), sqliteVersion: "3.54.0" },
+};
+
+const TARGETS = [RECIPE, RECIPE_WIN32];
 
 export class FakeFiles implements NativeLibsFiles {
   readonly files = new Map<string, { content: Uint8Array; mode?: number }>();
@@ -97,6 +109,8 @@ export interface Scenario {
   build?: Partial<ProcessResult>;
   run?: Partial<ProcessResult>;
   cosign?: Partial<ProcessResult>;
+  /** Per build image: the run's reply and the library it writes. */
+  images?: Record<string, { run?: Partial<ProcessResult>; library?: Uint8Array }>;
 }
 
 export class FakeRunner implements ProcessRunner {
@@ -119,12 +133,15 @@ export class FakeRunner implements ProcessRunner {
     if (args[0] === "build") return done(this.scenario.build);
     const mount = (target: string) =>
       args.find((arg) => arg.endsWith(`:${target}`))?.slice(0, -target.length - 1) ?? "";
-    const reply = done(this.scenario.run);
+    const target = TARGETS.find((recipe) => args.includes(recipe.image)) ?? RECIPE;
+    const image = this.scenario.images?.[target.image];
+    const reply = done(image?.run ?? this.scenario.run);
     if (reply.exitCode !== 0) return reply;
     const { toolchain = "gcc 1\n", source = '#define VERSION "1.2.3"\n' } = this.scenario;
+    const library = image?.library ?? this.scenario.library ?? (target === RECIPE ? LIBRARY : DLL);
     this.files.writeNew(join(mount("/build/src"), "test.c"), bytes(source));
     this.files.writeNew(join(mount("/build/out"), "toolchain.txt"), bytes(toolchain));
-    this.files.writeNew(join(mount("/build/out"), "libtest.so"), this.scenario.library ?? LIBRARY);
+    this.files.writeNew(join(mount("/build/out"), target.output.file), library);
     return reply;
   }
 

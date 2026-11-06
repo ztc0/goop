@@ -1,20 +1,29 @@
 import type { EngineName } from "../../shared/containers";
+import type { NativePlatform } from "../types/native-libs";
+import { PLATFORMS } from "./manifest";
 
 export type BuildCommand =
-  | { kind: "build"; libraries: string[]; engine?: EngineName; verifySignature: boolean }
+  | {
+      kind: "build";
+      libraries: string[];
+      target?: NativePlatform;
+      engine?: EngineName;
+      verifySignature: boolean;
+    }
   | { kind: "help" }
   | { kind: "usage"; error: string };
 
-export const USAGE = `Usage: bun run native-libs:build [<library>...] [--engine podman|docker] [--verify-signature]
+export const USAGE = `Usage: bun run native-libs:build [<library>...] [--target linux-x64|win32-x64] [--engine podman|docker] [--verify-signature]
 
-Downloads each pinned native library's source, checks its sha256, builds it in a fresh
-container without network and checks the output against its pinned sha256. Only then it
-writes .local/build/native/<platform>/<file> and .local/build/native/manifest.json.
+Downloads each pinned native library's source, checks its sha256, builds it for each target
+in a fresh container without network and checks every output against its pinned sha256. Only
+then it writes .local/build/native/<platform>/<file> and .local/build/native/manifest.json.
 
 Libraries (by default, all of them):
-  sqlite3mc           SQLite3MultipleCiphers 2.6.1, for linux-x64
+  sqlite3mc           SQLite3MultipleCiphers 2.6.1, for linux-x64 and win32-x64
 
 Options:
+  --target <platform> linux-x64 or win32-x64; by default every target of each library
   --engine <engine>   podman or docker; by default Podman if installed, else Docker
   --verify-signature  First check the Cosign signature of the release's checksum list;
                       it needs Rekor, the Sigstore transparency log
@@ -23,9 +32,10 @@ Options:
 
 const ENGINES: readonly string[] = ["podman", "docker"] satisfies EngineName[];
 
-/** The command line: library names, `--engine <engine>` and `--verify-signature`. */
+/** The command line: library names, `--target`, `--engine` and `--verify-signature`. */
 export function parseBuildArgs(argv: string[], known: readonly string[]): BuildCommand {
   const libraries: string[] = [];
+  let target: NativePlatform | undefined;
   let engine: EngineName | undefined;
   let verifySignature = false;
   const usage = (error: string): BuildCommand => ({ kind: "usage", error });
@@ -35,6 +45,15 @@ export function parseBuildArgs(argv: string[], known: readonly string[]): BuildC
     if (arg === "--verify-signature") {
       if (verifySignature) return usage("--verify-signature is given more than once.");
       verifySignature = true;
+    } else if (arg === "--target") {
+      const value = argv[index + 1];
+      index += 1;
+      if (value === undefined) return usage("--target needs a value.");
+      if (!PLATFORMS.includes(value)) {
+        return usage(`Unknown --target: ${value} (expected ${PLATFORMS.join(" or ")}).`);
+      }
+      if (target !== undefined) return usage("--target is given more than once.");
+      target = value as NativePlatform;
     } else if (arg === "--engine") {
       const value = argv[index + 1];
       index += 1;
@@ -55,7 +74,11 @@ export function parseBuildArgs(argv: string[], known: readonly string[]): BuildC
     }
   }
   const chosen = libraries.length > 0 ? libraries : [...known];
-  return engine === undefined
-    ? { kind: "build", libraries: chosen, verifySignature }
-    : { kind: "build", libraries: chosen, engine, verifySignature };
+  return {
+    kind: "build",
+    libraries: chosen,
+    ...(target === undefined ? {} : { target }),
+    ...(engine === undefined ? {} : { engine }),
+    verifySignature,
+  };
 }

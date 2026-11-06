@@ -4,7 +4,8 @@ import type { LibraryEntry, NativeManifest, NativePlatform } from "../types/nati
 
 export type ParsedManifest = { manifest: NativeManifest } | { error: string };
 
-const PLATFORMS: readonly string[] = ["linux-x64", "win32-x64"] satisfies NativePlatform[];
+/** Every platform folder of `.local/build/native/`. */
+export const PLATFORMS: readonly string[] = ["linux-x64", "win32-x64"] satisfies NativePlatform[];
 
 /** The manifest with `entry` for `name` on `platform`; every other entry is kept. */
 export function withEntry(
