@@ -54,3 +54,34 @@ export interface Finding {
   severity: string;
   title: string;
 }
+
+/** What the wait needs from GitHub; the adapter calls `gh`, tests fake it. */
+export interface GhApi {
+  head(pr: number): Promise<string>;
+  requestReview(pr: number): Promise<void>;
+  checks(pr: number): Promise<Check[]>;
+  reviews(pr: number): Promise<RabbitReview[]>;
+  comments(pr: number): Promise<RabbitComment[]>;
+  reviewComments(pr: number): Promise<ReviewComment[]>;
+}
+
+export interface WaitDeps {
+  gh: GhApi;
+  /** Milliseconds since the epoch. */
+  now(): number;
+  sleep(ms: number): Promise<void>;
+}
+
+export type CiResult = "DONE" | "UNAVAILABLE" | "TIMEOUT";
+export type RabbitOutcome = "LIMIT" | "REVIEWED" | "HEAD_MOVED" | "UNAVAILABLE" | "TIMEOUT";
+
+/** What the agent reports to the maintainer (S6). */
+export interface Report {
+  pr: number;
+  /** The head the review and the decision are for. */
+  head: string;
+  ci: CiResult;
+  jobs: Check[];
+  coderabbit: RabbitOutcome;
+  findings: Finding[];
+}

@@ -40,7 +40,7 @@ This skill is the procedure; the rules live in `docs/development/rules/commits.m
 1. Branch from a fresh `origin/dev`: `feat/`, `fix/` or `docs/`.
 2. Commit work units: `type(scope): subject`, with their tests and docs.
 3. Push and open the pull request into `dev` with the sections of `.github/PULL_REQUEST_TEMPLATE.md`; tick only what is true and say why for the rest.
-4. Comment `@coderabbitai review`, then wait for CI and for CodeRabbit's review or rate-limit notice: `references/waiting.md`.
+4. In the background, run `bun scripts/dev-env/run.ts bun .agents/skills/collaborate/scripts/review.ts <n>`: it asks CodeRabbit to review the head and waits for CI and CodeRabbit (`references/waiting.md`).
 5. Report and stop: the head SHA reviewed, CI per job, each finding with whether it is valid and why (or the rate limit), and a proposal: merge, fix, or reject with a reason.
 6. Do what the maintainer decides: fix on the branch and push (then back to step 4), reply on rejected findings with the reason, or merge exactly the reviewed head: `gh pr merge <n> --merge --match-head-commit <reviewed sha>`.
 
@@ -51,6 +51,6 @@ Pull request numbers and URLs, CI state per job, CodeRabbit findings with a verd
 ## References
 
 - `docs/development/rules/commits.md`: the rules this procedure follows.
-- `references/waiting.md`: waiting for CI and CodeRabbit with `gh`.
+- `references/waiting.md`: the review script, its report, and reading findings.
 - `references/stacked-chain.md`: building, fixing and merging a chain.
 - `references/release-sync.md`: the `dev` -> `main` pull request and the sync after it.
