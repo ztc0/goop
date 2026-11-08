@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { sandboxPaths } from "../../model/paths";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
 import {
   GUEST_COMMAND,
   keygenArgs,
@@ -9,8 +9,8 @@ import {
   scpDownloadArgs,
   scpUploadArgs,
   sshArgs,
-} from "../../model/ssh-args";
-import { describeOnLinuxHost } from "../linux-host";
+} from "@scripts/sandbox/model/ssh-args";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
 
 const paths = sandboxPaths("/repo");
 

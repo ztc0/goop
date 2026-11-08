@@ -1,4 +1,3 @@
-import type { ProcessRunner } from "../../shared/containers";
 import {
   GUEST_COMMAND,
   keygenArgs,
@@ -8,8 +7,9 @@ import {
   scpDownloadArgs,
   scpUploadArgs,
   sshArgs,
-} from "../model/ssh-args";
-import type { GuestShell, SandboxPaths } from "../types/sandbox";
+} from "@scripts/sandbox/model/ssh-args";
+import type { GuestShell, SandboxPaths } from "@scripts/sandbox/types/sandbox";
+import type { ProcessRunner } from "@scripts/shared/containers";
 
 /** The guest over SSH and scp, with the key generated for this VM only. */
 export function createGuestShell(runner: ProcessRunner, paths: SandboxPaths): GuestShell {

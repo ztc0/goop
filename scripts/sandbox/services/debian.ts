@@ -1,5 +1,5 @@
 import { relative } from "node:path";
-import { formatBytes, resolveCopyPath } from "../model/base-files";
+import { formatBytes, resolveCopyPath } from "@scripts/sandbox/model/base-files";
 import {
   DEBIAN_IMAGE,
   DEBIAN_PREFIX,
@@ -12,17 +12,17 @@ import {
   SYSTEMD_READY_CHECK,
   userCommand,
   userShell,
-} from "../model/debian-config";
-import { displayPath } from "../model/paths";
-import { formatElapsed } from "../model/readiness";
-import type { RunRequest, SandboxDeps } from "../types/sandbox";
-import { listContainers } from "./status";
+} from "@scripts/sandbox/model/debian-config";
+import { displayPath } from "@scripts/sandbox/model/paths";
+import { formatElapsed } from "@scripts/sandbox/model/readiness";
+import { listContainers } from "@scripts/sandbox/services/status";
 import {
   INTERRUPTED_EXIT_CODE,
   prepareContainerStorage,
   reportNotReady,
   waitUntilReady,
-} from "./vm-lifecycle";
+} from "@scripts/sandbox/services/vm-lifecycle";
+import type { RunRequest, SandboxDeps } from "@scripts/sandbox/types/sandbox";
 
 /** Builds the Debian image into the engine's storage (S2); the layer cache makes a rebuild quick. */
 export async function installDebian(deps: SandboxDeps): Promise<number> {

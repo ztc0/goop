@@ -1,4 +1,4 @@
-import type { ToolchainPackage } from "../types/native-libs";
+import type { ToolchainPackage } from "@scripts/native-libs/types/native-libs";
 
 /** Reads `dpkg-query` lines (`name version`) and names every package that differs from its pin. */
 export function checkToolchain(expected: readonly ToolchainPackage[], listed: string): string[] {

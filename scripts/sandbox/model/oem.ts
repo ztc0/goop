@@ -1,4 +1,4 @@
-import type { OemFiles } from "../types/sandbox";
+import type { OemFiles } from "@scripts/sandbox/types/sandbox";
 
 const ED25519_KEY = /^ssh-ed25519 [A-Za-z0-9+/]+={0,2}$/;
 

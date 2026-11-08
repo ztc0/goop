@@ -1,4 +1,4 @@
-import type { Clock, RandomSource } from "../types/sandbox";
+import type { Clock, RandomSource } from "@scripts/sandbox/types/sandbox";
 
 export const systemClock: Clock = {
   now: () => Date.now(),

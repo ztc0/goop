@@ -1,6 +1,6 @@
-import type { EngineName } from "../../shared/containers";
-import type { NativePlatform } from "../types/native-libs";
-import { PLATFORMS } from "./manifest";
+import { PLATFORMS } from "@scripts/native-libs/model/manifest";
+import type { NativePlatform } from "@scripts/native-libs/types/native-libs";
+import type { EngineName } from "@scripts/shared/containers";
 
 export type BuildCommand =
   | {

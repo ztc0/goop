@@ -1,4 +1,14 @@
 import {
+  forceRemoveArgs,
+  installContainerArgs,
+  manualRemoveCommand,
+  overlayArgs,
+  runContainerArgs,
+  stopArgs,
+  systemdContainerArgs,
+} from "@scripts/sandbox/model/podman-args";
+import type { ContainerEngine, SandboxPaths } from "@scripts/sandbox/types/sandbox";
+import {
   buildArgs,
   copyInArgs,
   copyOutArgs,
@@ -10,17 +20,7 @@ import {
   podmanEnvironment,
   podmanGlobalArgs,
   removeArgs,
-} from "../../shared/containers";
-import {
-  forceRemoveArgs,
-  installContainerArgs,
-  manualRemoveCommand,
-  overlayArgs,
-  runContainerArgs,
-  stopArgs,
-  systemdContainerArgs,
-} from "../model/podman-args";
-import type { ContainerEngine, SandboxPaths } from "../types/sandbox";
+} from "@scripts/shared/containers";
 
 /** Podman against the repo-local storage: every call carries the global flags (S3). */
 export function createPodmanEngine(runner: ProcessRunner, paths: SandboxPaths): ContainerEngine {

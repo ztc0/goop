@@ -1,5 +1,5 @@
-import type { SandboxPaths } from "../types/sandbox";
-import { GUEST_HOST, GUEST_USER, SSH_PORT } from "./vm-config";
+import { GUEST_HOST, GUEST_USER, SSH_PORT } from "@scripts/sandbox/model/vm-config";
+import type { SandboxPaths } from "@scripts/sandbox/types/sandbox";
 
 export const REACHABLE_CHECK = "echo ok";
 export const READY_MARKER_CHECK = "Test-Path C:\\OEM\\ready.txt";

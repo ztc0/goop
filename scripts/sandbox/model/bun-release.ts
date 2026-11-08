@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { sha256Mismatch } from "../../shared/download";
-import type { BunTarget, PinnedBun, SandboxPaths } from "../types/sandbox";
+import type { BunTarget, PinnedBun, SandboxPaths } from "@scripts/sandbox/types/sandbox";
+import { sha256Mismatch } from "@scripts/shared/download";
 
 /** The Bun that `package.json` pins (`packageManager`); the sandbox suite runs with it (T8). */
 export const BUN_VERSION = "1.4.2";

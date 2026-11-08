@@ -1,5 +1,4 @@
 import { dirname, join, relative } from "node:path";
-import { sha256Hex, sha256Mismatch } from "../../shared/download";
 import {
   bunCachePath,
   checkBunZip,
@@ -7,9 +6,9 @@ import {
   MAX_BUN_ZIP_BYTES,
   MAX_SHASUMS_BYTES,
   shasumsUrl,
-} from "../model/bun-release";
-import { DEBIAN_IMAGE } from "../model/debian-config";
-import { displayPath } from "../model/paths";
+} from "@scripts/sandbox/model/bun-release";
+import { DEBIAN_IMAGE } from "@scripts/sandbox/model/debian-config";
+import { displayPath } from "@scripts/sandbox/model/paths";
 import {
   GIT_ROOT_MARKER,
   repoFiles,
@@ -19,8 +18,11 @@ import {
   SUITE_REPO,
   suiteCommand,
   suiteSummary,
-} from "../model/suite";
-import { zipMember } from "../model/zip";
+} from "@scripts/sandbox/model/suite";
+import { zipMember } from "@scripts/sandbox/model/zip";
+import { runInDebian } from "@scripts/sandbox/services/debian";
+import { runInWindows } from "@scripts/sandbox/services/run";
+import { prepareContainerStorage } from "@scripts/sandbox/services/vm-lifecycle";
 import type {
   PinnedBun,
   RunRequest,
@@ -28,10 +30,8 @@ import type {
   SandboxOs,
   SuiteDeps,
   SuitePlan,
-} from "../types/sandbox";
-import { runInDebian } from "./debian";
-import { runInWindows } from "./run";
-import { prepareContainerStorage } from "./vm-lifecycle";
+} from "@scripts/sandbox/types/sandbox";
+import { sha256Hex, sha256Mismatch } from "@scripts/shared/download";
 
 /** What the suite needs from each system: the check before downloading, and the run itself. */
 interface SuiteSystem {

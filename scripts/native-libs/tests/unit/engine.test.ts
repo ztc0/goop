@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { buildEngine, runArgs } from "../../model/engine";
-import { nativeLibsPaths } from "../../model/paths";
-import type { LibraryRecipe } from "../../types/native-libs";
+import { buildEngine, runArgs } from "@scripts/native-libs/model/engine";
+import { nativeLibsPaths } from "@scripts/native-libs/model/paths";
+import type { LibraryRecipe } from "@scripts/native-libs/types/native-libs";
 
 // native-libs:build runs on Linux x86_64 only; these suites compare POSIX host paths.
 const describeOnLinuxHost = describe.skipIf(process.platform === "win32");

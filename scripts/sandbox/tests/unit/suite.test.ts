@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { BUN_RELEASES } from "../../model/bun-release";
+import { BUN_RELEASES } from "@scripts/sandbox/model/bun-release";
 import {
   GIT_ROOT_MARKER,
   repoFiles,
@@ -7,7 +7,7 @@ import {
   SUITE_PLANS,
   suiteCommand,
   suiteSummary,
-} from "../../model/suite";
+} from "@scripts/sandbox/model/suite";
 
 describe("the suite plan of each system", () => {
   test("names the Bun build, the shell and where the uploads land, one entry per system", () => {

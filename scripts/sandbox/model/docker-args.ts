@@ -3,7 +3,12 @@
 // here. The builders every container takes in the same form and the engine environment live
 // in scripts/shared/containers. The Windows arguments are built but never run on Docker: this
 // PC has no Docker, and a 25-minute Windows install is too heavy for CI.
-export { installContainerArgs, overlayArgs, runContainerArgs, stopArgs } from "./podman-args";
+export {
+  installContainerArgs,
+  overlayArgs,
+  runContainerArgs,
+  stopArgs,
+} from "@scripts/sandbox/model/podman-args";
 
 /**
  * A container whose process 1 is systemd. Docker has no `--systemd=always`, and on a cgroup v2

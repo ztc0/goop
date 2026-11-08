@@ -1,4 +1,4 @@
-import type { EngineName } from "../types/containers";
+import type { EngineName } from "@scripts/shared/containers/types/containers";
 
 export type EngineChoice = { engine: EngineName; warning?: string } | { error: string };
 

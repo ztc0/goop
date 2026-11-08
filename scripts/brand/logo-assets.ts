@@ -2,8 +2,8 @@
 // Run it after changing src/shared/brand/model/logo.ts: bun scripts/brand/logo-assets.ts
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { repoRoot } from "@scripts/shared/repo-root";
 import { logoGrid, logoSvg } from "@/shared/brand";
-import { repoRoot } from "../shared/repo-root";
 
 const assets = join(repoRoot(), "assets");
 mkdirSync(assets, { recursive: true });

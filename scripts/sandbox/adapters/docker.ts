@@ -1,4 +1,14 @@
 import {
+  forceRemoveArgs,
+  installContainerArgs,
+  manualRemoveCommand,
+  overlayArgs,
+  runContainerArgs,
+  stopArgs,
+  systemdContainerArgs,
+} from "@scripts/sandbox/model/docker-args";
+import type { ContainerEngine, SandboxPaths } from "@scripts/sandbox/types/sandbox";
+import {
   buildArgs,
   copyInArgs,
   copyOutArgs,
@@ -9,17 +19,7 @@ import {
   logsArgs,
   type ProcessRunner,
   removeArgs,
-} from "../../shared/containers";
-import {
-  forceRemoveArgs,
-  installContainerArgs,
-  manualRemoveCommand,
-  overlayArgs,
-  runContainerArgs,
-  stopArgs,
-  systemdContainerArgs,
-} from "../model/docker-args";
-import type { ContainerEngine, SandboxPaths } from "../types/sandbox";
+} from "@scripts/shared/containers";
 
 /** Docker through its daemon, which keeps images and containers in its own storage (S3, S4). */
 export function createDockerEngine(runner: ProcessRunner, paths: SandboxPaths): ContainerEngine {

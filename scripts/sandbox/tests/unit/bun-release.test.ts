@@ -7,9 +7,9 @@ import {
   checkPackageManager,
   MAX_BUN_ZIP_BYTES,
   shasumsUrl,
-} from "../../model/bun-release";
-import { sandboxPaths } from "../../model/paths";
-import { describeOnLinuxHost } from "../linux-host";
+} from "@scripts/sandbox/model/bun-release";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
 
 const WINDOWS_ZIP = "ce4c17497b2f29712a99d3d53f028de28cd42e3bacb8589599e7f000e49b6405";
 const LINUX_ZIP = "36368faef7527875d5ffa52e53cd48021741f2a83eb6208a8dd64068d422a913";

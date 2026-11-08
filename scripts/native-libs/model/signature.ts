@@ -1,4 +1,4 @@
-import type { CosignPin, SignedChecksums } from "../types/native-libs";
+import type { CosignPin, SignedChecksums } from "@scripts/native-libs/types/native-libs";
 
 /**
  * The cosign that checks a release's signature: v2.6.5, the last 2.x, whose `verify-blob`

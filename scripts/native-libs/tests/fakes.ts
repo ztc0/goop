@@ -1,11 +1,21 @@
 // Doubles for the build service: an in-memory file system, a scripted process runner and
 // downloads served from a table, so every step can fail on demand.
 import { join } from "node:path";
-import type { Output, ProcessRequest, ProcessResult, ProcessRunner } from "../../shared/containers";
-import { sha256Hex } from "../../shared/download";
-import { buildEngine } from "../model/engine";
-import { nativeLibsPaths } from "../model/paths";
-import type { BuildDeps, CosignPin, LibraryRecipe, NativeLibsFiles } from "../types/native-libs";
+import { buildEngine } from "@scripts/native-libs/model/engine";
+import { nativeLibsPaths } from "@scripts/native-libs/model/paths";
+import type {
+  BuildDeps,
+  CosignPin,
+  LibraryRecipe,
+  NativeLibsFiles,
+} from "@scripts/native-libs/types/native-libs";
+import type {
+  Output,
+  ProcessRequest,
+  ProcessResult,
+  ProcessRunner,
+} from "@scripts/shared/containers";
+import { sha256Hex } from "@scripts/shared/download";
 
 export const bytes = (text: string) => new TextEncoder().encode(text);
 export const text = (content: Uint8Array | undefined) =>

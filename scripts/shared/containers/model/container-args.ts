@@ -1,6 +1,6 @@
 // Arguments that Podman and Docker take in the same form, whatever the container runs.
 import { dirname } from "node:path";
-import type { ExecOptions } from "../types/containers";
+import type { ExecOptions } from "@scripts/shared/containers/types/containers";
 
 export function removeArgs(name: string): string[] {
   return ["rm", name];

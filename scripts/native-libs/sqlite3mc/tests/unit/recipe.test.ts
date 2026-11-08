@@ -12,7 +12,7 @@ import {
   TOOLCHAIN,
   WIN32_COMPILE_FLAGS,
   WIN32_TOOLCHAIN,
-} from "../../recipe";
+} from "@scripts/native-libs/sqlite3mc/recipe";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..");
 const RELEASE = "https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v2.6.1";

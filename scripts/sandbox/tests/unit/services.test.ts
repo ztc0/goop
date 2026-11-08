@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { ProcessRequest, ProcessResult, ProcessRunner } from "../../../shared/containers";
-import { nodeFileStore } from "../../adapters/file-store";
-import { createGuestShell } from "../../adapters/guest-shell";
-import { createPodmanEngine } from "../../adapters/podman";
-import { sandboxPaths } from "../../model/paths";
-import { runInDebian } from "../../services/debian";
-import { installWindows } from "../../services/install";
-import { runInWindows } from "../../services/run";
-import type { Clock, SandboxDeps } from "../../types/sandbox";
+import { nodeFileStore } from "@scripts/sandbox/adapters/file-store";
+import { createGuestShell } from "@scripts/sandbox/adapters/guest-shell";
+import { createPodmanEngine } from "@scripts/sandbox/adapters/podman";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
+import { runInDebian } from "@scripts/sandbox/services/debian";
+import { installWindows } from "@scripts/sandbox/services/install";
+import { runInWindows } from "@scripts/sandbox/services/run";
+import type { Clock, SandboxDeps } from "@scripts/sandbox/types/sandbox";
+import type { ProcessRequest, ProcessResult, ProcessRunner } from "@scripts/shared/containers";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
 

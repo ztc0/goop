@@ -1,6 +1,6 @@
-import { formatElapsed, readinessDecision } from "../model/readiness";
-import { passwordFromBytes } from "../model/vm-config";
-import type { ReadinessPolicy, SandboxDeps } from "../types/sandbox";
+import { formatElapsed, readinessDecision } from "@scripts/sandbox/model/readiness";
+import { passwordFromBytes } from "@scripts/sandbox/model/vm-config";
+import type { ReadinessPolicy, SandboxDeps } from "@scripts/sandbox/types/sandbox";
 
 export type Readiness = "ready" | "timeout" | "interrupted";
 

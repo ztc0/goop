@@ -1,8 +1,8 @@
 // Podman arguments for the Windows VM and the Debian container. The storage flags and the
 // arguments every container takes in the same form live in scripts/shared/containers.
-import type { SandboxPaths } from "../types/sandbox";
-import { DEBIAN_STOP_SECONDS } from "./debian-config";
-import { runDirectory } from "./paths";
+
+import { DEBIAN_STOP_SECONDS } from "@scripts/sandbox/model/debian-config";
+import { runDirectory } from "@scripts/sandbox/model/paths";
 import {
   GUEST_HOST,
   GUEST_USER,
@@ -12,7 +12,8 @@ import {
   STOP_TIMEOUT_SECONDS,
   WEB_PORT,
   WINDOWS_IMAGE,
-} from "./vm-config";
+} from "@scripts/sandbox/model/vm-config";
+import type { SandboxPaths } from "@scripts/sandbox/types/sandbox";
 
 /** Devices, Windows settings and ports shared by the install and every run. */
 function vmOptions(): string[] {

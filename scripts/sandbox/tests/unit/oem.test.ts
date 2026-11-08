@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { oemFiles, parsePublicKey } from "../../model/oem";
+import { oemFiles, parsePublicKey } from "@scripts/sandbox/model/oem";
 
 const KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKeyForTests";
 

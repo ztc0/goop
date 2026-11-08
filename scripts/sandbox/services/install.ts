@@ -1,15 +1,15 @@
 import { join } from "node:path";
-import { oemFiles, parsePublicKey } from "../model/oem";
-import { displayPath } from "../model/paths";
-import { formatElapsed, INSTALL_READINESS } from "../model/readiness";
-import { INSTALL_CONTAINER, WEB_URL } from "../model/vm-config";
-import type { SandboxDeps } from "../types/sandbox";
+import { oemFiles, parsePublicKey } from "@scripts/sandbox/model/oem";
+import { displayPath } from "@scripts/sandbox/model/paths";
+import { formatElapsed, INSTALL_READINESS } from "@scripts/sandbox/model/readiness";
+import { INSTALL_CONTAINER, WEB_URL } from "@scripts/sandbox/model/vm-config";
 import {
   guestPassword,
   prepareContainerStorage,
   reportNotReady,
   waitUntilReady,
-} from "./vm-lifecycle";
+} from "@scripts/sandbox/services/vm-lifecycle";
+import type { SandboxDeps } from "@scripts/sandbox/types/sandbox";
 
 /**
  * Installs Windows once into .local/windows/base/ (S5): the container installs Windows,

@@ -9,18 +9,18 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import type { ProcessRequest, ProcessResult, ProcessRunner } from "../../../shared/containers";
-import { sha256Hex } from "../../../shared/download";
-import { nodeFileStore } from "../../adapters/file-store";
-import { createGuestShell } from "../../adapters/guest-shell";
-import { createPodmanEngine } from "../../adapters/podman";
-import { BUN_RELEASES, MAX_BUN_ZIP_BYTES, shasumsUrl } from "../../model/bun-release";
-import { sandboxPaths } from "../../model/paths";
-import { SUITE_PLANS, suiteCommand } from "../../model/suite";
-import { runSuite } from "../../services/suite";
-import type { SuiteDeps } from "../../types/sandbox";
-import { describeOnLinuxHost } from "../linux-host";
-import { zipFixture } from "../zip-fixture";
+import { nodeFileStore } from "@scripts/sandbox/adapters/file-store";
+import { createGuestShell } from "@scripts/sandbox/adapters/guest-shell";
+import { createPodmanEngine } from "@scripts/sandbox/adapters/podman";
+import { BUN_RELEASES, MAX_BUN_ZIP_BYTES, shasumsUrl } from "@scripts/sandbox/model/bun-release";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
+import { SUITE_PLANS, suiteCommand } from "@scripts/sandbox/model/suite";
+import { runSuite } from "@scripts/sandbox/services/suite";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
+import { zipFixture } from "@scripts/sandbox/tests/zip-fixture";
+import type { SuiteDeps } from "@scripts/sandbox/types/sandbox";
+import type { ProcessRequest, ProcessResult, ProcessRunner } from "@scripts/shared/containers";
+import { sha256Hex } from "@scripts/shared/download";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
 const NAME = "goop-debian-run-r1";

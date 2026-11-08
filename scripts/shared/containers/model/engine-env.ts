@@ -1,4 +1,4 @@
-import type { PodmanStorage } from "../types/containers";
+import type { PodmanStorage } from "@scripts/shared/containers/types/containers";
 
 /** Global flags that keep images, containers and temporary files inside the repo (S3). */
 export function podmanGlobalArgs(paths: PodmanStorage): string[] {

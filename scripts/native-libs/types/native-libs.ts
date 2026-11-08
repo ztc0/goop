@@ -1,4 +1,4 @@
-import type { EngineName, Output, PodmanStorage, ProcessRunner } from "../../shared/containers";
+import type { EngineName, Output, PodmanStorage, ProcessRunner } from "@scripts/shared/containers";
 
 /** The platform keys of `.local/build/native/`, the same ones `src/shared/vault/native` reads. */
 export type NativePlatform = "linux-x64" | "win32-x64";

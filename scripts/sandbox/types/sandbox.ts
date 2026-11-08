@@ -4,7 +4,7 @@ import type {
   Output,
   ProcessResult,
   ProcessRunner,
-} from "../../shared/containers";
+} from "@scripts/shared/containers";
 
 /** Where the sandbox keeps everything, all inside the repo (S3). */
 export interface SandboxPaths {

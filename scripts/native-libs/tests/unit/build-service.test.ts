@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { sha256Hex } from "../../../shared/download";
-import { manifestText, withEntry } from "../../model/manifest";
-import { buildLibrary } from "../../services/build";
+import { manifestText, withEntry } from "@scripts/native-libs/model/manifest";
+import { buildLibrary } from "@scripts/native-libs/services/build";
 import {
   ARCHIVE,
   bytes,
@@ -14,7 +13,8 @@ import {
   RECIPE,
   RECIPE_WIN32,
   text,
-} from "../fakes";
+} from "@scripts/native-libs/tests/fakes";
+import { sha256Hex } from "@scripts/shared/download";
 
 const OUT = "/repo/.local/build/native";
 const NOTHING = "error: Nothing was written to .local/build/native/.";

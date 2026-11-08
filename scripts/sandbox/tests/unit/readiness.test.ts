@@ -4,7 +4,7 @@ import {
   INSTALL_READINESS,
   RUN_READINESS,
   readinessDecision,
-} from "../../model/readiness";
+} from "@scripts/sandbox/model/readiness";
 
 describe("readiness policy", () => {
   test("install polls every 10 s for up to 60 min; a run waits up to 10 min", () => {

@@ -7,28 +7,29 @@
 // Usage: bun scripts/sandbox/cli.ts install|status|test <windows|debian> [--engine podman|docker]
 //        bun scripts/sandbox/cli.ts run <windows|debian> [--copy p] [--fetch p] [--] <command>
 //        bun scripts/sandbox/cli.ts run debian [--copy p] [--fetch p]  (an interactive shell)
+
+import { createDockerEngine } from "@scripts/sandbox/adapters/docker";
+import { nodeFileStore } from "@scripts/sandbox/adapters/file-store";
+import { createGuestShell } from "@scripts/sandbox/adapters/guest-shell";
+import { createPodmanEngine } from "@scripts/sandbox/adapters/podman";
+import { cryptoRandom, systemClock } from "@scripts/sandbox/adapters/system";
+import { parseCliArgs, USAGE } from "@scripts/sandbox/model/cli-args";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
+import { passwordFromBytes, runId } from "@scripts/sandbox/model/vm-config";
+import { installDebian, runInDebian, showDebianStatus } from "@scripts/sandbox/services/debian";
+import { installWindows } from "@scripts/sandbox/services/install";
+import { runInWindows } from "@scripts/sandbox/services/run";
+import { showStatus } from "@scripts/sandbox/services/status";
+import { runSuite } from "@scripts/sandbox/services/suite";
+import type { SandboxDeps } from "@scripts/sandbox/types/sandbox";
 import {
   bunProcessRunner,
   chooseEngine,
   installedEngines,
   terminalOutput,
-} from "../shared/containers";
-import { downloadBytes } from "../shared/download";
-import { repoRoot } from "../shared/repo-root";
-import { createDockerEngine } from "./adapters/docker";
-import { nodeFileStore } from "./adapters/file-store";
-import { createGuestShell } from "./adapters/guest-shell";
-import { createPodmanEngine } from "./adapters/podman";
-import { cryptoRandom, systemClock } from "./adapters/system";
-import { parseCliArgs, USAGE } from "./model/cli-args";
-import { sandboxPaths } from "./model/paths";
-import { passwordFromBytes, runId } from "./model/vm-config";
-import { installDebian, runInDebian, showDebianStatus } from "./services/debian";
-import { installWindows } from "./services/install";
-import { runInWindows } from "./services/run";
-import { showStatus } from "./services/status";
-import { runSuite } from "./services/suite";
-import type { SandboxDeps } from "./types/sandbox";
+} from "@scripts/shared/containers";
+import { downloadBytes } from "@scripts/shared/download";
+import { repoRoot } from "@scripts/shared/repo-root";
 
 const command = parseCliArgs(process.argv.slice(2));
 if (command.kind === "usage") {

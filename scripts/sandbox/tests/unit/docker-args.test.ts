@@ -1,4 +1,13 @@
 import { expect, test } from "bun:test";
+import { DEBIAN_IMAGE } from "@scripts/sandbox/model/debian-config";
+import {
+  forceRemoveArgs,
+  installContainerArgs,
+  manualRemoveCommand,
+  systemdContainerArgs,
+} from "@scripts/sandbox/model/docker-args";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
 import {
   buildArgs,
   copyInArgs,
@@ -7,16 +16,7 @@ import {
   execArgs,
   imageSizeArgs,
   listRunningArgs,
-} from "../../../shared/containers";
-import { DEBIAN_IMAGE } from "../../model/debian-config";
-import {
-  forceRemoveArgs,
-  installContainerArgs,
-  manualRemoveCommand,
-  systemdContainerArgs,
-} from "../../model/docker-args";
-import { sandboxPaths } from "../../model/paths";
-import { describeOnLinuxHost } from "../linux-host";
+} from "@scripts/shared/containers";
 
 const paths = sandboxPaths("/repo");
 
