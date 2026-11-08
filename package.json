@@ -18,6 +18,7 @@
     "build": "bun scripts/dev-env/run.ts bun build --compile src/main.ts --outfile dist/goop",
     "clean": "bun scripts/dev-env/clean.ts",
     "clean:local": "bun scripts/dev-env/clean.ts --local",
+    "native-libs:build": "bun scripts/dev-env/run.ts bun scripts/native-libs/cli.ts",
     "sandbox:install": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts install",
     "sandbox:run": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts run",
     "sandbox:status": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts status",
