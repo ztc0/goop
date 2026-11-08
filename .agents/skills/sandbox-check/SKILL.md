@@ -38,8 +38,9 @@ Not for pure logic with no OS access: the normal suite covers it.
 4. Compile it: `bun scripts/dev-env/run.ts bun build --compile --target=bun-linux-x64|bun-windows-x64 <probe.ts> --outfile <probe>`.
 5. Run it: `bun run sandbox:run <system> --copy <probe> --fetch <result path> -- '<run the probe>'` (see `docs/development/sandbox.md`).
 6. After a host reboot, if Podman reports a changed boot ID, delete `.temp/containers/run` and `.temp/containers/tmp` and run again.
-7. Read the verbatim output, record it in the pull request, delete the probe and its fetched results.
-8. Push and check the pull request's CI on `ubuntu-latest` and `windows-latest`.
+7. Read the verbatim output and keep it in `.temp/scratch/<name>/` until the pull request exists.
+8. Push, open the pull request, put the output in its _How it was verified_, then delete the probe and its fetched results.
+9. Check the pull request's CI on `ubuntu-latest` and `windows-latest`.
 
 ## Output Contract
 

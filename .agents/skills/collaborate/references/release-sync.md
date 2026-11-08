@@ -24,5 +24,18 @@ gh pr create --base dev --head main --title "chore: sync dev with main after <re
 Then the normal flow: wait for CI and CodeRabbit, report, and on the maintainer's word merge it with a merge commit, never a squash:
 
 ```bash
-gh pr merge <n> --merge
+gh pr merge <n> --merge --match-head-commit <reviewed sha>
 ```
+
+## When the sync conflicts
+
+If `dev` changed a line the release squash also holds, the sync pull request conflicts and `gh pr merge` refuses it. Stop and report the conflicting files. On the maintainer's word, resolve it on a branch from `main`, never on `main` itself:
+
+```bash
+git switch -c sync/<release> origin/main
+git merge origin/dev            # resolve the conflicts, then commit
+git push -u origin sync/<release>
+gh pr create --base dev --head sync/<release> --title "chore: sync dev with main after <release>"
+```
+
+That pull request replaces the conflicting one, which is closed.

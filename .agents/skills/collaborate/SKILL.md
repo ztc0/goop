@@ -31,6 +31,8 @@ This skill is the procedure; the rules live in `docs/development/rules/commits.m
 | More than about 400 lines                  | A stacked chain: `references/stacked-chain.md`                       |
 | A fix to an early pull request of a chain  | Check it at the chain's tip first: `references/stacked-chain.md`     |
 | A red CI job                               | Read its log; fix what the pull request caused; rerun a timeout once |
+| CodeRabbit hit its rate limit              | Report it; merge only if the maintainer still decides to             |
+| The head moved after the report            | Back to step 4: a new review and a new decision                      |
 | The maintainer says the release is in main | `references/release-sync.md`                                         |
 
 ## Execution Steps
@@ -39,8 +41,8 @@ This skill is the procedure; the rules live in `docs/development/rules/commits.m
 2. Commit work units: `type(scope): subject`, with their tests and docs.
 3. Push and open the pull request into `dev` with the sections of `.github/PULL_REQUEST_TEMPLATE.md`; tick only what is true and say why for the rest.
 4. Comment `@coderabbitai review`, then wait for CI and for CodeRabbit's review or rate-limit notice: `references/waiting.md`.
-5. Report and stop: CI per job, each finding with whether it is valid and why (or the rate limit), and a proposal: merge, fix, or reject with a reason.
-6. Do what the maintainer decides: fix on the branch and push (then back to step 4), reply on rejected findings with the reason, or `gh pr merge <n> --merge`.
+5. Report and stop: the head SHA reviewed, CI per job, each finding with whether it is valid and why (or the rate limit), and a proposal: merge, fix, or reject with a reason.
+6. Do what the maintainer decides: fix on the branch and push (then back to step 4), reply on rejected findings with the reason, or merge exactly the reviewed head: `gh pr merge <n> --merge --match-head-commit <reviewed sha>`.
 
 ## Output Contract
 
