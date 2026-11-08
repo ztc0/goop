@@ -1,7 +1,6 @@
 # Sandbox: throwaway Windows and Debian machines
 
 goop ships for Linux and Windows. Some checks only mean something on a real system: native DLLs, file paths and the compiled `.exe` on Windows; systemd units, timers and user services on Linux. `scripts/sandbox/` runs them in throwaway machines:
-
 - `windows`: a Windows 11 virtual machine, run by QEMU inside a container.
 - `debian`: a Debian 13 container with systemd as process 1 and a non-root user `goop`.
 
@@ -72,7 +71,7 @@ bun run sandbox:test debian
 
 `bun install` downloads the dependencies from the npm registry inside the sandbox: both the Windows VM and the Debian container reach the network. The Debian image has `git` (pinned) because commitlint calls `git config`.
 
-The native library is not copied in, so its integration tests skip in the sandbox (20 tests: run `bun run native:build` and the host suite for them). Linux in a VM (a Debian VM with a software TPM) comes with sandbox T7; until then the Linux suite runs in the container only.
+The native library is not copied in, so its integration tests skip in the sandbox (20 tests; the build of the library is being redone, see `odd/tasks/storage.md` L39). Linux in a VM (a Debian VM with a software TPM) comes with sandbox T7; until then the Linux suite runs in the container only.
 
 ## How a run works
 
@@ -148,7 +147,6 @@ podman --root "$PWD/.local/containers/storage" --runroot "$PWD/.temp/containers/
 ## Engines
 
 The engine is chosen in this order:
-
 1. `--engine docker|podman`, if given; it stops with an error when that engine is not installed.
 2. Podman, if it is installed. It keeps every image and container under `.local/` and leaves no root-owned files.
 3. Docker, if it is the only one. It prints a warning: its images and containers live in Docker's own storage (usually `/var/lib/docker`), outside this repository. `bun run clean:local` does not remove them.
