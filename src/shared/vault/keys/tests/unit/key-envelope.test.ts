@@ -9,8 +9,8 @@ import {
   parseRecoveryKey,
   sealPassphraseEnvelope,
   sealRecoveryEnvelope,
-} from "../../model/key-envelope";
-import type { Bytes } from "../../types/key-envelope";
+} from "@/shared/vault/keys/model/key-envelope";
+import type { Bytes } from "@/shared/vault/keys/types/key-envelope";
 
 const range = (start: number, length: number): Bytes =>
   new Uint8Array(Array.from({ length }, (_, index) => start + index));

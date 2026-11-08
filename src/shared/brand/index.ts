@@ -8,4 +8,4 @@ export {
   logoGrid,
   logoSvg,
   type TerminalCell,
-} from "./model/logo";
+} from "@/shared/brand/model/logo";

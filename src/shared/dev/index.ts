@@ -7,4 +7,4 @@ export {
   type LocalLayout,
   layoutDirectories,
   type TempLayout,
-} from "./model/dev-layout";
+} from "@/shared/dev/model/dev-layout";

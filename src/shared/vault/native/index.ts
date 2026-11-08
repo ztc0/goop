@@ -3,18 +3,18 @@
 export {
   type NativeLibraryCacheOptions,
   nativeLibraryCache,
-} from "./adapters/native-library-cache";
+} from "@/shared/vault/native/adapters/native-library-cache";
 export {
   NativeLibraryError,
   NativeManifestError,
   nativePlatform,
   parseNativeManifest,
   pinnedLibrary,
-} from "./model/native-library";
+} from "@/shared/vault/native/model/native-library";
 export type {
   NativeFiles,
   NativeManifest,
   NativePlatform,
   PinnedFile,
   PinnedLibrary,
-} from "./types/native-library";
+} from "@/shared/vault/native/types/native-library";

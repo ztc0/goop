@@ -12,7 +12,7 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { NativeLibraryError, nativeLibraryCache } from "@/shared/vault/native";
-import type { PinnedLibrary } from "../../types/native-library";
+import type { PinnedLibrary } from "@/shared/vault/native/types/native-library";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..", "..");
 const linux = process.platform === "linux";

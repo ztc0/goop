@@ -8,7 +8,12 @@
 // The first 30 bytes, the header, plus the label `goop-dek-v1` are the additional data, so
 // AES-GCM refuses a change in any byte.
 import { scrypt } from "node:crypto";
-import type { Bytes, DataKey, EnvelopeKind, SealRandomness } from "../types/key-envelope";
+import type {
+  Bytes,
+  DataKey,
+  EnvelopeKind,
+  SealRandomness,
+} from "@/shared/vault/keys/types/key-envelope";
 
 const VERSION = 1;
 const KIND_BYTE: Record<EnvelopeKind, number> = { recovery: 1, passphrase: 2 };

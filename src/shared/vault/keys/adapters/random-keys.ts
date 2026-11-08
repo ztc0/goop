@@ -4,8 +4,8 @@ import {
   formatRecoveryKey,
   sealPassphraseEnvelope,
   sealRecoveryEnvelope,
-} from "../model/key-envelope";
-import type { Bytes, DataKey, SealRandomness } from "../types/key-envelope";
+} from "@/shared/vault/keys/model/key-envelope";
+import type { Bytes, DataKey, SealRandomness } from "@/shared/vault/keys/types/key-envelope";
 
 const random = (length: number): Bytes => crypto.getRandomValues(new Uint8Array(length));
 const freshRandomness = (): SealRandomness => ({ salt: random(16), nonce: random(12) });

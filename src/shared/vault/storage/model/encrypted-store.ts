@@ -1,7 +1,7 @@
 // The pure side of the encrypted store (S7): what SQLite's result codes mean to goop, how values
 // are bound and read, and the store's errors. No error ever carries the key, the SQL parameters
 // or row data, and none quotes SQLite's own message, which can echo them.
-import type { StoreValue } from "../types/encrypted-store";
+import type { StoreValue } from "@/shared/vault/storage/types/encrypted-store";
 
 /** The SQLite version inside sqlite3mc 2.6.1. A mismatch means the wrong library or slots. */
 export const SQLITE3MC_SQLITE_VERSION = "3.54.0";

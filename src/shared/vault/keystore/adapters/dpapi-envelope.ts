@@ -3,25 +3,25 @@
 // environment. Every buffer DPAPI returns is copied, zeroed and freed.
 
 import type { Bytes, DataKey } from "@/shared/vault/keys";
+import { dpapiFfi } from "@/shared/vault/keystore/adapters/dpapi-ffi";
 import {
   CRYPTPROTECT_UI_FORBIDDEN,
   classifyDpapiError,
   DPAPI_ENTROPY,
   DPAPI_RETRY_WAITS_MS,
   hexCode,
-} from "../model/dpapi";
+} from "@/shared/vault/keystore/model/dpapi";
 import {
   OsEnvelopeOpenError,
   OsEnvelopeSealError,
   OsEnvelopeUnavailableError,
-} from "../model/os-key-envelope";
-import type { DpapiFunction, DpapiNative, DpapiOutput } from "../types/dpapi";
+} from "@/shared/vault/keystore/model/os-key-envelope";
+import type { DpapiFunction, DpapiNative, DpapiOutput } from "@/shared/vault/keystore/types/dpapi";
 import type {
   OsEnvelopeAvailability,
   OsEnvelopeUnavailable,
   OsKeyEnvelope,
-} from "../types/os-key-envelope";
-import { dpapiFfi } from "./dpapi-ffi";
+} from "@/shared/vault/keystore/types/os-key-envelope";
 
 /** A sealed 32-byte key is a few hundred bytes; more is refused before DPAPI sees it. */
 const SEALED_LIMIT = 4096;

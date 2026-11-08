@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readlinkSync, rmSync } from "node:f
 import { join, resolve } from "node:path";
 import { newDataKey } from "@/shared/vault/keys";
 import { type EncryptedStore, StoreLibraryError, sqlite3mcEngine } from "@/shared/vault/storage";
-import { encryptedStoreContract } from "./encrypted-store-contract";
+import { encryptedStoreContract } from "@/shared/vault/storage/tests/integration/encrypted-store-contract";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..", "..");
 // Built locally by the T10 spike; CI has no build until T5, so these tests skip there.

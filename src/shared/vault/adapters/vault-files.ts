@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { chmod, link, mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { Bytes } from "@/shared/vault/keys";
-import { VaultFileError } from "../model/vault-state";
-import type { VaultFiles } from "../types/vault";
+import { VaultFileError } from "@/shared/vault/model/vault-state";
+import type { VaultFiles } from "@/shared/vault/types/vault";
 
 const FOLDER_MODE = 0o700;
 const FILE_MODE = 0o600;
