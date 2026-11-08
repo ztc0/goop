@@ -28,7 +28,7 @@ describeOnLinuxHost("docker arguments (S4)", () => {
     expect(buildArgs(DEBIAN_IMAGE, paths.debianContainerfile)).toEqual([
       "build",
       "--tag",
-      "localhost/goop-sandbox-debian:1",
+      "localhost/goop-sandbox-debian:2",
       "--file",
       "/repo/scripts/sandbox/debian/Containerfile",
       "/repo/scripts/sandbox/debian",
@@ -38,7 +38,7 @@ describeOnLinuxHost("docker arguments (S4)", () => {
       "inspect",
       "--format",
       "{{.Size}}",
-      "localhost/goop-sandbox-debian:1",
+      "localhost/goop-sandbox-debian:2",
     ]);
   });
 
@@ -59,7 +59,7 @@ describeOnLinuxHost("docker arguments (S4)", () => {
       "/tmp:exec",
       "--env",
       "container=docker",
-      "localhost/goop-sandbox-debian:1",
+      "localhost/goop-sandbox-debian:2",
     ]);
   });
 

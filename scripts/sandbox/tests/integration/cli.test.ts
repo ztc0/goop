@@ -710,7 +710,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
   });
 });
 
-const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:1";
+const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:2";
 const USER_EXEC = [
   "exec",
   "--user",
