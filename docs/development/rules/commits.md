@@ -2,6 +2,8 @@
 
 ## Messages
 
+The steps for committing, pull requests, CodeRabbit, merging and the release sync follow the `collaborate` skill (`.agents/skills/collaborate/`); these rules win where they differ.
+
 Conventional Commits, checked by commitlint in the `commit-msg` hook:
 
 ```text
