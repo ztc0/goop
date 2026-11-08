@@ -1,0 +1,25 @@
+# The sqlite3mc linux-x64 build image (odd/tasks/native-library.md, S1): the pinned Debian 13
+# base with the pinned gcc and binutils that compile libsqlite3mc.so. DEBIAN_IMAGE, APT_SNAPSHOT
+# and TOOLCHAIN in ../recipe.ts hold the same values, and a test keeps them equal.
+FROM docker.io/library/debian:trixie@sha256:e2914ec98e08b24b4cee3cefcb9f90dfb5519f8d215a2ccf0c9a49b10b6e43de
+
+# Packages come from the Debian snapshot the base image was made from, so their versions cannot
+# move. apt checks the archive's signature with the keyring in the base image; plain http keeps
+# ca-certificates out of it, and the snapshot's Release files are past their Valid-Until date
+# by design.
+RUN rm /etc/apt/sources.list.d/debian.sources \
+ && printf '%s\n' \
+      'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20261027T000000Z trixie main' \
+      'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20261027T000000Z trixie-updates main' \
+      'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20261027T000000Z trixie-security main' \
+      > /etc/apt/sources.list \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      gcc-14=14.2.0-19 \
+      cpp-14=14.2.0-19 \
+      libgcc-14-dev=14.2.0-19 \
+      binutils=2.44-3 \
+      binutils-x86-64-linux-gnu=2.44-3 \
+      libc6-dev=2.41-12+deb13u4 \
+      unzip=6.0-29+deb13u1 \
+ && rm -rf /var/lib/apt/lists/*
