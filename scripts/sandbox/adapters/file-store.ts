@@ -2,8 +2,10 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -21,6 +23,16 @@ export const nodeFileStore: FileStore = {
     writeFileSync(path, content, mode === undefined ? {} : { mode });
   },
   readText: (path) => readFileSync(path, "utf8"),
+  readBytes: (path) => new Uint8Array(readFileSync(path)),
+  writeBytes: (path, content, mode) => {
+    const partial = `${path}.part`;
+    writeFileSync(partial, content, mode === undefined ? {} : { mode });
+    renameSync(partial, path);
+  },
+  freshDirectory: (parent, prefix) => {
+    mkdirSync(parent, { recursive: true });
+    return mkdtempSync(join(parent, prefix));
+  },
   listFiles: (directory) =>
     readdirSync(directory, { withFileTypes: true })
       .filter((entry) => entry.isFile())

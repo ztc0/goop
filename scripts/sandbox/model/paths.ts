@@ -27,6 +27,9 @@ export function sandboxPaths(root: string): SandboxPaths {
     results: join(temp, "results"),
     debianContainerfile: join(root, "scripts", "sandbox", "debian", "Containerfile"),
     debianResults: join(root, ".temp", "debian", "results"),
+    bunCache: join(local, "cache", "sandbox-bun"),
+    downloads: join(root, ".temp", "downloads"),
+    suite: join(root, ".temp", "sandbox-test"),
   };
 }
 
