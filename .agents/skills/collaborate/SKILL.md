@@ -18,6 +18,7 @@ This skill is the procedure; the rules live in `docs/development/rules/commits.m
 - Never merge into `main`, push to it, tag or release.
 - Never force-push. When history must be rewritten, give the maintainer the exact `--force-with-lease=<branch>:<old sha>` commands.
 - Never `--no-verify`: a failing hook is a failing change.
+- Never open a pull request until the maintainer asks for it; until then, keep committing on the branch.
 - Never merge, and never fix CodeRabbit findings, before the maintainer decides.
 - Run a command that reads a file only after the write that creates it has finished.
 - Scratch files go to `.temp/scratch/`.
@@ -39,7 +40,7 @@ This skill is the procedure; the rules live in `docs/development/rules/commits.m
 
 1. Branch from a fresh `origin/dev`: `feat/`, `fix/` or `docs/`.
 2. Commit work units: `type(scope): subject`, with their tests and docs.
-3. Push and open the pull request into `dev` with the sections of `.github/PULL_REQUEST_TEMPLATE.md`; tick only what is true and say why for the rest.
+3. Only when the maintainer asks for the pull request: push and open it into `dev` with the sections of `.github/PULL_REQUEST_TEMPLATE.md`; tick only what is true and say why for the rest.
 4. In the background, run `bun scripts/dev-env/run.ts bun .agents/skills/collaborate/scripts/review.ts <n>`: it asks CodeRabbit to review the head and waits for CI and CodeRabbit (`references/waiting.md`).
 5. Report and stop: the head SHA reviewed, CI per job, each finding with whether it is valid and why (or the rate limit), and a proposal: merge, fix, or reject with a reason.
 6. Do what the maintainer decides: fix on the branch and push (then back to step 4), reply on rejected findings with the reason, or merge exactly the reviewed head: `gh pr merge <n> --merge --match-head-commit <reviewed sha>`.
