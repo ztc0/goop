@@ -25,9 +25,15 @@ export const nodeFileStore: FileStore = {
   readText: (path) => readFileSync(path, "utf8"),
   readBytes: (path) => new Uint8Array(readFileSync(path)),
   writeBytes: (path, content, mode) => {
-    const partial = `${path}.part`;
-    writeFileSync(partial, content, mode === undefined ? {} : { mode });
-    renameSync(partial, path);
+    // One temporary file per write: two writers of the same target never share one.
+    const partial = `${path}.${crypto.randomUUID()}.part`;
+    try {
+      writeFileSync(partial, content, mode === undefined ? { flag: "wx" } : { mode, flag: "wx" });
+      renameSync(partial, path);
+    } catch (error) {
+      rmSync(partial, { force: true });
+      throw error;
+    }
   },
   freshDirectory: (parent, prefix) => {
     mkdirSync(parent, { recursive: true });
