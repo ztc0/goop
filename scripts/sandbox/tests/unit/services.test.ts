@@ -169,7 +169,7 @@ describe("runInWindows", () => {
 });
 
 describe("runInDebian without a command (S2)", () => {
-  const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:1";
+  const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:2";
   const NAME = "goop-debian-run-r3";
 
   test("with a terminal it opens a login shell as goop, fetches, removes the container and returns the shell's exit code", async () => {

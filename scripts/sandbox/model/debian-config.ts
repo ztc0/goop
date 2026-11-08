@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { ExecOptions, ReadinessPolicy, SandboxPaths } from "../types/sandbox";
 
 /** The image `sandbox:install debian` builds (S2); bump the tag when the Containerfile changes. */
-export const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:1";
+export const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:2";
 export const DEBIAN_PREFIX = "goop-debian";
 /** The non-root user, with the UID the Containerfile gives it. */
 export const DEBIAN_USER = "goop";

@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   DEBIAN_IMAGE,
   debianContainerName,
@@ -32,8 +34,16 @@ describeOnLinuxHost("Debian sandbox (S2)", () => {
     );
   });
 
+  test("installs git at a pinned version, which the suite's commitlint calls (T8)", () => {
+    const containerfile = readFileSync(
+      join(import.meta.dir, "..", "..", "debian", "Containerfile"),
+    );
+
+    expect(containerfile.toString()).toContain(" git=1:2.47.3-0+deb13u1");
+  });
+
   test("names the image and each run's container", () => {
-    expect(DEBIAN_IMAGE).toBe("localhost/goop-sandbox-debian:1");
+    expect(DEBIAN_IMAGE).toBe("localhost/goop-sandbox-debian:2");
     expect(debianContainerName("abc")).toBe("goop-debian-run-abc");
   });
 
@@ -41,7 +51,7 @@ describeOnLinuxHost("Debian sandbox (S2)", () => {
     expect(buildArgs(DEBIAN_IMAGE, paths.debianContainerfile)).toEqual([
       "build",
       "--tag",
-      "localhost/goop-sandbox-debian:1",
+      "localhost/goop-sandbox-debian:2",
       "--file",
       "/repo/scripts/sandbox/debian/Containerfile",
       "/repo/scripts/sandbox/debian",
@@ -51,7 +61,7 @@ describeOnLinuxHost("Debian sandbox (S2)", () => {
       "inspect",
       "--format",
       "{{.Size}}",
-      "localhost/goop-sandbox-debian:1",
+      "localhost/goop-sandbox-debian:2",
     ]);
   });
 
@@ -62,7 +72,7 @@ describeOnLinuxHost("Debian sandbox (S2)", () => {
       "--name",
       "goop-debian-run-abc",
       "--systemd=always",
-      "localhost/goop-sandbox-debian:1",
+      "localhost/goop-sandbox-debian:2",
     ]);
   });
 
