@@ -24,6 +24,34 @@ describe("parseBuildArgs", () => {
     });
   });
 
+  test("--target builds one platform of each library", () => {
+    expect(parse("--target", "win32-x64")).toEqual({
+      kind: "build",
+      libraries: ["sqlite3mc"],
+      target: "win32-x64",
+      verifySignature: false,
+    });
+    expect(parse("sqlite3mc", "--engine", "podman", "--target", "linux-x64")).toEqual({
+      kind: "build",
+      libraries: ["sqlite3mc"],
+      target: "linux-x64",
+      engine: "podman",
+      verifySignature: false,
+    });
+  });
+
+  test("--target refuses another platform, a missing value and a second --target", () => {
+    expect(parse("--target", "darwin-arm64")).toEqual({
+      kind: "usage",
+      error: "Unknown --target: darwin-arm64 (expected linux-x64 or win32-x64).",
+    });
+    expect(parse("--target")).toEqual({ kind: "usage", error: "--target needs a value." });
+    expect(parse("--target", "linux-x64", "--target", "win32-x64")).toEqual({
+      kind: "usage",
+      error: "--target is given more than once.",
+    });
+  });
+
   test("shows the help for -h and --help", () => {
     expect(parse("-h")).toEqual({ kind: "help" });
     expect(parse("sqlite3mc", "--help")).toEqual({ kind: "help" });
@@ -63,9 +91,16 @@ describe("parseBuildArgs", () => {
 
   test("the usage names the command, the library and every option", () => {
     expect(USAGE).toStartWith(
-      "Usage: bun run native-libs:build [<library>...] [--engine podman|docker] [--verify-signature]\n",
+      "Usage: bun run native-libs:build [<library>...] [--target linux-x64|win32-x64] [--engine podman|docker] [--verify-signature]\n",
     );
-    for (const word of ["sqlite3mc", "--engine <engine>", "--verify-signature", "--help"]) {
+    for (const word of [
+      "sqlite3mc",
+      "for linux-x64 and win32-x64",
+      "--target <platform>",
+      "--engine <engine>",
+      "--verify-signature",
+      "--help",
+    ]) {
       expect(USAGE).toContain(word);
     }
   });

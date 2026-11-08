@@ -11,23 +11,28 @@ const decode = (content: Uint8Array | undefined) =>
   content === undefined ? undefined : new TextDecoder().decode(content);
 
 /**
- * Builds one library for one platform (S1, S2): the signature when asked, the archive's sha256
- * before anything reads it, a fresh `--rm` container without network, the toolchain and source
- * version, then the output's sha256 against its pin. Only then are the library and the manifest
- * written; any failure writes nothing to `.local/build/native/`.
+ * Builds one library for each of its targets (S1, S2, S3): per target, the signature when asked,
+ * the archive's sha256 before anything reads it, a fresh `--rm` container without network, the
+ * toolchain and source version, then the output's sha256 against its pin. Only when every target
+ * matches are the libraries and the manifest written; any failure writes nothing to
+ * `.local/build/native/`, so a published library never sits next to a stale manifest.
  */
 export async function buildLibrary(
   deps: BuildDeps,
-  recipe: LibraryRecipe,
+  recipes: readonly LibraryRecipe[],
   options: BuildOptions,
 ): Promise<number> {
   const startedAt = deps.now();
-  const error = await build(deps, recipe, options);
+  const error = await build(deps, recipes, options);
   if (error === undefined) {
     const { root, output, manifest } = deps.paths;
-    const library = relative(root, join(output, recipe.platform, recipe.output.file));
+    const libraries = recipes.map((recipe) =>
+      relative(root, join(output, recipe.platform, recipe.output.file)),
+    );
     const elapsed = ((deps.now() - startedAt) / 1000).toFixed(1);
-    deps.output.info(`Wrote ${library} and ${relative(root, manifest)} in ${elapsed} s.`);
+    deps.output.info(
+      `Wrote ${libraries.join(", ")} and ${relative(root, manifest)} in ${elapsed} s.`,
+    );
     return 0;
   }
   deps.output.error(error);
@@ -35,12 +40,44 @@ export async function buildLibrary(
   return 1;
 }
 
-/** Every step up to the writes; undefined when they are done, else the error. */
+/** Every target, then the writes; undefined when they are done, else the error. */
 async function build(
+  deps: BuildDeps,
+  recipes: readonly LibraryRecipe[],
+  options: BuildOptions,
+): Promise<string | undefined> {
+  const { paths, files } = deps;
+  const libraries: Library[] = [];
+  for (const recipe of recipes) {
+    const library = await buildTarget(deps, recipe, options);
+    if (typeof library === "string") return library;
+    libraries.push({ target: join(paths.output, recipe.platform, recipe.output.file), library });
+  }
+
+  const existing = decode(files.read(paths.manifest));
+  let manifest: NativeManifest = { version: 1, libraries: {} };
+  if (existing !== undefined) {
+    const parsed = parseManifest(existing);
+    if ("error" in parsed) {
+      return `The existing ${relative(paths.root, paths.manifest)} cannot be read (${parsed.error}); fix or remove it.`;
+    }
+    manifest = parsed.manifest;
+  }
+  for (const recipe of recipes) {
+    manifest = withEntry(manifest, recipe.name, recipe.platform, recipe.output);
+  }
+  const text = manifestText(manifest);
+  const checked = parseManifest(text);
+  if ("error" in checked) return checked.error;
+  return publish(deps, libraries, new TextEncoder().encode(text));
+}
+
+/** One target up to its checked output: the library's bytes, else the error. */
+async function buildTarget(
   deps: BuildDeps,
   recipe: LibraryRecipe,
   options: BuildOptions,
-): Promise<string | undefined> {
+): Promise<Uint8Array | string> {
   const { paths, engine, files, output } = deps;
   const { archive, source } = recipe;
   const containers = (args: string[]) =>
@@ -103,48 +140,49 @@ async function build(
     return `The built ${recipe.output.file} does not match its pin: expected ${recipe.output.sha256}, got ${sha256}.`;
   }
   output.info(`Output sha256 ok: ${sha256}  ${recipe.output.file}`);
+  return library;
+}
 
-  const existing = decode(files.read(paths.manifest));
-  let previous: NativeManifest | undefined;
-  if (existing !== undefined) {
-    const parsed = parseManifest(existing);
-    if ("error" in parsed) {
-      return `The existing ${relative(paths.root, paths.manifest)} cannot be read (${parsed.error}); fix or remove it.`;
-    }
-    previous = parsed.manifest;
-  }
-  const text = manifestText(withEntry(previous, recipe.name, recipe.platform, recipe.output));
-  const checked = parseManifest(text);
-  if ("error" in checked) return checked.error;
-  const target = join(paths.output, recipe.platform, recipe.output.file);
-  return publish(deps, target, library, new TextEncoder().encode(text));
+interface Library {
+  target: string;
+  library: Uint8Array;
 }
 
 /**
- * Writes the library, then the manifest. If the manifest cannot be written, the library goes back
- * to what it was (or is removed), so a failed build leaves `.local/build/native/` unchanged.
+ * Writes each library, then the manifest. If any of them cannot be written, every library written
+ * so far goes back to what it was (or is removed), so a failed build leaves
+ * `.local/build/native/` unchanged.
  */
 function publish(
   { files, paths }: BuildDeps,
-  target: string,
-  library: Uint8Array,
+  libraries: readonly Library[],
   manifest: Uint8Array,
 ): string | undefined {
   const failed = (path: string, error: unknown) =>
     `Could not write ${relative(paths.root, path)} (${String(error)}).`;
-  const before = files.read(target);
-  try {
-    files.makeDirectory(dirname(target));
-    files.replace(target, library);
-  } catch (error) {
-    return failed(target, error);
+  const written: { target: string; before: Uint8Array | undefined }[] = [];
+  const undo = () => {
+    for (const { target, before } of written.reverse()) {
+      if (before === undefined) files.remove(target);
+      else files.replace(target, before);
+    }
+  };
+  for (const { target, library } of libraries) {
+    const before = files.read(target);
+    try {
+      files.makeDirectory(dirname(target));
+      files.replace(target, library);
+    } catch (error) {
+      undo();
+      return failed(target, error);
+    }
+    written.push({ target, before });
   }
   try {
     files.replace(paths.manifest, manifest);
     return undefined;
   } catch (error) {
-    if (before === undefined) files.remove(target);
-    else files.replace(target, before);
+    undo();
     return failed(paths.manifest, error);
   }
 }

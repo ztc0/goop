@@ -7,10 +7,12 @@ import {
   bytes,
   COSIGN_BYTES,
   COSIGN_PIN,
+  DLL,
   type Harness,
   harness,
   LIBRARY,
   RECIPE,
+  RECIPE_WIN32,
   text,
 } from "../fakes";
 
@@ -26,9 +28,9 @@ const OTHER = withEntry(undefined, "sqlite-vec", "linux-x64", {
   sha256: "e".repeat(64),
 });
 
-async function failing(h: Harness, options = OFF) {
+async function failing(h: Harness, options = OFF, recipes = [RECIPE]) {
   const before = h.files.below(OUT).map((path) => [path, text(h.files.read(path))]);
-  expect(await buildLibrary(h.deps, RECIPE, options)).toBe(1);
+  expect(await buildLibrary(h.deps, recipes, options)).toBe(1);
   expect(h.output.lines.at(-1)).toBe(NOTHING);
   expect(h.files.below(OUT).map((path) => [path, text(h.files.read(path))])).toEqual(before);
   return h.output.lines.filter((line) => line.startsWith("error: ")).slice(0, -1);
@@ -41,7 +43,7 @@ describeOnLinuxHost("buildLibrary", () => {
   test("checks the archive, builds in a fresh container, checks it and writes it", async () => {
     const h = harness();
     h.files.replace(`${OUT}/manifest.json`, bytes(manifestText(OTHER)));
-    expect(await buildLibrary(h.deps, RECIPE, OFF)).toBe(0);
+    expect(await buildLibrary(h.deps, [RECIPE], OFF)).toBe(0);
     expect(h.output.lines).toEqual([
       "testlib linux-x64",
       SIGNATURE_OFF,
@@ -66,7 +68,7 @@ describeOnLinuxHost("buildLibrary", () => {
 
   test("creates Podman's storage first, then builds the image and runs a fresh container", async () => {
     const h = harness();
-    await buildLibrary(h.deps, RECIPE, OFF);
+    await buildLibrary(h.deps, [RECIPE], OFF);
     expect(h.files.directories.slice(0, 3)).toEqual(h.deps.engine.directories);
     const [build, run] = h.runner.engine();
     expect(build).toEqual([
@@ -168,6 +170,109 @@ describeOnLinuxHost("buildLibrary", () => {
   });
 });
 
+describeOnLinuxHost("buildLibrary with several targets", () => {
+  const BOTH = [RECIPE, RECIPE_WIN32];
+  const SO = `${OUT}/linux-x64/libtest.so`;
+  const DLL_PATH = `${OUT}/win32-x64/test.dll`;
+  const entry = (file: string, content: Uint8Array) => ({
+    file,
+    sha256: sha256Hex(content),
+    sqliteVersion: "3.54.0",
+  });
+  /** A manifest and both libraries from an earlier build. */
+  const published = (h: Harness) => {
+    h.files.replace(SO, bytes("old ELF"));
+    h.files.replace(DLL_PATH, bytes("old PE"));
+    const old = withEntry(
+      withEntry(OTHER, "testlib", "linux-x64", entry("libtest.so", bytes("old ELF"))),
+      "testlib",
+      "win32-x64",
+      entry("test.dll", bytes("old PE")),
+    );
+    h.files.replace(`${OUT}/manifest.json`, bytes(manifestText(old)));
+  };
+
+  test("builds each target in its own image, then writes both libraries and one manifest", async () => {
+    const h = harness();
+    h.files.replace(`${OUT}/manifest.json`, bytes(manifestText(OTHER)));
+    expect(await buildLibrary(h.deps, BOTH, OFF)).toBe(0);
+    expect(h.output.lines.filter((line) => line.startsWith("testlib "))).toEqual([
+      "testlib linux-x64",
+      "testlib win32-x64",
+    ]);
+    expect(h.output.lines.filter((line) => line.startsWith("Output sha256 ok"))).toEqual([
+      `Output sha256 ok: ${SHA}  libtest.so`,
+      `Output sha256 ok: ${sha256Hex(DLL)}  test.dll`,
+    ]);
+    expect(h.output.lines.at(-1)).toBe(
+      "Wrote .local/build/native/linux-x64/libtest.so, .local/build/native/win32-x64/test.dll and .local/build/native/manifest.json in 2.5 s.",
+    );
+    expect(h.runner.engine().map((args) => args.at(-4))).toEqual([
+      "localhost/goop-native-libs-test:1",
+      "localhost/goop-native-libs-test:1",
+      "localhost/goop-native-libs-test-win32:1",
+      "localhost/goop-native-libs-test-win32:1",
+    ]);
+    expect(h.files.below(OUT)).toEqual([SO, `${OUT}/manifest.json`, DLL_PATH]);
+    expect(h.files.read(DLL_PATH)).toEqual(DLL);
+    expect(text(h.files.read(`${OUT}/manifest.json`))).toBe(
+      manifestText(
+        withEntry(
+          withEntry(OTHER, "testlib", "linux-x64", entry("libtest.so", LIBRARY)),
+          "testlib",
+          "win32-x64",
+          entry("test.dll", DLL),
+        ),
+      ),
+    );
+  });
+
+  test("one target keeps the other platform's library and manifest entry", async () => {
+    const h = harness();
+    published(h);
+    expect(await buildLibrary(h.deps, [RECIPE_WIN32], OFF)).toBe(0);
+    expect(h.files.read(SO)).toEqual(bytes("old ELF"));
+    expect(text(h.files.read(`${OUT}/manifest.json`))).toContain(
+      `"sha256": "${sha256Hex(bytes("old ELF"))}"`,
+    );
+    expect(text(h.files.read(`${OUT}/manifest.json`))).toContain(`"sha256": "${sha256Hex(DLL)}"`);
+  });
+
+  test("a failure in the second target writes nothing, not even the first target", async () => {
+    const run = harness({ images: { [RECIPE_WIN32.image]: { run: { exitCode: 2 } } } });
+    published(run);
+    expect(await failing(run, OFF, BOTH)).toEqual([
+      "error: The build container failed (podman run exited 2).",
+    ]);
+    expect(run.output.lines).toContain(`Output sha256 ok: ${SHA}  libtest.so`);
+    const pin = harness({ images: { [RECIPE_WIN32.image]: { library: bytes("other PE") } } });
+    published(pin);
+    expect(await failing(pin, OFF, BOTH)).toEqual([
+      `error: The built test.dll does not match its pin: expected ${sha256Hex(DLL)}, got ${sha256Hex(bytes("other PE"))}.`,
+    ]);
+  });
+
+  test("a second library that cannot be written puts the first one back", async () => {
+    const h = harness();
+    published(h);
+    h.files.failReplace.add(DLL_PATH);
+    expect(await failing(h, OFF, BOTH)).toEqual([
+      `error: Could not write .local/build/native/win32-x64/test.dll (Error: cannot write ${DLL_PATH}).`,
+    ]);
+  });
+
+  test("a manifest that cannot be written puts both libraries back or removes them", async () => {
+    const old = harness();
+    published(old);
+    old.files.failReplace.add(`${OUT}/manifest.json`);
+    expect(await failing(old, OFF, BOTH)).toHaveLength(1);
+    const fresh = harness();
+    fresh.files.failReplace.add(`${OUT}/manifest.json`);
+    expect(await failing(fresh, OFF, BOTH)).toHaveLength(1);
+    expect(fresh.files.below(OUT)).toEqual([]);
+  });
+});
+
 describeOnLinuxHost("buildLibrary with --verify-signature", () => {
   const SIGNED = [
     "testlib linux-x64",
@@ -179,7 +284,7 @@ describeOnLinuxHost("buildLibrary with --verify-signature", () => {
 
   test("checks the signature with the pinned cosign before the archive", async () => {
     const h = harness();
-    expect(await buildLibrary(h.deps, RECIPE, ON)).toBe(0);
+    expect(await buildLibrary(h.deps, [RECIPE], ON)).toBe(0);
     expect(h.output.lines.slice(0, 7)).toEqual([
       ...SIGNED,
       "Signature ok: SUMS lists test-1.0.zip with its pinned sha256.",
