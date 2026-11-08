@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { nodeFileStore } from "../../adapters/file-store";
+import { nodeFileStore } from "@scripts/sandbox/adapters/file-store";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
 let fixture: string;
