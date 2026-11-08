@@ -28,6 +28,8 @@ Commands:
                     in a throwaway sandbox; it and its changes are deleted at the end;
                     debian without a command opens a shell in it until you type exit
   status <system>   Show the Windows base or the Debian image, and running sandboxes
+  test <system>     Run the whole test suite in a throwaway sandbox, on a copy of
+                    the repo with the Bun that package.json pins (hash-checked)
 
 Systems:
   windows           A Windows 11 VM
@@ -41,6 +43,7 @@ Examples:
   bun run sandbox:run debian           # opens a shell; exit deletes the container
   bun run sandbox:run debian uname -a
   bun run sandbox:run windows --copy dist 'Get-ChildItem C:\\goop'
+  bun run sandbox:test windows
   bun run sandbox:status windows
 `;
 
@@ -341,8 +344,8 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
     expect(calls()).toEqual([]);
   });
 
-  test("install and status with a command point to run, and exit 2 (S1)", () => {
-    for (const command of ["install", "status"]) {
+  test("install, status and test with a command point to run, and exit 2 (S1)", () => {
+    for (const command of ["install", "status", "test"]) {
       const result = cli([command, "debian", "systemctl --version"]);
 
       expect(result.exitCode).toBe(2);
@@ -378,6 +381,30 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe(`run needs a PowerShell command.\n${USAGE}`);
     expect(calls()).toEqual([]);
+  });
+});
+
+describeOnLinuxHost("scripts/sandbox/cli.ts test (T8)", () => {
+  test("windows without a base exits 1 with the install hint before downloading or copying", () => {
+    const result = cli(["test", "windows"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("No Windows base: run `bun run sandbox:install windows` first.\n");
+    expect(readdirSync(root)).toEqual([]);
+    expect(calls()).toEqual([]);
+  });
+
+  test("debian without the image exits 1 with the install hint before downloading or copying", () => {
+    const result = cli(["test", "debian"], { FAKE_NO_IMAGE: "1" });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("No Debian image: run `bun run sandbox:install debian` first.\n");
+    expect(podmanCalls()).toEqual([
+      ["image", "inspect", "--format", "{{.Size}}", "localhost/goop-sandbox-debian:2"],
+    ]);
+    expect(existsSync(join(root, ".temp", "downloads"))).toBe(false);
   });
 });
 

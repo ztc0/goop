@@ -10,6 +10,8 @@ Commands:
                     in a throwaway sandbox; it and its changes are deleted at the end;
                     debian without a command opens a shell in it until you type exit
   status <system>   Show the Windows base or the Debian image, and running sandboxes
+  test <system>     Run the whole test suite in a throwaway sandbox, on a copy of
+                    the repo with the Bun that package.json pins (hash-checked)
 
 Systems:
   windows           A Windows 11 VM
@@ -23,6 +25,7 @@ Examples:
   bun run sandbox:run debian           # opens a shell; exit deletes the container
   bun run sandbox:run debian uname -a
   bun run sandbox:run windows --copy dist 'Get-ChildItem C:\\goop'
+  bun run sandbox:test windows
   bun run sandbox:status windows
 `;
 
@@ -66,7 +69,7 @@ function readEngine(
   return value as EngineName;
 }
 
-function parseNoCommand(command: "install" | "status", args: string[]): CliCommand {
+function parseNoCommand(command: "install" | "status" | "test", args: string[]): CliCommand {
   const os = readOs(command, args[0]);
   if (typeof os !== "string") return os;
   let engine: EngineName | undefined;
@@ -128,12 +131,13 @@ function parseRun(args: string[]): CliCommand {
   return { kind: "run", os, engine, copy, fetch, command };
 }
 
-/** The command line: `install <system>`, `status <system>` or `run <system> [--copy p]... [--fetch p]... [--] [command]`, each with an optional `--engine`. */
+/** The command line: `install <system>`, `status <system>`, `test <system>` or `run <system> [--copy p]... [--fetch p]... [--] [command]`, each with an optional `--engine`. */
 export function parseCliArgs(argv: string[]): CliCommand {
   const [command, ...rest] = argv;
   switch (command) {
     case "install":
     case "status":
+    case "test":
       return parseNoCommand(command, rest);
     case "run":
       return parseRun(rest);

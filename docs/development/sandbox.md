@@ -29,6 +29,8 @@ The system is the word right after the command: `windows` or `debian`.
 | `bun run sandbox:run debian`      | Starts a throwaway container, runs one shell command as `goop`, deletes the container                       |
 | `bun run sandbox:status windows`  | Shows the base and its size, and any VM still running                                                       |
 | `bun run sandbox:status debian`   | Shows the Debian image and its size, and any container still running                                        |
+| `bun run sandbox:test windows`    | Runs the whole test suite in a throwaway VM on a copy of the repo (see [The whole suite](#the-whole-suite)) |
+| `bun run sandbox:test debian`     | Runs the whole test suite in a throwaway container, on a copy of the repo                                   |
 
 `sandbox:run` takes the system first, then the options, then the command:
 
@@ -53,6 +55,24 @@ bun run sandbox:run windows --copy .local/build/sqlite/windows/goop-spike-check.
 On Debian, the command runs with `bash -lc` as `goop` in `/home/goop/goop/`, and `systemctl --user` works because goop's user manager starts at boot. Without a command, `bun run sandbox:run debian` opens a login shell as `goop` in a fresh container; `exit` leaves it and deletes the container. The shell needs a terminal: without one, the run stops with exit code 2 and asks for a command.
 
 On Windows, while a VM runs, its screen is visible in a browser at `http://127.0.0.1:8006`. SSH listens on `127.0.0.1:2222`. Both bind to loopback only.
+
+## The whole suite
+
+`sandbox:test <system>` runs `bun run test` in a throwaway sandbox, so the suite runs on Windows and on Debian, not only on the host. It takes `--engine` and no command; its exit code is the suite's exit code.
+
+```sh
+bun run sandbox:test windows
+bun run sandbox:test debian
+```
+
+1. It checks that the Windows base or the Debian image exists, and that `package.json` pins the Bun the sandbox has hashes for (`"packageManager": "bun@1.4.2"`). Otherwise it stops before downloading anything.
+2. It takes Bun from `.local/cache/sandbox-bun/<version>-<hash>/` when the executable there still has its pinned sha256. Otherwise it downloads the release zip (`bun-windows-x64.zip` or `bun-linux-x64.zip`) and the release's `SHASUMS256.txt` from `github.com/oven-sh/bun` into a fresh folder under `.temp/downloads/`. The zip must be listed in `SHASUMS256.txt` with the sha256 pinned in `scripts/sandbox/model/bun-release.ts`, and must have it; the executable inside must have its own pinned sha256. Only then is the executable cached. Nothing from the download runs on the host.
+3. It copies the repo into `.temp/sandbox-test/<run id>/repo/`: the files `git ls-files --cached --others --exclude-standard` lists, so uncommitted work is tested too and `.local/`, `.temp/` and `node_modules/` never are. An empty `.git` folder marks the copy's root for tools that look for it (commitlint); no git history is copied.
+4. It uploads the copy and Bun (to `C:\goop\repo` and `C:\goop\bun` on Windows, to `/home/goop/goop/` on Debian), puts that Bun first on `PATH`, and runs `bun install --frozen-lockfile` and `bun run test` there (PowerShell on Windows, `bash` as `goop` on Debian). The sandbox is deleted and the copy removed when the run ends.
+
+`bun install` downloads the dependencies from the npm registry inside the sandbox: both the Windows VM and the Debian container reach the network. The Debian image has `git` (pinned) because commitlint calls `git config`.
+
+The native library is not copied in, so its integration tests skip in the sandbox (20 tests: run `bun run native:build` and the host suite for them). Linux in a VM (a Debian VM with a software TPM) comes with sandbox T7; until then the Linux suite runs in the container only.
 
 ## How a run works
 
@@ -81,7 +101,7 @@ The install works the same way, once. The `dockurr/windows` image downloads the 
 
 ### Debian
 
-`sandbox:install debian` builds `scripts/sandbox/debian/Containerfile` into the image `localhost/goop-sandbox-debian:1`. The image is Debian 13 (`debian:trixie`, pinned by digest) with systemd, dbus and the user `goop` (UID 1000), whose user manager starts at boot. Only the Containerfile's folder is sent to the build.
+`sandbox:install debian` builds `scripts/sandbox/debian/Containerfile` into the image `localhost/goop-sandbox-debian:2`. The image is Debian 13 (`debian:trixie`, pinned by digest) with systemd, dbus, git and the user `goop` (UID 1000), whose user manager starts at boot. Only the Containerfile's folder is sent to the build.
 
 ```mermaid
 sequenceDiagram
@@ -106,7 +126,10 @@ If the container cannot be removed, the run prints the command that removes it b
 | `.local/windows/base/`                 | The installed Windows disk (`data.qcow2`) and its UEFI files               |
 | `.local/windows/ssh/`                  | The SSH key pair for the guest (mode 0600)                                 |
 | `.local/windows/password`              | The random guest password (mode 0600)                                      |
-| `.local/containers/storage/`           | Podman's images and containers, `localhost/goop-sandbox-debian:1`          |
+| `.local/containers/storage/`           | Podman's images and containers, `localhost/goop-sandbox-debian:2`          |
+| `.local/cache/sandbox-bun/`            | The verified Bun executables of `sandbox:test`, by version and hash        |
+| `.temp/downloads/bun-*/`               | A downloaded Bun zip, kept after its sha256 check                          |
+| `.temp/sandbox-test/<id>/`             | The repo copy and Bun of one `sandbox:test` run; deleted when it ends      |
 | `.temp/windows/runs/<id>/`             | The disk layer of one run; deleted when the run ends                       |
 | `.temp/windows/results/`               | Files brought back with `--fetch` from Windows                             |
 | `.temp/debian/results/`                | Files brought back with `--fetch` from Debian                              |
@@ -151,7 +174,8 @@ The CI job "Sandbox: Debian on Docker" (`.github/workflows/ci.yml`, not a requir
 - Windows: the first install's `Set-ExecutionPolicy` step failed on this image; it is now tolerated (see the log of [`odd/tasks/windows-vm.md`](../../odd/tasks/windows-vm.md)).
 - Windows on Docker: the arguments are built and unit-tested, but it has never run.
 - Debian: a container shares the host's kernel and has no TPM, so it cannot test TPM2, a kernel of its own or reboots. A Debian VM for those is deferred (S5 in [`odd/tasks/sandbox.md`](../../odd/tasks/sandbox.md)).
-- Debian: the base image is pinned by digest, but the apt packages installed on top of it are not pinned.
+- Debian: the base image is pinned by digest, but the apt packages installed on top of it are not pinned, except `git`.
+- Linux in a VM: not yet; the Debian VM with a software TPM comes with sandbox T7.
 
 ## How `scripts/` is organized
 
@@ -162,7 +186,7 @@ The CI job "Sandbox: Debian on Docker" (`.github/workflows/ci.yml`, not a requir
 | `scripts/dev-env/` | `run.ts` (the repo-local environment for every package script) and `clean.ts`                   |
 | `scripts/brand/`   | `logo-assets.ts`, which builds the logo files                                                   |
 | `scripts/sandbox/` | The sandbox: `cli.ts` plus `types/`, `model/`, `services/`, `adapters/`, `debian/` and `tests/` |
-| `scripts/shared/`  | Code used by more than one script folder, such as `repo-root.ts`                                |
+| `scripts/shared/`  | Code used by more than one script folder: `repo-root.ts`, `download.ts` (https and sha256)      |
 
 Inside a feature folder, `types/` holds the interfaces, `model/` the pure logic, `services/` the steps in order, and `adapters/` the I/O (processes, files, clock). Tests use fake adapters, so they never start Podman, Docker, Windows or Debian. The rules are in [`rules/architecture.md`](rules/architecture.md).
 
@@ -177,7 +201,10 @@ Inside `scripts/sandbox/`:
 | `model/docker-args.ts`   | The Docker arguments that differ from Podman's, such as the systemd flags                         |
 | `model/debian-config.ts` | The Debian image tag, user, folders and readiness check                                           |
 | `model/vm-config.ts`     | The `dockurr/windows` image, ports and Windows names                                              |
-| `services/`              | `install.ts`, `run.ts` and `status.ts` for Windows, `debian.ts` for Debian                        |
+| `model/bun-release.ts`   | The pinned Bun release: URLs, the zip and executable sha256 values, the cache folder              |
+| `model/suite.ts`         | One suite plan per system (Bun build, shell, upload folder), the suite command, the repo copy     |
+| `model/zip.ts`           | Reads one named file out of a zip, after its sha256 check                                         |
+| `services/`              | `install.ts`, `run.ts`, `status.ts` for Windows, `debian.ts` for Debian, `suite.ts` for `test`    |
 | `adapters/`              | `podman.ts` and `docker.ts` (the `ContainerEngine` adapters), the guest SSH shell, files, process |
 | `debian/Containerfile`   | The Debian image                                                                                  |
 | `tests/`                 | Unit tests of the pure logic and integration tests of the CLI with fake programs                  |

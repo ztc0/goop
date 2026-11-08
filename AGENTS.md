@@ -23,6 +23,7 @@ All scripts run inside the repo-local environment (`scripts/dev-env/run.ts`).
 | `bun run sandbox:install` | Install a sandbox once (`windows`: Windows, about 25 min; `debian`: a systemd container)                                                            |
 | `bun run sandbox:run`     | Run a command in a throwaway sandbox (`windows\|debian <command>`, `--copy`, `--fetch`; `--` optional; `debian` alone opens a shell)                |
 | `bun run sandbox:status`  | Show the Windows base or the Debian image, and the running sandboxes (`windows\|debian`)                                                            |
+| `bun run sandbox:test`    | Run the whole test suite in a throwaway sandbox (`windows\|debian`) on a copy of the repo with the pinned, hash-checked Bun                         |
 
 ## Golden rules
 
