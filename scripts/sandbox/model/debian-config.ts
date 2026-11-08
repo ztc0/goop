@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import type { ExecOptions, ReadinessPolicy, SandboxPaths } from "../types/sandbox";
+import type { ExecOptions } from "../../shared/containers";
+import type { ReadinessPolicy, SandboxPaths } from "../types/sandbox";
 
 /** The image `sandbox:install debian` builds (S2); bump the tag when the Containerfile changes. */
 export const DEBIAN_IMAGE = "localhost/goop-sandbox-debian:2";

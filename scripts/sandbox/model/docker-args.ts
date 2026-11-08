@@ -1,28 +1,9 @@
-// Docker arguments (S4). Docker takes the same subcommands and flags as Podman for building,
-// inspecting, listing, exec, cp and the dockur Windows containers, so those builders are
-// shared; only what Docker does differently lives here. Docker has no per-command storage
-// flags: its images and containers go to the daemon's own storage (the S3 warning says so).
-// The Windows arguments are built but never run on Docker: this PC has no Docker, and a
-// 25-minute Windows install is too heavy for CI.
-export {
-  buildArgs,
-  copyInArgs,
-  copyOutArgs,
-  execArgs,
-  imageSizeArgs,
-  installContainerArgs,
-  listRunningArgs,
-  logsArgs,
-  overlayArgs,
-  removeArgs,
-  runContainerArgs,
-  stopArgs,
-} from "./podman-args";
-
-/** The password travels in the environment, read by `-e PASSWORD`, so it never appears in argv. */
-export function dockerEnvironment(password?: string): Record<string, string> {
-  return password === undefined ? {} : { PASSWORD: password };
-}
+// Docker arguments (S4). Docker takes the same subcommands and flags as Podman for the dockur
+// Windows containers, so those builders are shared; only what Docker does differently lives
+// here. The builders every container takes in the same form and the engine environment live
+// in scripts/shared/containers. The Windows arguments are built but never run on Docker: this
+// PC has no Docker, and a 25-minute Windows install is too heavy for CI.
+export { installContainerArgs, overlayArgs, runContainerArgs, stopArgs } from "./podman-args";
 
 /**
  * A container whose process 1 is systemd. Docker has no `--systemd=always`, and on a cgroup v2

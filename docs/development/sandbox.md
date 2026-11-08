@@ -179,30 +179,29 @@ The CI job "Sandbox: Debian on Docker" (`.github/workflows/ci.yml`, not a requir
 
 `scripts/` follows the same architecture as `src/`: one folder per feature, named after what it does.
 
-| Folder             | What it is for                                                                                  |
-| ------------------ | ----------------------------------------------------------------------------------------------- |
-| `scripts/dev-env/` | `run.ts` (the repo-local environment for every package script) and `clean.ts`                   |
-| `scripts/brand/`   | `logo-assets.ts`, which builds the logo files                                                   |
-| `scripts/sandbox/` | The sandbox: `cli.ts` plus `types/`, `model/`, `services/`, `adapters/`, `debian/` and `tests/` |
-| `scripts/shared/`  | Code used by more than one script folder: `repo-root.ts`, `download.ts` (https and sha256)      |
+| Folder             | What it is for                                                                                                                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/dev-env/` | `run.ts` (the repo-local environment for every package script) and `clean.ts`                                                                                                                 |
+| `scripts/brand/`   | `logo-assets.ts`, which builds the logo files                                                                                                                                                 |
+| `scripts/sandbox/` | The sandbox: `cli.ts` plus `types/`, `model/`, `services/`, `adapters/`, `debian/` and `tests/`                                                                                               |
+| `scripts/shared/`  | Modules used by more than one script folder, each behind its own `index.ts`: `repo-root/`, `download/` (https and sha256), `containers/` (engine choice, container arguments, process runner) |
 
 Inside a feature folder, `types/` holds the interfaces, `model/` the pure logic, `services/` the steps in order, and `adapters/` the I/O (processes, files, clock). Tests use fake adapters, so they never start Podman, Docker, Windows or Debian. The rules are in [`rules/architecture.md`](rules/architecture.md).
 
 Inside `scripts/sandbox/`:
 
-| Path                     | What it is for                                                                                    |
-| ------------------------ | ------------------------------------------------------------------------------------------------- |
-| `cli.ts`                 | Parses the command line, picks the engine and calls the service for the system                    |
-| `model/cli-args.ts`      | The command line and the usage text                                                               |
-| `model/engine-choice.ts` | The engine order above                                                                            |
-| `model/podman-args.ts`   | The Podman arguments, with the repo-local storage flags                                           |
-| `model/docker-args.ts`   | The Docker arguments that differ from Podman's, such as the systemd flags                         |
-| `model/debian-config.ts` | The Debian image tag, user, folders and readiness check                                           |
-| `model/vm-config.ts`     | The `dockurr/windows` image, ports and Windows names                                              |
-| `model/bun-release.ts`   | The pinned Bun release: URLs, the zip and executable sha256 values, the cache folder              |
-| `model/suite.ts`         | One suite plan per system (Bun build, shell, upload folder), the suite command, the repo copy     |
-| `model/zip.ts`           | Reads one named file out of a zip, after its sha256 check                                         |
-| `services/`              | `install.ts`, `run.ts`, `status.ts` for Windows, `debian.ts` for Debian, `suite.ts` for `test`    |
-| `adapters/`              | `podman.ts` and `docker.ts` (the `ContainerEngine` adapters), the guest SSH shell, files, process |
-| `debian/Containerfile`   | The Debian image                                                                                  |
-| `tests/`                 | Unit tests of the pure logic and integration tests of the CLI with fake programs                  |
+| Path                     | What it is for                                                                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `cli.ts`                 | Parses the command line, picks the engine (`scripts/shared/containers/`) and calls the service                   |
+| `model/cli-args.ts`      | The command line and the usage text                                                                              |
+| `model/podman-args.ts`   | The Podman arguments for the Windows VM and the Debian container (storage flags in `scripts/shared/containers/`) |
+| `model/docker-args.ts`   | The Docker arguments that differ from Podman's, such as the systemd flags                                        |
+| `model/debian-config.ts` | The Debian image tag, user, folders and readiness check                                                          |
+| `model/vm-config.ts`     | The `dockurr/windows` image, ports and Windows names                                                             |
+| `model/bun-release.ts`   | The pinned Bun release: URLs, the zip and executable sha256 values, the cache folder                             |
+| `model/suite.ts`         | One suite plan per system (Bun build, shell, upload folder), the suite command, the repo copy                    |
+| `model/zip.ts`           | Reads one named file out of a zip, after its sha256 check                                                        |
+| `services/`              | `install.ts`, `run.ts`, `status.ts` for Windows, `debian.ts` for Debian, `suite.ts` for `test`                   |
+| `adapters/`              | `podman.ts` and `docker.ts` (the `ContainerEngine` adapters), the guest SSH shell, files, clock                  |
+| `debian/Containerfile`   | The Debian image                                                                                                 |
+| `tests/`                 | Unit tests of the pure logic and integration tests of the CLI with fake programs                                 |

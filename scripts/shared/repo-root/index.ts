@@ -5,5 +5,5 @@ import { resolve } from "node:path";
  * scripts against a fixture folder instead of the real repo.
  */
 export function repoRoot(): string {
-  return process.env.GOOP_REPO_ROOT ?? resolve(import.meta.dir, "..", "..");
+  return process.env.GOOP_REPO_ROOT ?? resolve(import.meta.dir, "..", "..", "..");
 }

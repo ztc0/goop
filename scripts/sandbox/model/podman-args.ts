@@ -1,5 +1,6 @@
-import { dirname } from "node:path";
-import type { ExecOptions, SandboxPaths } from "../types/sandbox";
+// Podman arguments for the Windows VM and the Debian container. The storage flags and the
+// arguments every container takes in the same form live in scripts/shared/containers.
+import type { SandboxPaths } from "../types/sandbox";
 import { DEBIAN_STOP_SECONDS } from "./debian-config";
 import { runDirectory } from "./paths";
 import {
@@ -12,28 +13,6 @@ import {
   WEB_PORT,
   WINDOWS_IMAGE,
 } from "./vm-config";
-
-/** Global flags that keep images, containers and temporary files inside the repo (S3). */
-export function podmanGlobalArgs(paths: SandboxPaths): string[] {
-  return [
-    "--root",
-    paths.containerStorage,
-    "--runroot",
-    paths.containerRunRoot,
-    "--tmpdir",
-    paths.containerTmp,
-  ];
-}
-
-/**
- * Environment of every podman call. The password travels here, read by `-e PASSWORD`,
- * so it never appears in argv.
- */
-export function podmanEnvironment(paths: SandboxPaths, password?: string): Record<string, string> {
-  return password === undefined
-    ? { TMPDIR: paths.containerTmp }
-    : { TMPDIR: paths.containerTmp, PASSWORD: password };
-}
 
 /** Devices, Windows settings and ports shared by the install and every run. */
 function vmOptions(): string[] {
@@ -125,51 +104,9 @@ export function stopArgs(name: string): string[] {
   return ["stop", "-t", String(STOP_TIMEOUT_SECONDS), name];
 }
 
-export function removeArgs(name: string): string[] {
-  return ["rm", name];
-}
-
-export function logsArgs(name: string): string[] {
-  return ["logs", "--tail", "50", name];
-}
-
-export function listRunningArgs(prefix: string): string[] {
-  return ["ps", "--filter", `name=${prefix}`, "--format", "{{.Names}}\t{{.Status}}"];
-}
-
-/** The build context is the Containerfile's own folder, so nothing else in the repo is sent. */
-export function buildArgs(tag: string, containerfile: string): string[] {
-  return ["build", "--tag", tag, "--file", containerfile, dirname(containerfile)];
-}
-
-export function imageSizeArgs(tag: string): string[] {
-  return ["image", "inspect", "--format", "{{.Size}}", tag];
-}
-
 /** A container whose process 1 is systemd; Podman mounts /run, /tmp and the cgroups for it. */
 export function systemdContainerArgs(name: string, image: string): string[] {
   return ["run", "-d", "--name", name, "--systemd=always", image];
-}
-
-export function execArgs(name: string, command: string[], options: ExecOptions = {}): string[] {
-  const { user, workdir, env = {}, interactive } = options;
-  return [
-    "exec",
-    ...(interactive ? ["-it"] : []),
-    ...(user === undefined ? [] : ["--user", user]),
-    ...(workdir === undefined ? [] : ["--workdir", workdir]),
-    ...Object.entries(env).flatMap(([key, value]) => ["--env", `${key}=${value}`]),
-    name,
-    ...command,
-  ];
-}
-
-export function copyInArgs(name: string, localPath: string, containerDirectory: string): string[] {
-  return ["cp", localPath, `${name}:${containerDirectory}`];
-}
-
-export function copyOutArgs(name: string, containerPath: string, localDirectory: string): string[] {
-  return ["cp", `${name}:${containerPath}`, localDirectory];
 }
 
 export function forceRemoveArgs(name: string): string[] {

@@ -7,16 +7,20 @@
 // Usage: bun scripts/sandbox/cli.ts install|status|test <windows|debian> [--engine podman|docker]
 //        bun scripts/sandbox/cli.ts run <windows|debian> [--copy p] [--fetch p] [--] <command>
 //        bun scripts/sandbox/cli.ts run debian [--copy p] [--fetch p]  (an interactive shell)
+import {
+  bunProcessRunner,
+  chooseEngine,
+  installedEngines,
+  terminalOutput,
+} from "../shared/containers";
 import { downloadBytes } from "../shared/download";
 import { repoRoot } from "../shared/repo-root";
 import { createDockerEngine } from "./adapters/docker";
 import { nodeFileStore } from "./adapters/file-store";
 import { createGuestShell } from "./adapters/guest-shell";
 import { createPodmanEngine } from "./adapters/podman";
-import { bunProcessRunner } from "./adapters/process-runner";
-import { cryptoRandom, installedEngines, systemClock, terminalOutput } from "./adapters/system";
+import { cryptoRandom, systemClock } from "./adapters/system";
 import { parseCliArgs, USAGE } from "./model/cli-args";
-import { chooseEngine } from "./model/engine-choice";
 import { sandboxPaths } from "./model/paths";
 import { passwordFromBytes, runId } from "./model/vm-config";
 import { installDebian, runInDebian, showDebianStatus } from "./services/debian";
