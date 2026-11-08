@@ -9,7 +9,7 @@ import {
   resultCodeName,
   StoreError,
   StoreOpenError,
-} from "../../model/encrypted-store";
+} from "@/shared/vault/storage/model/encrypted-store";
 
 function thrown(work: () => unknown): Error {
   try {

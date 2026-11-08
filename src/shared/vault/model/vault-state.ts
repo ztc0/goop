@@ -2,7 +2,7 @@
 // from the files that exist, never from a failed open: a store without envelopes is never a
 // first run. No error here carries a key, a passphrase or a recovery key.
 import type { OsEnvelopeUnavailableReason } from "@/shared/vault/keystore";
-import type { VaultFileName, VaultPresence, VaultState } from "../types/vault";
+import type { VaultFileName, VaultPresence, VaultState } from "@/shared/vault/types/vault";
 
 export const STORE_FILE: VaultFileName = "goop.db";
 export const OS_ENVELOPE_FILE: VaultFileName = "data-key.os";

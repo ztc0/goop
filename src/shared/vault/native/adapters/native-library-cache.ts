@@ -13,8 +13,8 @@ import {
   missingLibrary,
   nativeFileMode,
   nativeLibraryPath,
-} from "../model/native-library";
-import type { NativeFiles, PinnedLibrary } from "../types/native-library";
+} from "@/shared/vault/native/model/native-library";
+import type { NativeFiles, PinnedLibrary } from "@/shared/vault/native/types/native-library";
 
 const FOLDER_MODE = 0o700;
 const WRITABLE_MODE = 0o600;

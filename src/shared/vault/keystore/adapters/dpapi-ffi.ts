@@ -2,8 +2,8 @@
 // import, so importing `@/shared/vault/keystore` on Linux touches no Windows symbol.
 import { dlopen, type Pointer, ptr, read, toArrayBuffer } from "bun:ffi";
 import type { Bytes } from "@/shared/vault/keys";
-import { viewOrFree } from "../model/dpapi";
-import type { DpapiNative } from "../types/dpapi";
+import { viewOrFree } from "@/shared/vault/keystore/model/dpapi";
+import type { DpapiNative } from "@/shared/vault/keystore/types/dpapi";
 
 // DATA_BLOB on x64: DWORD cbData, 4 bytes of padding, BYTE* pbData.
 const BLOB_SIZE = 16;

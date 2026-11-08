@@ -6,12 +6,12 @@ export {
   newRecoveryKey,
   sealWithPassphrase,
   sealWithRecoveryKey,
-} from "./adapters/random-keys";
+} from "@/shared/vault/keys/adapters/random-keys";
 export {
   EnvelopeFormatError,
   EnvelopeOpenError,
   KeyInputError,
   openPassphraseEnvelope,
   openRecoveryEnvelope,
-} from "./model/key-envelope";
-export type { Bytes, DataKey, EnvelopeKind } from "./types/key-envelope";
+} from "@/shared/vault/keys/model/key-envelope";
+export type { Bytes, DataKey, EnvelopeKind } from "@/shared/vault/keys/types/key-envelope";

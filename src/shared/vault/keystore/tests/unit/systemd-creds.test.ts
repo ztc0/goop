@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { credsArgs, parseSystemdVersion, systemdAvailability } from "../../model/systemd-creds";
+import {
+  credsArgs,
+  parseSystemdVersion,
+  systemdAvailability,
+} from "@/shared/vault/keystore/model/systemd-creds";
 
 const TPM2_YES = "yes\n+firmware\n+driver\n+system\n+subsystem\n+libraries\n";
 const TPM2_NO = "no\n-firmware\n-driver\n-system\n-subsystem\n+libraries\n";

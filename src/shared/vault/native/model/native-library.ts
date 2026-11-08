@@ -6,7 +6,7 @@ import type {
   NativePlatform,
   PinnedFile,
   PinnedLibrary,
-} from "../types/native-library";
+} from "@/shared/vault/native/types/native-library";
 
 const PLATFORMS: readonly NativePlatform[] = ["linux-x64", "win32-x64"];
 const SHA256 = /^[0-9a-f]{64}$/;

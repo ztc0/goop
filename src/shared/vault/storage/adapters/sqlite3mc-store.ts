@@ -3,6 +3,7 @@
 // statement is finalized and every failed open closes its handle, on every path.
 import { type Pointer, ptr, toArrayBuffer } from "bun:ffi";
 import type { DataKey } from "@/shared/vault/keys";
+import { loadSqlite3mc, type Sqlite3mcNative } from "@/shared/vault/storage/adapters/sqlite3mc-ffi";
 import {
   bindingOf,
   checkCipher,
@@ -18,14 +19,13 @@ import {
   StoreError,
   StoreLibraryError,
   StoreOpenError,
-} from "../model/encrypted-store";
+} from "@/shared/vault/storage/model/encrypted-store";
 import type {
   EncryptedStore,
   EncryptedStoreEngine,
   StoreRow,
   StoreValue,
-} from "../types/encrypted-store";
-import { loadSqlite3mc, type Sqlite3mcNative } from "./sqlite3mc-ffi";
+} from "@/shared/vault/storage/types/encrypted-store";
 
 // READWRITE | CREATE | FULLMUTEX | NOFOLLOW (a symlink is refused).
 const OPEN_FLAGS = 0x2 | 0x4 | 0x10000 | 0x01000000;

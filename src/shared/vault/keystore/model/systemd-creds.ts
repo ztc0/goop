@@ -1,6 +1,6 @@
 // The pure side of the Linux OS envelope (S5): the argv given to `systemd-creds` and the reading
 // of its replies. The adapter `adapters/systemd-creds-envelope` runs it.
-import type { OsEnvelopeAvailability } from "../types/os-key-envelope";
+import type { OsEnvelopeAvailability } from "@/shared/vault/keystore/types/os-key-envelope";
 
 /** The name sealed into the credential: decrypting with another name is refused. */
 export const CREDENTIAL_NAME = "goop-dek";

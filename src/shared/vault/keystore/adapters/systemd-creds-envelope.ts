@@ -8,13 +8,13 @@ import {
   OsEnvelopeOpenError,
   OsEnvelopeSealError,
   OsEnvelopeUnavailableError,
-} from "../model/os-key-envelope";
-import { credsArgs, systemdAvailability } from "../model/systemd-creds";
+} from "@/shared/vault/keystore/model/os-key-envelope";
+import { credsArgs, systemdAvailability } from "@/shared/vault/keystore/model/systemd-creds";
 import type {
   OsEnvelopeAvailability,
   OsEnvelopeUnavailable,
   OsKeyEnvelope,
-} from "../types/os-key-envelope";
+} from "@/shared/vault/keystore/types/os-key-envelope";
 
 /** A sealed 32-byte key is about 770 bytes of base64 (T11 spike); more is refused. */
 const SEALED_LIMIT = 4096;

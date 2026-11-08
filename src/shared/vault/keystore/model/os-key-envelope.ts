@@ -1,6 +1,9 @@
 // Errors of the OS envelopes (S5, S6). None of them ever carries the data key, the sealed
 // bytes or the key store's raw output.
-import type { OsEnvelopeUnavailable, OsEnvelopeUnavailableReason } from "../types/os-key-envelope";
+import type {
+  OsEnvelopeUnavailable,
+  OsEnvelopeUnavailableReason,
+} from "@/shared/vault/keystore/types/os-key-envelope";
 
 /** The sealed bytes were changed, or belong to another user, machine or name. It never says which. */
 export class OsEnvelopeOpenError extends Error {

@@ -2,28 +2,28 @@
 // pinned native libraries it loads. The rest of goop imports only this entry (`@/shared/vault`).
 
 // The key service (S9): setup, start and recovery over the submodules above.
-export { nodeVaultFiles } from "./adapters/vault-files";
-export * from "./keys";
-export * from "./keystore";
+export { nodeVaultFiles } from "@/shared/vault/adapters/vault-files";
+export * from "@/shared/vault/keys";
+export * from "@/shared/vault/keystore";
 export {
   KeyStoreUnavailableError,
   PassphraseRequiredError,
   VaultFileError,
   VaultStateError,
   vaultState,
-} from "./model/vault-state";
-export * from "./native";
+} from "@/shared/vault/model/vault-state";
+export * from "@/shared/vault/native";
 export {
   type KeyService,
   type KeyServiceOptions,
   keyService,
   type SetupResult,
-} from "./services/key-service";
-export * from "./storage";
+} from "@/shared/vault/services/key-service";
+export * from "@/shared/vault/storage";
 export type {
   VaultFileName,
   VaultFiles,
   VaultKeys,
   VaultPresence,
   VaultState,
-} from "./types/vault";
+} from "@/shared/vault/types/vault";

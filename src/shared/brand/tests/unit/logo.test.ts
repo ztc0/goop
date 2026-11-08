@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { join, resolve } from "node:path";
-import { halfBlockRows, LOGO_PALETTE, type LogoGrid, logoGrid, logoSvg } from "../../model/logo";
+import {
+  halfBlockRows,
+  LOGO_PALETTE,
+  type LogoGrid,
+  logoGrid,
+  logoSvg,
+} from "@/shared/brand/model/logo";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..");
 

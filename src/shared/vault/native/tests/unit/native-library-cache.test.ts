@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { NativeLibraryError, NativeManifestError, nativeLibraryCache } from "@/shared/vault/native";
-import type { NativeFiles, PinnedLibrary } from "../../types/native-library";
+import type { NativeFiles, PinnedLibrary } from "@/shared/vault/native/types/native-library";
 
 const LIBRARY = new TextEncoder().encode("a dummy sqlite3mc library");
 const TAMPERED = new TextEncoder().encode("a tampered sqlite3mc library");

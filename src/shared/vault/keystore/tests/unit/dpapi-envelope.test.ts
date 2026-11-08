@@ -7,7 +7,7 @@ import {
   type OsEnvelopeUnavailable,
   OsEnvelopeUnavailableError,
 } from "@/shared/vault/keystore";
-import type { DpapiFunction, DpapiNative, DpapiResult } from "../../types/dpapi";
+import type { DpapiFunction, DpapiNative, DpapiResult } from "@/shared/vault/keystore/types/dpapi";
 
 const OPEN_FAILED =
   "The OS key envelope could not be opened: it was changed, or it belongs to another user, machine or name.";

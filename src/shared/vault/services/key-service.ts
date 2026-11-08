@@ -17,7 +17,6 @@ import {
   OsEnvelopeUnavailableError,
   type OsKeyEnvelope,
 } from "@/shared/vault/keystore";
-import type { EncryptedStore, EncryptedStoreEngine } from "@/shared/vault/storage";
 import {
   KeyStoreUnavailableError,
   OS_ENVELOPE_FILE,
@@ -28,8 +27,9 @@ import {
   VaultFileError,
   VaultStateError,
   vaultState,
-} from "../model/vault-state";
-import type { VaultFileName, VaultFiles, VaultKeys, VaultState } from "../types/vault";
+} from "@/shared/vault/model/vault-state";
+import type { EncryptedStore, EncryptedStoreEngine } from "@/shared/vault/storage";
+import type { VaultFileName, VaultFiles, VaultKeys, VaultState } from "@/shared/vault/types/vault";
 
 /**
  * goop's SQLite application id ("goop"). Setup writes it so the new store has an encrypted first

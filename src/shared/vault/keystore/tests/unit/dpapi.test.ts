@@ -5,7 +5,7 @@ import {
   DPAPI_ENTROPY,
   DPAPI_RETRY_WAITS_MS,
   viewOrFree,
-} from "../../model/dpapi";
+} from "@/shared/vault/keystore/model/dpapi";
 
 describe("DPAPI settings", () => {
   test("the entropy binds the blob to goop's data key, and no prompt is ever shown", () => {

@@ -8,7 +8,7 @@ import {
   nativePlatform,
   parseNativeManifest,
   pinnedLibrary,
-} from "../../model/native-library";
+} from "@/shared/vault/native/model/native-library";
 
 const SHA = "0123456789abcdef".repeat(4);
 const entry = (fields: Record<string, unknown> = {}) => ({
