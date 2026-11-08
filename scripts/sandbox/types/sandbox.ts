@@ -25,6 +25,12 @@ export interface SandboxPaths {
   debianContainerfile: string;
   /** Files fetched from Debian runs, one folder per run. */
   debianResults: string;
+  /** Verified Bun executables for the sandbox suite, one folder per version and hash (T8). */
+  bunCache: string;
+  /** Parent of the fresh folder each Bun download gets. */
+  downloads: string;
+  /** The staged repo copy and Bun of each suite run, deleted when it ends. */
+  suite: string;
 }
 
 export interface ReadinessPolicy {
@@ -58,6 +64,31 @@ export type CliCommand =
   | ({ kind: "status" } & Target)
   | ({ kind: "run" } & Target & RunRequest)
   | { kind: "usage"; error?: string };
+
+/** The Bun builds the sandboxes need: Windows x64, and Linux x64 for every Linux system. */
+export type BunTarget = "windows-x64" | "linux-x64";
+
+/** A Bun release build, pinned by the sha256 of its zip and of the executable inside (T8). */
+export interface PinnedBun {
+  version: string;
+  asset: string;
+  url: string;
+  sha256: string;
+  /** The executable's path inside the zip. */
+  member: string;
+  /** The executable's name in the sandbox. */
+  binary: string;
+  binarySha256: string;
+}
+
+/** How a system runs the whole suite (T8): adding a system is one more plan. */
+export interface SuitePlan {
+  bun: PinnedBun;
+  /** The shell the suite command is written for. */
+  shell: "powershell" | "bash";
+  /** Where `--copy` puts the uploads in the sandbox. */
+  uploads: string;
+}
 
 export interface OemFiles {
   installBat: string;
@@ -146,6 +177,11 @@ export interface FileStore {
   makeDirectory(path: string): void;
   writeFile(path: string, content: string, mode?: number): void;
   readText(path: string): string;
+  readBytes(path: string): Uint8Array;
+  /** Writes next to the target, then renames over it, so a reader never sees half a file. */
+  writeBytes(path: string, content: Uint8Array, mode?: number): void;
+  /** Creates a new empty folder below the parent and returns its path. */
+  freshDirectory(parent: string, prefix: string): string;
   /** Regular files directly inside a folder. */
   listFiles(directory: string): FileEntry[];
   copyFile(from: string, to: string): void;
@@ -179,4 +215,11 @@ export interface SandboxDeps {
   signal: AbortSignal;
   /** stdin and stdout are a terminal, which the Debian shell needs. */
   terminal: boolean;
+}
+
+/** What `test` needs on top of a run: git for the repo copy and an https download (T8). */
+export interface SuiteDeps extends SandboxDeps {
+  runner: ProcessRunner;
+  /** Downloads a URL into memory, at most `maxBytes`; throws on any failure. */
+  download(url: string, maxBytes: number): Promise<Uint8Array>;
 }

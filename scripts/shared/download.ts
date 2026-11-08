@@ -18,3 +18,19 @@ export async function downloadBytes(url: string, maxBytes: number): Promise<Uint
   }
   return bytes;
 }
+
+export function sha256Hex(bytes: Uint8Array): string {
+  return new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
+}
+
+/** Undefined when the bytes have the pinned sha256, else the error to show. */
+export function sha256Mismatch(
+  name: string,
+  expected: string,
+  bytes: Uint8Array,
+): string | undefined {
+  const actual = sha256Hex(bytes);
+  return actual === expected
+    ? undefined
+    : `sha256 mismatch for ${name}: expected ${expected}, got ${actual}`;
+}

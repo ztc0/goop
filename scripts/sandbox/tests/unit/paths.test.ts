@@ -23,6 +23,9 @@ describeOnLinuxHost("sandboxPaths", () => {
       results: "/repo/.temp/windows/results",
       debianContainerfile: "/repo/scripts/sandbox/debian/Containerfile",
       debianResults: "/repo/.temp/debian/results",
+      bunCache: "/repo/.local/cache/sandbox-bun",
+      downloads: "/repo/.temp/downloads",
+      suite: "/repo/.temp/sandbox-test",
     });
   });
 

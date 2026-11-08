@@ -1,13 +1,8 @@
 import { dirname, join, relative } from "node:path";
 import { buildArgs } from "../../sandbox/model/podman-args";
 import { formatElapsed } from "../../sandbox/model/readiness";
-import {
-  checkArchive,
-  checkToolchain,
-  MAX_ARCHIVE_BYTES,
-  sha256Hex,
-  sqliteVersionOf,
-} from "../model/checks";
+import { sha256Hex } from "../../shared/download";
+import { checkArchive, checkToolchain, MAX_ARCHIVE_BYTES, sqliteVersionOf } from "../model/checks";
 import { BUILD_IMAGE, nativeRunArgs } from "../model/compile";
 import { TOOLCHAIN } from "../model/inputs";
 import { buildManifest, LINUX_LIBRARY, manifestText, parseManifest } from "../model/manifest";
