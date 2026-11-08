@@ -21,6 +21,6 @@
       "@scripts/*": ["./scripts/*"]
     }
   },
-  "include": ["src", "scripts", "tests", "tools", "eval"],
+  "include": ["src", "scripts", "tests", "tools", "eval", ".agents"],
   "exclude": ["node_modules", ".local", ".temp", "dist"]
 }

@@ -1,8 +1,8 @@
 # Documentation rules
 
-## Flows are Mermaid
+## Diagrams
 
-Every flow, sequence, state machine or architecture diagram in `docs/` is a Mermaid diagram in a fenced `mermaid` block. No images of diagrams, no ASCII art for flows.
+A flow, sequence, state machine or architecture diagram in `docs/` can be a Mermaid diagram in a fenced `mermaid` block, an image or ASCII art: use the one that reads best.
 
 ```mermaid
 flowchart LR
