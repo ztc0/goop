@@ -18,7 +18,6 @@ This skill is the procedure; the rules live in `docs/development/rules/commits.m
 - Never merge into `main`, push to it, tag or release.
 - Never force-push. When history must be rewritten, give the maintainer the exact `--force-with-lease=<branch>:<old sha>` commands.
 - Never `--no-verify`: a failing hook is a failing change.
-- Never open a pull request until the maintainer asks for it; until then, keep committing on the branch.
 - Never merge, and never fix CodeRabbit findings, before the maintainer decides.
 - Run a command that reads a file only after the write that creates it has finished.
 - Scratch files go to `.temp/scratch/`.
