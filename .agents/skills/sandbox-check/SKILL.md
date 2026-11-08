@@ -23,26 +23,27 @@ Not for pure logic with no OS access: the normal suite covers it.
 
 ## Decision Gates
 
-| The code touches                                 | Where it runs for real                                                                           |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Linux without a TPM2 (systemd, files, sqlite3mc) | `bun run sandbox:run debian ...`                                                                 |
-| A TPM2 (`systemd-creds`, host+tpm2)              | Debian VM with `swtpm` (UEFI, `libtss2`; sandbox T7)                                             |
-| Windows (DPAPI, `bun:ffi`, paths)                | `bun run sandbox:run windows ...`                                                                |
-| Anything                                         | The whole suite: host `bun run test`, CI `windows-latest`, and the Windows VM suite (sandbox T8) |
+| The code touches                                 | Where it runs for real                                                                                                                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Linux without a TPM2 (systemd, files, sqlite3mc) | `bun run sandbox:run debian ...`                                                                                                                                                                        |
+| A TPM2 (`systemd-creds`, host+tpm2)              | Debian VM with `swtpm` (UEFI, `libtss2`; sandbox T7)                                                                                                                                                    |
+| Windows (DPAPI, `bun:ffi`, paths)                | `bun run sandbox:run windows ...`                                                                                                                                                                       |
+| Anything                                         | The whole suite: host `bun run test`, `bun run sandbox:test windows` and `bun run sandbox:test debian` (sandbox T8, done), CI `ubuntu-latest` and `windows-latest`; Linux in a VM comes with sandbox T7 |
 
 ## Execution Steps
 
 1. `bun run lint`, `bun run typecheck`, `bun run test` on the host; all exit 0.
-2. Write the smallest probe in `.temp/scratch/<name>/probe.ts` that prints one `PASS`/`FAIL` line per check and exits 1 on any failure.
-3. Compile it: `bun scripts/dev-env/run.ts bun build --compile --target=bun-linux-x64|bun-windows-x64 <probe.ts> --outfile <probe>`.
-4. Run it: `bun run sandbox:run <system> --copy <probe> --fetch <result path> -- '<run the probe>'` (see `docs/development/sandbox.md`).
-5. After a host reboot, if Podman reports a changed boot ID, delete `.temp/containers/run` and `.temp/containers/tmp` and run again.
-6. Read the verbatim output, record it in the plan Log, delete the probe and its fetched results.
-7. Push and check the pull request's CI on `ubuntu-latest` and `windows-latest`.
+2. The whole suite in the sandboxes: `bun run sandbox:test windows` and `bun run sandbox:test debian`; both exit 0. Explain every group of skipped tests (Linux-only by nature, native library not built, ...); a group skipped only because a sandbox lacks a tool is a named task, never a silent skip.
+3. Write the smallest probe in `.temp/scratch/<name>/probe.ts` that prints one `PASS`/`FAIL` line per check and exits 1 on any failure.
+4. Compile it: `bun scripts/dev-env/run.ts bun build --compile --target=bun-linux-x64|bun-windows-x64 <probe.ts> --outfile <probe>`.
+5. Run it: `bun run sandbox:run <system> --copy <probe> --fetch <result path> -- '<run the probe>'` (see `docs/development/sandbox.md`).
+6. After a host reboot, if Podman reports a changed boot ID, delete `.temp/containers/run` and `.temp/containers/tmp` and run again.
+7. Read the verbatim output, record it in the plan Log, delete the probe and its fetched results.
+8. Push and check the pull request's CI on `ubuntu-latest` and `windows-latest`.
 
 ## Output Contract
 
-Return: the host suite counts, each sandbox run (system, command, verbatim result), the CI result per job, and any sandbox capability still missing as a named task.
+Return: the host suite counts, the `sandbox:test` counts per system with each skipped group and its reason, each sandbox run (system, command, verbatim result), the CI result per job, and any sandbox capability still missing as a named task.
 
 ## References
 

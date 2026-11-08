@@ -25,6 +25,27 @@ describe("parseCliArgs", () => {
     });
   });
 
+  test("test takes the system and an optional --engine, and no command (T8)", () => {
+    expect(parseCliArgs(["test", "windows"])).toEqual({ kind: "test", os: "windows" });
+    expect(parseCliArgs(["test", "debian", "--engine", "podman"])).toEqual({
+      kind: "test",
+      os: "debian",
+      engine: "podman",
+    });
+    expect(parseCliArgs(["test", "debian", "bun", "test"])).toEqual({
+      kind: "usage",
+      error: "test takes no command; to run one, use: bun run sandbox:run <system> <command>",
+    });
+    expect(parseCliArgs(["test"])).toEqual({
+      kind: "usage",
+      error: "test needs the system first: windows or debian.",
+    });
+    expect(parseCliArgs(["test", "macos"])).toEqual({
+      kind: "usage",
+      error: "Unknown system: macos (expected windows or debian).",
+    });
+  });
+
   test("install, run and status need the system first (S1)", () => {
     for (const command of ["install", "status", "run"]) {
       for (const rest of [[], ["--engine", "podman", "debian"]]) {

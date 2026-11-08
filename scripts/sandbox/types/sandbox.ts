@@ -62,6 +62,7 @@ export interface Target {
 export type CliCommand =
   | ({ kind: "install" } & Target)
   | ({ kind: "status" } & Target)
+  | ({ kind: "test" } & Target)
   | ({ kind: "run" } & Target & RunRequest)
   | { kind: "usage"; error?: string };
 
