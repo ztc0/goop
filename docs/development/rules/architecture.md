@@ -33,9 +33,9 @@ Inside a feature, create only the layers it needs, when it needs them:
 
 ## Imports
 
-- Use the `@/` alias for imports from `src/`: `import { devLayout } from "@/shared/dev"`.
+- Every import uses an alias, never a relative path: `@/` for `src/` (`import { devLayout } from "@/shared/dev"`) and `@scripts/` for `scripts/` (`import { repoRoot } from "@scripts/shared/repo-root"`). `tests/integration/import-aliases.test.ts` enforces it.
 - Another feature is imported only through its `index.ts`: `@/offers`, never `@/offers/model/dedupe`.
-- Inside a feature, relative imports are fine.
+- Inside a feature or module, the alias may reach its own internals: `@/offers/model/dedupe` is fine from within `src/offers/`.
 
 ## Process model
 

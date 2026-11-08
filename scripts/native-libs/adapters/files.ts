@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import type { NativeLibsFiles } from "../types/native-libs";
+import type { NativeLibsFiles } from "@scripts/native-libs/types/native-libs";
 
 /** The local file system. */
 export const nodeFiles: NativeLibsFiles = {

@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { displayPath, resultsDirectory, runDirectory, sandboxPaths } from "../../model/paths";
-import { describeOnLinuxHost } from "../linux-host";
+import {
+  displayPath,
+  resultsDirectory,
+  runDirectory,
+  sandboxPaths,
+} from "@scripts/sandbox/model/paths";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
 
 describeOnLinuxHost("sandboxPaths", () => {
   test("keeps Podman, the Windows base and the runs inside the repo (S3)", () => {

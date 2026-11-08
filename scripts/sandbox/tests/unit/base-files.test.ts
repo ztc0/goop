@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { baseFilesToCopy, formatBytes, resolveCopyPath } from "../../model/base-files";
-import { passwordFromBytes, runContainerName, runId } from "../../model/vm-config";
-import { describeOnLinuxHost } from "../linux-host";
+import { baseFilesToCopy, formatBytes, resolveCopyPath } from "@scripts/sandbox/model/base-files";
+import { passwordFromBytes, runContainerName, runId } from "@scripts/sandbox/model/vm-config";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
 
 describe("baseFilesToCopy", () => {
   test("copies the small files and skips the disk and any ISO, sorted", () => {

@@ -1,4 +1,8 @@
-import type { ProcessRequest, ProcessResult, ProcessRunner } from "../types/containers";
+import type {
+  ProcessRequest,
+  ProcessResult,
+  ProcessRunner,
+} from "@scripts/shared/containers/types/containers";
 
 /** Runs host programs with Bun.spawn, never through a shell. */
 export const bunProcessRunner: ProcessRunner = {

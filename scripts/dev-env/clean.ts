@@ -2,8 +2,8 @@
 // .local/ folder (models, data, caches) instead, only after typing "delete".
 import { existsSync, rmSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
+import { repoRoot } from "@scripts/shared/repo-root";
 import { devLayout } from "@/shared/dev";
-import { repoRoot } from "../shared/repo-root";
 
 const args = process.argv.slice(2);
 const local = args.length === 1 && args[0] === "--local";

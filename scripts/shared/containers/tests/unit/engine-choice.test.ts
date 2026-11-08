@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { chooseEngine, DOCKER_WARNING } from "../..";
+import { chooseEngine, DOCKER_WARNING } from "@scripts/shared/containers";
 
 describe("chooseEngine (S3)", () => {
   test("--engine podman uses Podman, with no warning", () => {

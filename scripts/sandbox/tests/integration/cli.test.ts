@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import { describeOnLinuxHost } from "../linux-host";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
 const cliScript = join(repo, "scripts", "sandbox", "cli.ts");

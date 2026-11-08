@@ -1,20 +1,20 @@
 import { describe, expect, test } from "bun:test";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
+import {
+  installContainerArgs,
+  overlayArgs,
+  runContainerArgs,
+  stopArgs,
+} from "@scripts/sandbox/model/podman-args";
+import { WINDOWS_IMAGE } from "@scripts/sandbox/model/vm-config";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
 import {
   listRunningArgs,
   logsArgs,
   podmanEnvironment,
   podmanGlobalArgs,
   removeArgs,
-} from "../../../shared/containers";
-import { sandboxPaths } from "../../model/paths";
-import {
-  installContainerArgs,
-  overlayArgs,
-  runContainerArgs,
-  stopArgs,
-} from "../../model/podman-args";
-import { WINDOWS_IMAGE } from "../../model/vm-config";
-import { describeOnLinuxHost } from "../linux-host";
+} from "@scripts/shared/containers";
 
 const paths = sandboxPaths("/repo");
 

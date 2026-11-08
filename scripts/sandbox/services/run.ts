@@ -1,16 +1,16 @@
 import { join, relative } from "node:path";
-import { baseFilesToCopy, resolveCopyPath } from "../model/base-files";
-import { displayPath, resultsDirectory, runDirectory } from "../model/paths";
-import { RUN_READINESS } from "../model/readiness";
-import { runContainerName, SSH_PORT, WEB_URL } from "../model/vm-config";
-import type { RunRequest, SandboxDeps } from "../types/sandbox";
+import { baseFilesToCopy, resolveCopyPath } from "@scripts/sandbox/model/base-files";
+import { displayPath, resultsDirectory, runDirectory } from "@scripts/sandbox/model/paths";
+import { RUN_READINESS } from "@scripts/sandbox/model/readiness";
+import { runContainerName, SSH_PORT, WEB_URL } from "@scripts/sandbox/model/vm-config";
 import {
   guestPassword,
   INTERRUPTED_EXIT_CODE,
   prepareContainerStorage,
   reportNotReady,
   waitUntilReady,
-} from "./vm-lifecycle";
+} from "@scripts/sandbox/services/vm-lifecycle";
+import type { RunRequest, SandboxDeps } from "@scripts/sandbox/types/sandbox";
 
 /**
  * Runs one PowerShell command in a throwaway VM (S5): a `--rm` container boots a qcow2

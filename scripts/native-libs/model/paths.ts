@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { NativeLibsPaths } from "../types/native-libs";
+import type { NativeLibsPaths } from "@scripts/native-libs/types/native-libs";
 
 /**
  * Every path the build uses, from the repo root: nothing lives outside it. Podman's storage is

@@ -1,7 +1,7 @@
-import type { SandboxOs, SuitePlan } from "../types/sandbox";
-import { BUN_RELEASES } from "./bun-release";
-import { DEBIAN_WORKDIR } from "./debian-config";
-import { formatElapsed } from "./readiness";
+import { BUN_RELEASES } from "@scripts/sandbox/model/bun-release";
+import { DEBIAN_WORKDIR } from "@scripts/sandbox/model/debian-config";
+import { formatElapsed } from "@scripts/sandbox/model/readiness";
+import type { SandboxOs, SuitePlan } from "@scripts/sandbox/types/sandbox";
 
 /** The folders of the staged copy, uploaded side by side into the plan's `uploads` folder. */
 export const SUITE_REPO = "repo";

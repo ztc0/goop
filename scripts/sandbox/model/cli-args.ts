@@ -1,5 +1,5 @@
-import type { EngineName } from "../../shared/containers";
-import type { CliCommand, SandboxOs } from "../types/sandbox";
+import type { CliCommand, SandboxOs } from "@scripts/sandbox/types/sandbox";
+import type { EngineName } from "@scripts/shared/containers";
 
 export const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> <system> [options]
 

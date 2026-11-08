@@ -1,7 +1,7 @@
 // sqlite3mc (ADR 0001) for linux-x64 and win32-x64: every input and the output are pinned here, so
 // the same recipe gives the same library on any machine (docs/research/spike-encrypted-sqlite.md).
 // Both targets compile the same verified amalgamation with the same SQLite options.
-import type { LibraryRecipe, ToolchainPackage } from "../types/native-libs";
+import type { LibraryRecipe, ToolchainPackage } from "@scripts/native-libs/types/native-libs";
 
 const RELEASE = "https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v2.6.1";
 const ARCHIVE = "sqlite3mc-2.6.1-sqlite-3.54.0-amalgamation.zip";

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseCliArgs } from "../../model/cli-args";
+import { parseCliArgs } from "@scripts/sandbox/model/cli-args";
 
 const OS = ["windows"];
 

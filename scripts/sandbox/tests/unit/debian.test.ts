@@ -2,14 +2,6 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  buildArgs,
-  copyInArgs,
-  copyOutArgs,
-  execArgs,
-  imageSizeArgs,
-  listRunningArgs,
-} from "../../../shared/containers";
-import {
   DEBIAN_IMAGE,
   debianContainerName,
   debianResultsDirectory,
@@ -17,14 +9,22 @@ import {
   SYSTEMD_READY_CHECK,
   userCommand,
   userShell,
-} from "../../model/debian-config";
-import { sandboxPaths } from "../../model/paths";
+} from "@scripts/sandbox/model/debian-config";
+import { sandboxPaths } from "@scripts/sandbox/model/paths";
 import {
   forceRemoveArgs,
   manualRemoveCommand,
   systemdContainerArgs,
-} from "../../model/podman-args";
-import { describeOnLinuxHost } from "../linux-host";
+} from "@scripts/sandbox/model/podman-args";
+import { describeOnLinuxHost } from "@scripts/sandbox/tests/linux-host";
+import {
+  buildArgs,
+  copyInArgs,
+  copyOutArgs,
+  execArgs,
+  imageSizeArgs,
+  listRunningArgs,
+} from "@scripts/shared/containers";
 
 const paths = sandboxPaths("/repo");
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { manifestText, parseManifest, withEntry } from "@scripts/native-libs/model/manifest";
+import type { LibraryEntry } from "@scripts/native-libs/types/native-libs";
 import { parseNativeManifest, pinnedLibrary } from "@/shared/vault";
-import { manifestText, parseManifest, withEntry } from "../../model/manifest";
-import type { LibraryEntry } from "../../types/native-libs";
 
 const SHA = "38380e83569117219e66b18175ff937a5ec738de9411444a0819c6327b55593f";
 const ENTRY: LibraryEntry = { file: "libsqlite3mc.so", sha256: SHA, sqliteVersion: "3.54.0" };

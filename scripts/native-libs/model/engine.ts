@@ -1,10 +1,10 @@
+import type { BuildEngine, LibraryRecipe } from "@scripts/native-libs/types/native-libs";
 import {
   type EngineName,
   type PodmanStorage,
   podmanEnvironment,
   podmanGlobalArgs,
-} from "../../shared/containers";
-import type { BuildEngine, LibraryRecipe } from "../types/native-libs";
+} from "@scripts/shared/containers";
 
 /** Podman with its repo-local storage, or Docker run as the host user. */
 export function buildEngine(

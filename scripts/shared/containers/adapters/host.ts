@@ -1,5 +1,5 @@
 import { writeSync } from "node:fs";
-import type { EngineName, Output } from "../types/containers";
+import type { EngineName, Output } from "@scripts/shared/containers/types/containers";
 
 /** Synchronous writes keep our lines in order with the guest output streamed to the same fds. */
 export const terminalOutput: Output = {

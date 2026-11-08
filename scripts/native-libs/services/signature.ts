@@ -1,8 +1,13 @@
 import { join } from "node:path";
-import { sha256Mismatch } from "../../shared/download";
-import { listedSha256 } from "../model/checks";
-import { cosignArgs } from "../model/signature";
-import type { BuildDeps, CosignPin, LibraryRecipe, RemoteFile } from "../types/native-libs";
+import { listedSha256 } from "@scripts/native-libs/model/checks";
+import { cosignArgs } from "@scripts/native-libs/model/signature";
+import type {
+  BuildDeps,
+  CosignPin,
+  LibraryRecipe,
+  RemoteFile,
+} from "@scripts/native-libs/types/native-libs";
+import { sha256Mismatch } from "@scripts/shared/download";
 
 /**
  * Checks the Cosign signature of the release's checksum list with the pinned cosign, then that

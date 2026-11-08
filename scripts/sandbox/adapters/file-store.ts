@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import type { FileStore } from "../types/sandbox";
+import type { FileStore } from "@scripts/sandbox/types/sandbox";
 
 /** The local file system. */
 export const nodeFileStore: FileStore = {

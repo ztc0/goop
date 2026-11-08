@@ -1,5 +1,5 @@
 import { join, relative } from "node:path";
-import type { SandboxPaths } from "../types/sandbox";
+import type { SandboxPaths } from "@scripts/sandbox/types/sandbox";
 
 /** Every path the sandboxes use, from the repo root: nothing lives outside it (S3). */
 export function sandboxPaths(root: string): SandboxPaths {

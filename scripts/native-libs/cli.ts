@@ -4,22 +4,23 @@
 // manifest.json.
 // Usage: bun scripts/native-libs/cli.ts [<library>...] [--target linux-x64|win32-x64]
 //   [--engine podman|docker] [--verify-signature]
+
+import { nodeFiles } from "@scripts/native-libs/adapters/files";
+import { parseBuildArgs, USAGE } from "@scripts/native-libs/model/cli-args";
+import { buildEngine } from "@scripts/native-libs/model/engine";
+import { nativeLibsPaths } from "@scripts/native-libs/model/paths";
+import { COSIGN } from "@scripts/native-libs/model/signature";
+import { buildLibrary } from "@scripts/native-libs/services/build";
+import { SQLITE3MC_LINUX, SQLITE3MC_WIN32 } from "@scripts/native-libs/sqlite3mc/recipe";
+import type { BuildDeps, LibraryRecipe } from "@scripts/native-libs/types/native-libs";
 import {
   bunProcessRunner,
   chooseEngine,
   installedEngines,
   terminalOutput,
-} from "../shared/containers";
-import { downloadBytes } from "../shared/download";
-import { repoRoot } from "../shared/repo-root";
-import { nodeFiles } from "./adapters/files";
-import { parseBuildArgs, USAGE } from "./model/cli-args";
-import { buildEngine } from "./model/engine";
-import { nativeLibsPaths } from "./model/paths";
-import { COSIGN } from "./model/signature";
-import { buildLibrary } from "./services/build";
-import { SQLITE3MC_LINUX, SQLITE3MC_WIN32 } from "./sqlite3mc/recipe";
-import type { BuildDeps, LibraryRecipe } from "./types/native-libs";
+} from "@scripts/shared/containers";
+import { downloadBytes } from "@scripts/shared/download";
+import { repoRoot } from "@scripts/shared/repo-root";
 
 /** Each library and the platforms this script builds it for. */
 const RECIPES: Record<string, readonly LibraryRecipe[]> = {

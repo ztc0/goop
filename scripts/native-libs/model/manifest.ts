@@ -1,6 +1,10 @@
 // `.local/build/native/manifest.json`, the shape `src/shared/vault/native` reads: version 1,
 // then each library's file and sha256 by platform. Pure: no file is read here.
-import type { LibraryEntry, NativeManifest, NativePlatform } from "../types/native-libs";
+import type {
+  LibraryEntry,
+  NativeManifest,
+  NativePlatform,
+} from "@scripts/native-libs/types/native-libs";
 
 export type ParsedManifest = { manifest: NativeManifest } | { error: string };
 

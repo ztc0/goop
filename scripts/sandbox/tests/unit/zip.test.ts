@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { zipMember } from "../../model/zip";
-import { zipFixture } from "../zip-fixture";
+import { zipMember } from "@scripts/sandbox/model/zip";
+import { zipFixture } from "@scripts/sandbox/tests/zip-fixture";
 
 const BINARY = new TextEncoder().encode("binary ".repeat(200));
 

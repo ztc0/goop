@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseBuildArgs, USAGE } from "../../model/cli-args";
+import { parseBuildArgs, USAGE } from "@scripts/native-libs/model/cli-args";
 
 const KNOWN = ["sqlite3mc"];
 const parse = (...argv: string[]) => parseBuildArgs(argv, KNOWN);

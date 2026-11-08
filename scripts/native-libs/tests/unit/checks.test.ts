@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { checkToolchain, listedSha256 } from "../../model/checks";
-import { COSIGN, cosignArgs } from "../../model/signature";
+import { checkToolchain, listedSha256 } from "@scripts/native-libs/model/checks";
+import { COSIGN, cosignArgs } from "@scripts/native-libs/model/signature";
 
 const TOOLCHAIN = [
   { name: "gcc-14", version: "14.2.0-19" },

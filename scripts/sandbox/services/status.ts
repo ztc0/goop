@@ -1,8 +1,8 @@
-import { formatBytes } from "../model/base-files";
-import { displayPath } from "../model/paths";
-import { CONTAINER_PREFIX } from "../model/vm-config";
-import type { SandboxDeps } from "../types/sandbox";
-import { prepareContainerStorage } from "./vm-lifecycle";
+import { formatBytes } from "@scripts/sandbox/model/base-files";
+import { displayPath } from "@scripts/sandbox/model/paths";
+import { CONTAINER_PREFIX } from "@scripts/sandbox/model/vm-config";
+import { prepareContainerStorage } from "@scripts/sandbox/services/vm-lifecycle";
+import type { SandboxDeps } from "@scripts/sandbox/types/sandbox";
 
 /** Prints whether the Windows base exists, its size, and the running goop-windows containers. */
 export async function showStatus(deps: SandboxDeps): Promise<number> {

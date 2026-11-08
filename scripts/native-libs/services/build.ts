@@ -1,11 +1,16 @@
 import { dirname, join, relative } from "node:path";
-import { buildArgs } from "../../shared/containers";
-import { sha256Hex, sha256Mismatch } from "../../shared/download";
-import { checkToolchain } from "../model/checks";
-import { runArgs } from "../model/engine";
-import { manifestText, parseManifest, withEntry } from "../model/manifest";
-import type { BuildDeps, BuildOptions, LibraryRecipe, NativeManifest } from "../types/native-libs";
-import { verifySignature } from "./signature";
+import { checkToolchain } from "@scripts/native-libs/model/checks";
+import { runArgs } from "@scripts/native-libs/model/engine";
+import { manifestText, parseManifest, withEntry } from "@scripts/native-libs/model/manifest";
+import { verifySignature } from "@scripts/native-libs/services/signature";
+import type {
+  BuildDeps,
+  BuildOptions,
+  LibraryRecipe,
+  NativeManifest,
+} from "@scripts/native-libs/types/native-libs";
+import { buildArgs } from "@scripts/shared/containers";
+import { sha256Hex, sha256Mismatch } from "@scripts/shared/download";
 
 const decode = (content: Uint8Array | undefined) =>
   content === undefined ? undefined : new TextDecoder().decode(content);

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { USAGE } from "../../model/cli-args";
+import { USAGE } from "@scripts/native-libs/model/cli-args";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..");
 const cli = join(repo, "scripts", "native-libs", "cli.ts");
