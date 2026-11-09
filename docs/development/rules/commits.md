@@ -64,4 +64,6 @@ After opening a pull request, the agent:
 
 ## Publishing
 
-Agents commit each work unit on the feature branch as they go. They open a pull request only when the maintainer asks for it: the maintainer knows when an implementation is done, and a pull request bundles a finished set of work units, never one per change. When the maintainer says a release is in `main`, that is the request for the sync pull request into `dev`; asking for a large change asks for its whole stacked chain. Merging into `main`, tags and releases are the maintainer's decision.
+Agents commit each work unit on the feature branch as they go. A pull request bundles a finished set of work units, never one per change, and the agent opens it only when the maintainer asks for it or says yes to its proposal.
+
+A feature is done when every task in its `odd/tasks/<feature>.md` has its commit. Then the agent proposes the pull request once, in one question with a yes or no answer: the branch, its commits, its changed lines over `dev`, and whether it becomes a stacked chain. On yes it pushes and opens it (or the chain); on no it keeps the branch local and does not ask again for that feature until a new task is done. Work without a feature document is done when the maintainer says so. When the maintainer says a release is in `main`, that is the request for the sync pull request into `dev`; asking for a large change asks for its whole stacked chain. Merging into `main`, tags and releases are the maintainer's decision.
