@@ -4,12 +4,37 @@ labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: "Security problems go through SECURITY.md, not an issue. Never paste your CV, secrets or personal data here."
+      value: "Security problems go through SECURITY.md, not an issue."
+  - type: checkboxes
+    id: before
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched open and closed issues and did not find this problem.
+          required: true
+        - label: This report holds no CV, secrets or personal data, in the text, logs or screenshots.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [offers, discovery, profile, matching, chat, scheduler, models, learner, other]
+    validations:
+      required: true
   - type: textarea
     id: what-happened
     attributes:
       label: What happened
-      description: What you did, what you expected and what happened instead.
+      description: What you did when the problem appeared.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected and actual behavior
+      placeholder: |
+        Expected:
+        Actual:
     validations:
       required: true
   - type: textarea
@@ -28,7 +53,14 @@ body:
     id: os
     attributes:
       label: Operating system
-      options: [Linux, Windows]
+      options: [Linux, Windows, Windows (WSL)]
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: Operating system version
+      description: For example "Debian 13", "Ubuntu 24.04" or "Windows 11 24H2".
     validations:
       required: true
   - type: textarea
@@ -36,3 +68,9 @@ body:
     attributes:
       label: GPU, RAM and model mode
       description: For example "RX 7700S 8 GB, 32 GB RAM, download mode".
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      description: Only the useful lines. Remove personal data and secrets before pasting.
+      render: text

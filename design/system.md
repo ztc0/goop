@@ -182,6 +182,7 @@ No rounded corners and no shadows except inset edges (selection, toast).
 
 **goop turn** (`04`). Plain text in a `2ch 1fr` grid, opened by the flame marker in `--primary`
 (Nerd Font U+F06D, `●` fallback). Nested in order:
+
 - Thought head: `▾ Thought for 2.4s · ◆ high · ctrl+t` (dim, `Thought` bold); `▸` when folded.
   It names the reasoning level used.
 - Thought block: `--background-panel`, 1px `--border` left edge, italic dim text; shows the last
@@ -195,6 +196,7 @@ No rounded corners and no shadows except inset edges (selection, toast).
 **Composer** (`04`, `05`). No box: `--background-panel` with a 2px `--user` left edge; grows from
 1 to ~6 lines. Line: bold `›`, input, lavender block cursor (blinks; static under
 `prefers-reduced-motion`). Info line below, dim and split left/right:
+
 - Left: `model · reasoning · device · state`, model in bold `--primary`, reasoning in `--accent`
   (`think off` muted).
 - Right: hints for the state, including `ctrl+r reasoning` (cycles the level).
@@ -215,6 +217,7 @@ highlighted row has `--background-panel` and a lavender command.
 
 **Sidebar** (`04`, `06`). `--background-panel`, sections ordered from the job search to goop's
 internals:
+
 - Top status strip: `ctx 2.1K/6K`, context mini meter (`--success`), search state (`◐ search 25%`
   busy or `○ next search 09:00` idle), `● 5 sources` ok; `--border-subtle` line below.
 - Sections Offers → Rules → Search → Profile. Head: uppercase `h2` with `▾`/`▸` and a dim count on
@@ -234,6 +237,7 @@ internals:
 
 **Status line** (`04`, `05`, `06`, `M7`, `M8`, `M11`, `M12`). 28px high, `--border-subtle` top
 edge, one line (`white-space: nowrap`), three zones:
+
 1. Focus label: `● word`, bold lowercase; dot `--user` chat/home, `--secondary` offers and every
    full screen, `--warning` answering, `--error` alert/confirm (`M10`, `M11`).
 2. Keys of the focused pane only: bold `--text` key, muted action, `·` between; the primary
@@ -296,6 +300,7 @@ type-to-confirm line (`--error` tile).
 banner above the panes, right under the title: `--background-panel`, 2px left edge, `⚠`, then
 what failed · what still works; the action key on the right, muted with a bold `--text` key
 (`r restart`). One line (`white-space: nowrap`). Two variants:
+
 - Warning: 2px `--warning` edge and a yellow `⚠`, when goop already fixed it or chose a safe
   fallback and nothing blocks you (`Vulkan lists the 780M iGPU first · goop will use the RX 7700S
   (device 1)` with `↵ ok`, `W1`; slow connection, `W3`; no TPM2 → passphrase, `W5`).
@@ -312,6 +317,7 @@ until the typed group matches (`W5`); then it turns green.
 **Setup step list** (`W0`–`W9`). The left pane of every setup step (360px, pane head `Steps` with
 a count `1 of 10 done`, or `8 of 10 done · 1 skipped`; foot `you can leave and come back; nothing
 is lost`). One row per step, grid `2ch 1fr auto`, column gap 8px, padding `4px 8px`, 14px muted:
+
 - Glyphs: `✓` done (`--success`), `◐` current or running (`--warning`), `○` to do (muted), `—`
   skipped (muted, with a `skipped` tag).
 - Tags on the right, 13px muted: `required` / `optional`, plus the live `↓ 42%` (percent bold
@@ -367,6 +373,7 @@ which is only your query in the search line.
 ## Self-check for future artboards
 
 Before finishing an artboard while this file exists:
+
 - [ ] Every color is one of the 16 tokens (or the logo palette inside the logo); list them and
   compare. Frame colors (`#000`, notes panel) stay outside the screen.
 - [ ] Only the `--mono` stack inside the screen; no other font family.

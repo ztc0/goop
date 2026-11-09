@@ -3,6 +3,7 @@
 ## Test first
 
 For behavior with a runnable deterministic test:
+
 1. Write one failing test per requested rule.
 2. Run it and confirm it fails for the right reason (RED).
 3. Write the code that makes it pass (GREEN), then refactor with the tests green.
@@ -33,6 +34,7 @@ When a change touches existing shared code (options, parsers, helpers), add one 
 ## Real systems
 
 Code that talks to the operating system (TPM2, DPAPI, `bun:ffi`, systemd, native libraries) is checked on every system it runs on, never only with fakes. The steps follow the `testing` skill.
+
 - Fakes first, test-first: they cover every branch on any machine.
 - The whole suite runs on Linux and on Windows. CI does both on every pull request; locally, the host runs Linux and the Windows sandbox VM runs the Windows suite.
 - Each OS-facing path also runs for real in a sandbox: the Debian container (Linux, no TPM2), the Debian VM with `swtpm` (TPM2), the Windows VM (DPAPI). Never on the maintainer's machine without consent.
@@ -42,6 +44,7 @@ Code that talks to the operating system (TPM2, DPAPI, `bun:ffi`, systemd, native
 ## Spikes
 
 A spike answers one technical question in a timebox, with the least code that answers it. The workflow follows the `spikes` skill.
+
 - The code lives only in `.temp/spikes/<name>/`. It is never committed or pushed, has no tests and no review, and is deleted when the spike ends.
 - The deliverable is `docs/research/spike-<name>.md`, plus an ADR when it decides something.
 - The code is gone, so the report holds the evidence: versions, pinned hashes, exact commands and verbatim outputs.

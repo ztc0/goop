@@ -25,6 +25,7 @@ Yes: a Debian 13 VM booted with UEFI (OVMF), `swtpm` and the TPM2 libraries repo
 ## Evidence
 
 The spike code is deleted, so this section must be enough to repeat the result.
+
 - Versions:
   - Host: Arch Linux, kernel 7.2.11-arch1-1, Podman 6.1.4 rootless, Bun 1.4.2, `/dev/kvm` `crw-rw-rw- root kvm`.
   - Container image `localhost/goop-spike-tpm-vm:2` (`790d3fc3cf22`), `FROM docker.io/library/debian:trixie@sha256:e2914ec98e08b24b4cee3cefcb9f90dfb5519f8d215a2ccf0c9a49b10b6e43de` (the pin of `scripts/sandbox/debian/Containerfile`), with `qemu-system-x86 1:10.0.13+ds-0+deb13u1`, `qemu-utils 1:10.0.13+ds-0+deb13u1`, `swtpm 0.7.1-1.5`, `swtpm-tools 0.7.1-1.5`, `libtpms0 0.9.2-3.2`, `ovmf 2025.02-8+deb13u1`, `genisoimage 9:1.1.11-4`, `openssh-client 1:10.0p1-7+deb13u4`. Image `:1` (`bbea188a7693`) is the same without `ovmf`.
@@ -58,6 +59,7 @@ ssh -i /spike/ssh/id_ed25519 -p 2222 goop@127.0.0.1 '<command>'
 ```
 
 The SeaBIOS run was the same `qemu-system-x86_64` line without `-machine q35` and the two `pflash` drives.
+
 - Commands and outputs, verbatim (in the guest, as `goop`):
 
 ```text

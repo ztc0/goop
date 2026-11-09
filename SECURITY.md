@@ -11,6 +11,7 @@ goop is in early development. Only the latest commit on `main` receives security
 Please do not open a public issue. Report it privately through GitHub's **Report a vulnerability** button on the repository's Security tab (private vulnerability reporting).
 
 Include:
+
 - What is affected and how to reproduce it.
 - The impact you expect (data exposure, code execution, prompt injection, ...).
 - Any suggested fix, if you have one.
