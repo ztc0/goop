@@ -90,7 +90,7 @@ describe("native library cache (fake file system)", () => {
     const path = await cache().verifiedPath(PINNED, LIBRARY);
 
     const temp = tempOf(fake.ops);
-    expect(path).toBe(TARGET);
+    expect<string>(path).toBe(TARGET);
     expect(dirname(temp)).toBe(FOLDER);
     expect(temp).not.toBe(TARGET);
     expect(fake.ops).toEqual([
@@ -115,8 +115,8 @@ describe("native library cache (fake file system)", () => {
     const { fake, cache } = fakeFiles({ [TARGET]: LIBRARY });
     const libraries = cache();
 
-    expect(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
-    expect(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
+    expect<string>(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
+    expect<string>(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
 
     expect(fake.ops).toEqual([]);
     expect(fake.reads).toEqual([TARGET, TARGET]);
@@ -165,7 +165,7 @@ describe("native library cache (fake file system)", () => {
     const path = await cache().verifiedPath(PINNED, LIBRARY);
 
     const temp = tempOf(fake.ops);
-    expect(path).toBe(TARGET);
+    expect<string>(path).toBe(TARGET);
     expect(fake.ops).toEqual([
       `makeFolder ${FOLDER} 700`,
       `write ${temp} 600`,

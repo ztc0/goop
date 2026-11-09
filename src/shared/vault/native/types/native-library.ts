@@ -22,6 +22,14 @@ export interface PinnedLibrary extends PinnedFile {
   name: string;
 }
 
+declare const verified: unique symbol;
+
+/**
+ * A library path whose file matched its pinned sha256 when `vault/native` returned it. Only
+ * `vault/native` makes one, so `vault/storage` cannot load a path nobody checked (S4).
+ */
+export type VerifiedLibraryPath = string & { readonly [verified]: true };
+
 /** The file system calls of the native cache, kept thin so every decision is testable. */
 export interface NativeFiles {
   /** The file's bytes, or undefined when there is no such file. */

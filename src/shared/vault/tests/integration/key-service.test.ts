@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, rmSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
+  builtNativeLibrary,
   type EncryptedStore,
   EnvelopeOpenError,
   keyService,
@@ -15,14 +16,15 @@ import {
   StoreOpenError,
   sqlite3mcEngine,
   VaultStateError,
+  type VerifiedLibraryPath,
 } from "@/shared/vault";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..");
-const library = [
-  join(repo, ".local", "build", "native", "linux-x64", "libsqlite3mc.so"),
-  join(repo, ".local", "build", "sqlite", "libsqlite3mc.so"),
-].find(existsSync);
-const missing = process.platform !== "linux" || library === undefined;
+const folder = join(repo, ".local", "build", "native");
+const missing = process.platform !== "linux" || !existsSync(join(folder, "manifest.json"));
+const library = missing
+  ? ("" as VerifiedLibraryPath)
+  : await builtNativeLibrary({ folder, name: "sqlite3mc", platform: "linux-x64" });
 const PASSPHRASE = "correct horse battery staple";
 const TIMEOUT = 30_000;
 
@@ -58,7 +60,7 @@ async function rejection(promise: Promise<unknown>): Promise<Error> {
 }
 
 describe.skipIf(missing)(
-  "key service end to end (skipped without libsqlite3mc.so under .local/build/native/linux-x64)",
+  "key service end to end (skipped without .local/build/native/manifest.json; bun run native-libs:build)",
   () => {
     let root = "";
     let folder = "";
@@ -78,7 +80,7 @@ describe.skipIf(missing)(
       keyService({
         files: nodeVaultFiles(folder),
         os,
-        engine: sqlite3mcEngine({ library: library ?? "" }),
+        engine: sqlite3mcEngine({ library: library }),
         ...(askPassphrase ? { askPassphrase } : {}),
       });
     const kept = (store: EncryptedStore) => {
@@ -111,7 +113,7 @@ describe.skipIf(missing)(
         (await service(fakeOs("machine-a")).setup({})).store.close();
 
         expect(() =>
-          sqlite3mcEngine({ library: library ?? "" }).open(join(folder, "goop.db"), newDataKey()),
+          sqlite3mcEngine({ library: library }).open(join(folder, "goop.db"), newDataKey()),
         ).toThrow(StoreOpenError);
       },
       TIMEOUT,

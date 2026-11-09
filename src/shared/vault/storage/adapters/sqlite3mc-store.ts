@@ -3,6 +3,7 @@
 // statement is finalized and every failed open closes its handle, on every path.
 import { type Pointer, ptr, toArrayBuffer } from "bun:ffi";
 import type { DataKey } from "@/shared/vault/keys";
+import type { VerifiedLibraryPath } from "@/shared/vault/native";
 import { loadSqlite3mc, type Sqlite3mcNative } from "@/shared/vault/storage/adapters/sqlite3mc-ffi";
 import {
   bindingOf,
@@ -35,8 +36,8 @@ const COLUMN = { integer: 1, float: 2, text: 3, blob: 4 } as const;
 const CIPHER = "chacha20";
 
 export interface Sqlite3mcOptions {
-  /** The library file; T5 verifies its sha256 before giving the path here. */
-  library: string;
+  /** The library file, as `vault/native` returned it after checking its sha256 (S4). */
+  library: VerifiedLibraryPath;
   /** The SQLite version the library must report. Tests change it to see the refusal. */
   expectedVersion?: string;
 }

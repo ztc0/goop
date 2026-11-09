@@ -1,14 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readdirSync, readlinkSync, rmSync } from "node:fs";
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readlinkSync,
+  rmSync,
+  unlinkSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { newDataKey } from "@/shared/vault/keys";
+import { builtNativeLibrary, type VerifiedLibraryPath } from "@/shared/vault/native";
 import { type EncryptedStore, StoreLibraryError, sqlite3mcEngine } from "@/shared/vault/storage";
 import { encryptedStoreContract } from "@/shared/vault/storage/tests/integration/encrypted-store-contract";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..", "..");
-// Built locally by the T10 spike; CI has no build until T5, so these tests skip there.
-const library = join(repo, ".local", "build", "sqlite", "libsqlite3mc.so");
-const missing = process.platform !== "linux" || !existsSync(library);
+// Built by `bun run native-libs:build`; CI has no build until native-library T7, so these tests
+// skip there. A built library that does not match its manifest fails here instead of skipping.
+const folder = join(repo, ".local", "build", "native");
+const missing = process.platform !== "linux" || !existsSync(join(folder, "manifest.json"));
+const library = missing
+  ? ("" as VerifiedLibraryPath)
+  : await builtNativeLibrary({ folder, name: "sqlite3mc", platform: "linux-x64" });
 
 /** Runs `work` on a fresh store in its own folder under `.temp/tests/`, removed afterwards. */
 function withStore(work: (store: EncryptedStore) => void) {
@@ -54,7 +68,7 @@ function tempFilesOf(store: EncryptedStore): string[] {
 }
 
 describe.skipIf(missing)(
-  "sqlite3mc store (skipped without .local/build/sqlite/libsqlite3mc.so; T5 builds it)",
+  "sqlite3mc store (skipped without .local/build/native/manifest.json; bun run native-libs:build)",
   () => {
     encryptedStoreContract(() => sqlite3mcEngine({ library }));
 
@@ -74,11 +88,25 @@ describe.skipIf(missing)(
       withStore((store) => {
         expect(tempFilesOf(store)).toEqual([]);
       });
-      // The probe can see one: the same work on temporary files opens one.
+      // SQLITE_TEMP_STORE=3 keeps temporary data in memory even when a connection asks for files.
       withStore((store) => {
         store.run("PRAGMA temp_store = FILE");
-        expect(tempFilesOf(store).length).toBeGreaterThan(0);
+        expect(tempFilesOf(store)).toEqual([]);
       });
+    });
+
+    test("the temporary file probe sees a file deleted while still open", () => {
+      const folder = join(repo, ".temp", "tests", `probe-${crypto.randomUUID()}`);
+      mkdirSync(folder, { recursive: true });
+      const path = join(folder, "scratch");
+      const fd = openSync(path, "w");
+      try {
+        unlinkSync(path);
+        expect(openDeletedFiles()).toContain(`${path} (deleted)`);
+      } finally {
+        closeSync(fd);
+        rmSync(folder, { recursive: true, force: true });
+      }
     });
 
     test("a library that reports another SQLite version is refused before any open", () => {
@@ -90,7 +118,6 @@ describe.skipIf(missing)(
 );
 
 test("a missing library is a library error", () => {
-  expect(() => sqlite3mcEngine({ library: join(repo, ".temp", "no-such-lib.so") })).toThrow(
-    StoreLibraryError,
-  );
+  const library = join(repo, ".temp", "no-such-lib.so") as VerifiedLibraryPath;
+  expect(() => sqlite3mcEngine({ library })).toThrow(StoreLibraryError);
 });
