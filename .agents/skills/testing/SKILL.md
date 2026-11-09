@@ -3,9 +3,7 @@
 name: testing
 description: "Trigger: test, tests, test first, TDD, RED, testear, probar, test on Windows, probar en windows, probar en linux, sandbox, real run, e2e, TPM, DPAPI, bun:ffi. Test a goop change test-first at the right level, from unit tests to real runs on Windows and Linux."
 license: GPL-3.0-only
-metadata:
-author: ztc0
-version: "1.0"
+metadata: { author: ztc0, version: "1.0" }
 ---
 
 ## Activation Contract

@@ -62,4 +62,4 @@ After opening a pull request, the agent:
 
 ## Publishing
 
-Agents commit each work unit on the feature branch as they go. They open a pull request only when the maintainer asks for it: the maintainer knows when an implementation is done, and a pull request bundles a finished set of work units, never one per change. Merging into `main`, tags and releases are the maintainer's decision.
+Agents commit each work unit on the feature branch as they go. They open a pull request only when the maintainer asks for it: the maintainer knows when an implementation is done, and a pull request bundles a finished set of work units, never one per change. When the maintainer says a release is in `main`, that is the request for the sync pull request into `dev`; asking for a large change asks for its whole stacked chain. Merging into `main`, tags and releases are the maintainer's decision.

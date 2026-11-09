@@ -20,8 +20,14 @@ Three kinds of check, from the most automatic to the most real:
 
 1. Run the whole suite on each system: `bun run sandbox:test windows` and `bun run sandbox:test debian`; both exit 0. Explain each group of skipped tests (Linux-only by nature, native library not built, ...).
 2. Write the smallest probe in `.temp/scratch/<name>/probe.ts`: one `PASS` or `FAIL` line per check, exit 1 on any failure.
-3. Compile it: `bun scripts/dev-env/run.ts bun build --compile --target=bun-linux-x64|bun-windows-x64 <probe.ts> --outfile <probe>`.
-4. Run it: `bun run sandbox:run <system> --copy <probe> --fetch <result path> -- '<run the probe>'`.
+3. Compile it for the system it runs on, one of:
+
+   ```bash
+   bun scripts/dev-env/run.ts bun build --compile --target=bun-linux-x64 <probe.ts> --outfile <probe>
+   bun scripts/dev-env/run.ts bun build --compile --target=bun-windows-x64 <probe.ts> --outfile <probe>.exe
+   ```
+
+4. Run it so it writes its output to a file in the sandbox, keeping its exit code, and fetch that file: `bun run sandbox:run <system> --copy <probe> --fetch <result path> -- '<run the probe, writing its output to the result path>'`.
 5. After a host reboot, if Podman reports a changed boot ID, delete `.temp/containers/run` and `.temp/containers/tmp` and run again.
-6. Keep the verbatim output in `.temp/scratch/<name>/` until the pull request exists; then put it in its _How it was verified_ and delete the probe and its fetched results.
-7. Check the pull request's CI on `ubuntu-latest` and `windows-latest`.
+6. Keep the verbatim output in `.temp/scratch/<name>/`. Steps 1 to 5 are the check before any pull request exists.
+7. Once the maintainer asks for the pull request: put the output in its _How it was verified_, delete the probe and its fetched results, and check its CI on `ubuntu-latest` and `windows-latest`.
