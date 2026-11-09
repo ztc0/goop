@@ -28,13 +28,16 @@ jobs:
             exit 1
           fi
 
-  check:
-    name: Lint, typecheck and test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  native-libs:
+    # The same script as on a developer's machine (odd/tasks/native-library.md, S9): it checks
+    # the Cosign signature (Rekor is reachable here), the archive pin and each library's output
+    # pin, and writes nothing on a mismatch. Both platforms are built in Linux containers.
+    name: Build the native libraries
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Builds run on pull requests too, so they get no attestation permission.
+    permissions:
+      contents: read
     steps:
       # Actions are pinned by commit SHA; the comment names the release.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,9 +47,73 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
+      - run: bun run native-libs:build --engine docker --verify-signature
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-libs
+          path: .local/build/native/
+          if-no-files-found: error
+          # .local/ is a dot folder, which upload-artifact skips by default.
+          include-hidden-files: true
+          retention-days: 7
+
+  attest-native-libs:
+    # Only code that reached dev or main is attested: never a pull request.
+    name: Attest the native libraries
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    needs: native-libs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: native-libs
+          path: .local/build/native/
+      - name: Check the libraries against the manifest
+        working-directory: .local/build/native
+        run: |
+          jq -r '.libraries[] | to_entries[] | "\(.value.sha256)  \(.key)/\(.value.file)"' manifest.json \
+            | sha256sum --check --strict
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            .local/build/native/manifest.json
+            .local/build/native/linux-x64/libsqlite3mc.so
+            .local/build/native/win32-x64/sqlite3mc.dll
+
+  check:
+    name: Lint, typecheck, test and build (${{ matrix.os }})
+    needs: native-libs
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      # The libraries this run built; vault/native checks each one against the manifest.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: native-libs
+          path: .local/build/native/
       - run: bun run lint
       - run: bun run typecheck
+      # A missing or changed library fails the native tests instead of skipping them.
       - run: bun run test
+        env:
+          GOOP_REQUIRE_NATIVE: "1"
+      # Each system builds its own executable on its own runner (L16).
+      - run: bun run build
 
   sandbox-debian-docker:
     # The Debian sandbox on Docker (S4): the maintainer's PC has only Podman, so Docker is
