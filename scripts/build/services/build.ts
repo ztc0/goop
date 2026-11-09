@@ -36,7 +36,7 @@ export async function buildExecutable(deps: BuildDeps, request: BuildRequest): P
   }
   const embedded = NATIVE_LIBRARIES.map((name, i) => `${name} (${basename(libraries[i] ?? "")})`);
   deps.output.info(
-    `Built ${relative(request.root, request.outfile)} for ${request.platform} with ${embedded.join(", ")} and the native manifest embedded.`,
+    `Built ${relative(request.root, request.outfile).replaceAll("\\", "/")} for ${request.platform} with ${embedded.join(", ")} and the native manifest embedded.`,
   );
   return 0;
 }
