@@ -81,6 +81,19 @@ describe("native library folder (real folder)", () => {
     expect(statSync(folder).mode & 0o777).toBe(0o700);
   });
 
+  test.skipIf(!linux)("a valid copy whose modes were widened gets 0700 and 0500 back", async () => {
+    await libraries().verifiedPath(PINNED, source);
+    const first = statSync(target);
+    chmodSync(target, 0o777);
+    chmodSync(folder, 0o777);
+
+    await libraries().verifiedPath(PINNED, source);
+
+    expect(statSync(folder).mode & 0o777).toBe(0o700);
+    expect(statSync(target).mode & 0o777).toBe(0o500);
+    expect(statSync(target).ino).toBe(first.ino);
+  });
+
   test("a valid copy is reused: the same file, not rewritten", async () => {
     await libraries().verifiedPath(PINNED, source);
     const first = statSync(target);
