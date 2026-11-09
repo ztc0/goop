@@ -95,6 +95,15 @@ describe.skipIf(missing)(
       });
     });
 
+    test("the library is built with SQLITE_TEMP_STORE=3, so no connection can ask for files", () => {
+      // The /proc probe below only sees files open when it looks; the build option rules them out.
+      withStore((store) => {
+        expect(store.query("PRAGMA compile_options")).toContainEqual({
+          compile_options: "TEMP_STORE=3",
+        });
+      });
+    });
+
     // The probe reads /proc/self/fd, which only Linux has.
     test.skipIf(!linux)("a temporary table larger than its cache opens no temporary file", () => {
       withStore((store) => {
