@@ -1,6 +1,7 @@
-// The native library cache (S8, ADR 0001). `bun build --compile` keeps embedded files where
-// dlopen cannot read them, so each library is copied to `<GOOP_HOME>/cache/native/<sha256>/` and
-// hashed against the build's pin before every load: a mismatch is never loaded.
+// The native libraries' private folder (S6, ADR 0001). `bun build --compile` keeps embedded files
+// where dlopen cannot read them, so goop itself copies each library to
+// `<GOOP_HOME>/lib/native/<sha256>/` and hashes it against the build's pin before every load: a
+// mismatch is never loaded.
 //
 // Check-then-load gap: the copy is hashed, then the caller dlopens it by path. A process running
 // as the same user could swap the file in between. ADR 0001's threat model accepts that: such a
@@ -23,8 +24,8 @@ import type {
 const FOLDER_MODE = 0o700;
 const WRITABLE_MODE = 0o600;
 
-export interface NativeLibraryCacheOptions {
-  /** `GOOP_HOME`; the libraries go under its `cache/native/`. */
+export interface NativeLibraryFolderOptions {
+  /** `GOOP_HOME`; the libraries go under its `lib/native/`. */
   goopHome: string;
   files?: NativeFiles;
   sha256?: (bytes: Uint8Array) => string;
@@ -56,7 +57,7 @@ export function nodeNativeFiles(platform: string = process.platform): NativeFile
   };
 }
 
-export function nativeLibraryCache(options: NativeLibraryCacheOptions) {
+export function nativeLibraryFolder(options: NativeLibraryFolderOptions) {
   const platform: string = options.platform ?? process.platform;
   const files = options.files ?? nodeNativeFiles(platform);
   const sha256 = options.sha256 ?? sha256Hex;
@@ -79,7 +80,7 @@ export function nativeLibraryCache(options: NativeLibraryCacheOptions) {
 
   return {
     /**
-     * The path of a cached copy that matches `pinned.sha256` right now, for
+     * The path of an extracted copy that matches `pinned.sha256` right now, for
      * `sqlite3mcEngine({ library })`. Call it before every load: it hashes the copy each time.
      * `source` is the embedded library, as bytes or a path; it is checked first.
      */
@@ -99,11 +100,11 @@ export function nativeLibraryCache(options: NativeLibraryCacheOptions) {
         );
       }
 
-      const cached = await files.read(target);
-      if (cached && sha256(cached) === pinned.sha256) return target as VerifiedLibraryPath;
+      const extracted = await files.read(target);
+      if (extracted && sha256(extracted) === pinned.sha256) return target as VerifiedLibraryPath;
 
       // Missing or changed: replace it once from the verified source, then check it again.
-      await install(folder, target, bytes, cached !== undefined);
+      await install(folder, target, bytes, extracted !== undefined);
       const installed = await files.read(target);
       if (!installed) throw missingLibrary(pinned, target);
       const installedHash = sha256(installed);

@@ -30,7 +30,7 @@ declare const verified: unique symbol;
  */
 export type VerifiedLibraryPath = string & { readonly [verified]: true };
 
-/** The file system calls of the native cache, kept thin so every decision is testable. */
+/** The file system calls of the native library folders, kept thin so every decision is testable. */
 export interface NativeFiles {
   /** The file's bytes, or undefined when there is no such file. */
   read(path: string): Promise<Uint8Array | undefined>;
