@@ -33,7 +33,7 @@ When a change touches existing shared code (options, parsers, helpers), add one 
 
 ## Real systems
 
-Code that talks to the operating system (TPM2, DPAPI, `bun:ffi`, systemd, native libraries) is checked on every system it runs on, never only with fakes. The steps follow the `sandbox-check` skill.
+Code that talks to the operating system (TPM2, DPAPI, `bun:ffi`, systemd, native libraries) is checked on every system it runs on, never only with fakes. The steps follow the `testing` skill.
 
 - Fakes first, test-first: they cover every branch on any machine.
 - The whole suite runs on Linux and on Windows. CI does both on every pull request; locally, the host runs Linux and the Windows sandbox VM runs the Windows suite.

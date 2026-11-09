@@ -3,9 +3,7 @@
 name: collaborate
 description: "Trigger: commit, commitear, open a PR, abrir PR, pull request, stacked PRs, cadena de PRs, CodeRabbit, review, merge to dev, mergear, release, sync main, ya mergeé a main. Commit, open and review pull requests, merge into dev and sync dev after a release, the goop way."
 license: GPL-3.0-only
-metadata:
-author: ztc0
-version: "1.0"
+metadata: { author: ztc0, version: "1.0" }
 ---
 
 ## Activation Contract
@@ -39,7 +37,7 @@ This skill is the procedure; the rules live in `docs/development/rules/commits.m
 
 1. Branch from a fresh `origin/dev`: `feat/`, `fix/` or `docs/`.
 2. Commit work units: `type(scope): subject`, with their tests and docs.
-3. Push and open the pull request into `dev` with the sections of `.github/PULL_REQUEST_TEMPLATE.md`; tick only what is true and say why for the rest.
+3. Until the maintainer asks for the pull request, stop here and report the branch and its commits. When asked: push and open it into `dev` with the sections of `.github/PULL_REQUEST_TEMPLATE.md`; tick only what is true and say why for the rest.
 4. In the background, run `bun scripts/dev-env/run.ts bun .agents/skills/collaborate/scripts/review.ts <n>`: it asks CodeRabbit to review the head and waits for CI and CodeRabbit (`references/waiting.md`).
 5. Report and stop: the head SHA reviewed, CI per job, each finding with whether it is valid and why (or the rate limit), and a proposal: merge, fix, or reject with a reason.
 6. Do what the maintainer decides: fix on the branch and push (then back to step 4), reply on rejected findings with the reason, or merge exactly the reviewed head: `gh pr merge <n> --merge --match-head-commit <reviewed sha>`.
