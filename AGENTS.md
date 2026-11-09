@@ -16,7 +16,7 @@ All scripts run inside the repo-local environment (`scripts/dev-env/run.ts`).
 | `bun run typecheck`         | TypeScript check, no output files                                                                                                                            |
 | `bun run lint`              | Biome lint and format check                                                                                                                                  |
 | `bun run format`            | Apply Biome formatting                                                                                                                                       |
-| `bun run build`             | Compile the single `goop` executable into `dist/`                                                                                                            |
+| `bun run build`             | Compile the single `goop` executable into `dist/` with the host's native libraries embedded (needs `bun run native-libs:build` first)                        |
 | `bun run clean`             | Delete `.temp/` (never `.local/`)                                                                                                                            |
 | `bun run clean:local`       | Delete `.local/` after an interactive confirmation                                                                                                           |
 | `bun run native-libs:build` | Build the pinned native libraries into `.local/build/native/` (`[sqlite3mc] [--target linux-x64\|win32-x64] [--engine podman\|docker] [--verify-signature]`) |
