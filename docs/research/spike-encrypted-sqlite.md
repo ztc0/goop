@@ -161,6 +161,7 @@ No maintained npm package that wraps sqlite3mc or SQLCipher through `bun:ffi` wa
 ## What changes for S12
 
 S12 lists "bun:sqlite + SQLite3MultipleCiphers + sqlite-vec + FTS5" as one stack. The spike shows that they cannot all live in `bun:sqlite`. The design below is recorded in [ADR 0001](../adr/0001-encrypted-store-through-sqlite3mc-ffi.md):
+
 - **The encrypted database goes through sqlite3mc via `bun:ffi`**, in a storage adapter that owns the FFI wrapper. FTS5 and sqlite-vec run there.
 - **`bun:sqlite` stays only for unencrypted, non-personal stores**, if any (for example a cache or a test double). Otherwise it is dropped.
 - **sqlite-vec is loaded into the sqlite3mc copy only.** `bun:sqlite` must never load it in the same process, or the process can crash (item g). A test should keep it that way.

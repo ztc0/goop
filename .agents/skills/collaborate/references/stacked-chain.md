@@ -25,6 +25,7 @@ Putting the fix inside the earlier commit instead (amend, then cherry-pick every
 ## Merge
 
 In order, one at a time, each only after the maintainer decides:
+
 1. Retarget it to `dev` if its base is the merged branch before it: `gh pr edit <n> --base dev`.
 2. Wait for CI and CodeRabbit (`waiting.md`), report, and wait for the decision.
 3. `gh pr merge <n> --merge`.
