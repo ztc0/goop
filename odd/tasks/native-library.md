@@ -22,7 +22,7 @@ Branch from `refactor/remove-native`. Test-first, native review on high-risk uni
 | T1  | S8     | Move the container tooling `scripts/sandbox/` and the script share into `scripts/shared/` with an entry    | inline | 262de5f                   |
 | T2  | S1, S2 | The script: pinned inputs, Cosign check, archive hash, reproducible Linux build, output pin, manifest      | inline | 604b27a, 46ba8c4, 4d9a181 |
 | T3  | S3     | Windows: cross-compile the DLL with mingw-w64 from the same source and options, pin it, check it in the VM | inline | 1ef1ca0, 61d6f77          |
-| T4  | S4, S5 | `vault/native` reads the manifest and loads from `.local/build/native/<platform>/`; the tests use one path | inline | -                         |
+| T4  | S4, S5 | `vault/native` reads the manifest and loads from `.local/build/native/<platform>/`; the tests use one path | inline | b538683                   |
 | T5  | S7     | `sandbox:test` copies the platform folder and the manifest; missing library is an error, not a skip        | inline | -                         |
 | T6  | S6     | `bun run build` embeds the library and manifest; goop extracts to `<GOOP_HOME>/lib/native/<sha256>/`       | inline | -                         |
 | T7  | S9     | CI job: run the script, enforce pins, upload and attest; test jobs use the artifact                        | inline | -                         |
