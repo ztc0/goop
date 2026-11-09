@@ -18,13 +18,22 @@ import {
   VaultStateError,
   type VerifiedLibraryPath,
 } from "@/shared/vault";
+import { nativePlatform } from "@/shared/vault/native";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..");
+// Skips without `bun run native-libs:build`, except with GOOP_REQUIRE_NATIVE=1 (`sandbox:test`),
+// where a missing library fails the file.
 const folder = join(repo, ".local", "build", "native");
-const missing = process.platform !== "linux" || !existsSync(join(folder, "manifest.json"));
+const linux = process.platform === "linux";
+const missing =
+  process.env.GOOP_REQUIRE_NATIVE !== "1" && !existsSync(join(folder, "manifest.json"));
 const library = missing
   ? ("" as VerifiedLibraryPath)
-  : await builtNativeLibrary({ folder, name: "sqlite3mc", platform: "linux-x64" });
+  : await builtNativeLibrary({
+      folder,
+      name: "sqlite3mc",
+      platform: nativePlatform(process.platform, process.arch),
+    });
 const PASSPHRASE = "correct horse battery staple";
 const TIMEOUT = 30_000;
 
@@ -100,7 +109,7 @@ describe.skipIf(missing)(
 
         expect(recoveryKey).toMatch(/^([0-9A-HJKMNP-TV-Z]{4}-){7}[0-9A-HJKMNP-TV-Z]{4}$/);
         expect(statSync(join(folder, "data-key.recovery")).size).toBe(78);
-        expect(statSync(join(folder, "data-key.os")).mode & 0o777).toBe(0o600);
+        if (linux) expect(statSync(join(folder, "data-key.os")).mode & 0o777).toBe(0o600);
         expect(existsSync(join(folder, "data-key.passphrase"))).toBe(false);
         expect(notes(kept(await service(os).start()))).toEqual([{ body: "first note" }]);
       },

@@ -65,14 +65,14 @@ bun run sandbox:test windows
 bun run sandbox:test debian
 ```
 
-1. It checks that the Windows base or the Debian image exists, and that `package.json` pins the Bun the sandbox has hashes for (`"packageManager": "bun@1.4.2"`). Otherwise it stops before downloading anything.
+1. It checks that the Windows base or the Debian image exists, that the native libraries for the system are built (`.local/build/native/manifest.json` and a non-empty `.local/build/native/win32-x64/` or `linux-x64/`), and that `package.json` pins the Bun the sandbox has hashes for (`"packageManager": "bun@1.4.2"`). Otherwise it stops before downloading anything; without the libraries it exits 1 with ``No native libraries for <platform>: run `bun run native-libs:build --target <platform>` first.``
 2. It takes Bun from `.local/cache/sandbox-bun/<version>-<hash>/` when the executable there still has its pinned sha256. Otherwise it downloads the release zip (`bun-windows-x64.zip` or `bun-linux-x64.zip`) and the release's `SHASUMS256.txt` from `github.com/oven-sh/bun` into a fresh folder under `.temp/downloads/`. The zip must be listed in `SHASUMS256.txt` with the sha256 pinned in `scripts/sandbox/model/bun-release.ts`, and must have it; the executable inside must have its own pinned sha256. Only then is the executable cached. Nothing from the download runs on the host.
-3. It copies the repo into `.temp/sandbox-test/<run id>/repo/`: the files `git ls-files --cached --others --exclude-standard` lists, so uncommitted work is tested too and `.local/`, `.temp/` and `node_modules/` never are. An empty `.git` folder marks the copy's root for tools that look for it (commitlint); no git history is copied.
-4. It uploads the copy and Bun (to `C:\goop\repo` and `C:\goop\bun` on Windows, to `/home/goop/goop/` on Debian), puts that Bun first on `PATH`, and runs `bun install --frozen-lockfile` and `bun run test` there (PowerShell on Windows, `bash` as `goop` on Debian). The sandbox is deleted and the copy removed when the run ends.
+3. It copies the repo into `.temp/sandbox-test/<run id>/repo/`: the files `git ls-files --cached --others --exclude-standard` lists, so uncommitted work is tested too and `.local/`, `.temp/` and `node_modules/` never are. An empty `.git` folder marks the copy's root for tools that look for it (commitlint); no git history is copied. Into the copy's `.local/build/native/` it adds the manifest and only the system's platform folder (`win32-x64/` for Windows, `linux-x64/` for Debian); nothing else from `.local/` is copied, and the library is never built in the sandbox.
+4. It uploads the copy and Bun (to `C:\goop\repo` and `C:\goop\bun` on Windows, to `/home/goop/goop/` on Debian), puts that Bun first on `PATH`, sets `GOOP_REQUIRE_NATIVE=1`, and runs `bun install --frozen-lockfile` and `bun run test` there (PowerShell on Windows, `bash` as `goop` on Debian). The sandbox is deleted and the copy removed when the run ends.
 
 `bun install` downloads the dependencies from the npm registry inside the sandbox: both the Windows VM and the Debian container reach the network. The Debian image has `git` (pinned) because commitlint calls `git config`.
 
-The native library is not copied in, so its integration tests skip in the sandbox (20 tests; the build of the library is being redone, see `odd/tasks/storage.md` L39). Linux in a VM (a Debian VM with a software TPM) comes with sandbox T7; until then the Linux suite runs in the container only.
+Build the native libraries first: `bun run native-libs:build --target win32-x64` for Windows, `--target linux-x64` for Debian. With `GOOP_REQUIRE_NATIVE=1` the native integration tests never skip in the sandbox: a missing or changed library fails them. On the host, without the variable, they still skip when `.local/build/native/manifest.json` is missing. Linux in a VM (a Debian VM with a software TPM) comes with sandbox T7; until then the Linux suite runs in the container only.
 
 ## How a run works
 
@@ -121,20 +121,20 @@ If the container cannot be removed, the run prints the command that removes it b
 
 ## Where the files live
 
-| Path                                   | Contents                                                                   |
-| -------------------------------------- | -------------------------------------------------------------------------- |
-| `.local/windows/base/`                 | The installed Windows disk (`data.qcow2`) and its UEFI files               |
-| `.local/windows/ssh/`                  | The SSH key pair for the guest (mode 0600)                                 |
-| `.local/windows/password`              | The random guest password (mode 0600)                                      |
-| `.local/containers/storage/`           | Podman's images and containers, `localhost/goop-sandbox-debian:2`          |
-| `.local/cache/sandbox-bun/`            | The verified Bun executables of `sandbox:test`, by version and hash        |
-| `.temp/downloads/bun-*/`               | A downloaded Bun zip, kept after its sha256 check                          |
-| `.temp/sandbox-test/<id>/`             | The repo copy and Bun of one `sandbox:test` run; deleted when it ends      |
-| `.temp/windows/runs/<id>/`             | The disk layer of one run; deleted when the run ends                       |
-| `.temp/windows/results/`               | Files brought back with `--fetch` from Windows                             |
-| `.temp/debian/results/`                | Files brought back with `--fetch` from Debian                              |
-| `.temp/containers/`                    | Podman's runtime and temporary files                                       |
-| `scripts/sandbox/debian/Containerfile` | The Debian image; bump the tag in `model/debian-config.ts` when it changes |
+| Path                                   | Contents                                                                                |
+| -------------------------------------- | --------------------------------------------------------------------------------------- |
+| `.local/windows/base/`                 | The installed Windows disk (`data.qcow2`) and its UEFI files                            |
+| `.local/windows/ssh/`                  | The SSH key pair for the guest (mode 0600)                                              |
+| `.local/windows/password`              | The random guest password (mode 0600)                                                   |
+| `.local/containers/storage/`           | Podman's images and containers, `localhost/goop-sandbox-debian:2`                       |
+| `.local/cache/sandbox-bun/`            | The verified Bun executables of `sandbox:test`, by version and hash                     |
+| `.temp/downloads/bun-*/`               | A downloaded Bun zip, kept after its sha256 check                                       |
+| `.temp/sandbox-test/<id>/`             | The repo copy, native libraries and Bun of one `sandbox:test` run; deleted when it ends |
+| `.temp/windows/runs/<id>/`             | The disk layer of one run; deleted when the run ends                                    |
+| `.temp/windows/results/`               | Files brought back with `--fetch` from Windows                                          |
+| `.temp/debian/results/`                | Files brought back with `--fetch` from Debian                                           |
+| `.temp/containers/`                    | Podman's runtime and temporary files                                                    |
+| `scripts/sandbox/debian/Containerfile` | The Debian image; bump the tag in `model/debian-config.ts` when it changes              |
 
 `bun run clean` deletes `.temp/`, which removes results but keeps the base and the image. `bun run clean:local` deletes the base and Podman's storage, and the next run needs a new install.
 

@@ -18,7 +18,7 @@ Three kinds of check, from the most automatic to the most real:
 
 ## Steps
 
-1. Run the whole suite on each system: `bun run sandbox:test windows` and `bun run sandbox:test debian`; both exit 0. Explain each group of skipped tests (Linux-only by nature, native library not built, ...).
+1. Build the native libraries for both systems (`bun run native-libs:build --target win32-x64` and `--target linux-x64`), then run the whole suite on each system: `bun run sandbox:test windows` and `bun run sandbox:test debian`; both exit 0. The suite copies in only the system's native libraries and the manifest, and the native tests never skip there. Explain each group of skipped tests (Linux-only by nature, ...).
 2. Write the smallest probe in `.temp/scratch/<name>/probe.ts`: one `PASS` or `FAIL` line per check, exit 1 on any failure.
 3. Compile it for the system it runs on, one of:
 

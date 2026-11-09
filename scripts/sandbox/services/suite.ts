@@ -11,6 +11,9 @@ import { DEBIAN_IMAGE } from "@scripts/sandbox/model/debian-config";
 import { displayPath } from "@scripts/sandbox/model/paths";
 import {
   GIT_ROOT_MARKER,
+  missingNativeLibraries,
+  NATIVE_BUILD,
+  NATIVE_MANIFEST,
   repoFiles,
   repoFilesArgs,
   SUITE_BUN,
@@ -24,6 +27,7 @@ import { runInDebian } from "@scripts/sandbox/services/debian";
 import { runInWindows } from "@scripts/sandbox/services/run";
 import { prepareContainerStorage } from "@scripts/sandbox/services/vm-lifecycle";
 import type {
+  NativePlatform,
   PinnedBun,
   RunRequest,
   SandboxDeps,
@@ -60,6 +64,11 @@ export async function runSuite(
   const release = plan.bun;
   const system = SYSTEMS[os];
   if (!(await system.ready(deps))) return 1;
+  const native = nativeFiles(deps, plan.native);
+  if (native === undefined) {
+    output.error(missingNativeLibraries(plan.native));
+    return 1;
+  }
   const packageJson = join(paths.root, "package.json");
   const pinError = checkPackageManager(
     files.exists(packageJson) ? files.readText(packageJson) : "",
@@ -83,9 +92,9 @@ export async function runSuite(
     // A tracked file deleted in the working tree is still listed; the copy skips it.
     const names = repoFiles(listed.stdout).filter((name) => files.exists(join(paths.root, name)));
     output.info(
-      `Copying ${names.length} repo files and Bun ${release.version} into ${displayPath(paths, staging)}...`,
+      `Copying ${names.length} repo files, the ${plan.native} native libraries and Bun ${release.version} into ${displayPath(paths, staging)}...`,
     );
-    for (const name of names) {
+    for (const name of [...names, ...native]) {
       const to = join(staging, SUITE_REPO, name);
       files.makeDirectory(dirname(to));
       files.copyFile(join(paths.root, name), to);
@@ -107,6 +116,23 @@ export async function runSuite(
   } finally {
     files.removeDirectory(staging);
   }
+}
+
+/**
+ * The manifest and the platform's libraries, relative to the repo root, as `bun run
+ * native-libs:build` left them; undefined when either is missing. Nothing else from .local/.
+ */
+function nativeFiles(deps: SandboxDeps, platform: NativePlatform): string[] | undefined {
+  const { paths, files } = deps;
+  const manifest = `${NATIVE_BUILD}/${NATIVE_MANIFEST}`;
+  const folder = `${NATIVE_BUILD}/${platform}`;
+  if (!files.exists(join(paths.root, manifest)) || !files.exists(join(paths.root, folder))) {
+    return undefined;
+  }
+  const libraries = files
+    .listFiles(join(paths.root, folder))
+    .map(({ name }) => `${folder}/${name}`);
+  return libraries.length === 0 ? undefined : [manifest, ...libraries.sort()];
 }
 
 async function windowsReady(deps: SandboxDeps): Promise<boolean> {

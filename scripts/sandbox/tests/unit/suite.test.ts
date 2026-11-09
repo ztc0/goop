@@ -10,22 +10,32 @@ import {
 } from "@scripts/sandbox/model/suite";
 
 describe("the suite plan of each system", () => {
-  test("names the Bun build, the shell and where the uploads land, one entry per system", () => {
+  test("names the Bun build, the native platform, the shell and where the uploads land, one entry per system", () => {
     expect(SUITE_PLANS).toEqual({
-      windows: { bun: BUN_RELEASES["windows-x64"], shell: "powershell", uploads: "C:\\goop" },
-      debian: { bun: BUN_RELEASES["linux-x64"], shell: "bash", uploads: "/home/goop/goop" },
+      windows: {
+        bun: BUN_RELEASES["windows-x64"],
+        native: "win32-x64",
+        shell: "powershell",
+        uploads: "C:\\goop",
+      },
+      debian: {
+        bun: BUN_RELEASES["linux-x64"],
+        native: "linux-x64",
+        shell: "bash",
+        uploads: "/home/goop/goop",
+      },
     });
   });
 
-  test("PowerShell puts the copied Bun first on PATH, installs, runs the suite and hands its exit code back", () => {
+  test("PowerShell puts the copied Bun first on PATH, requires the native libraries, installs, runs the suite and hands its exit code back", () => {
     expect(suiteCommand(SUITE_PLANS.windows)).toBe(
-      "$env:Path = 'C:\\goop\\bun;' + $env:Path; Set-Location C:\\goop\\repo; bun install --frozen-lockfile; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; bun run test; exit $LASTEXITCODE",
+      "$env:Path = 'C:\\goop\\bun;' + $env:Path; $env:GOOP_REQUIRE_NATIVE = '1'; Set-Location C:\\goop\\repo; bun install --frozen-lockfile; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; bun run test; exit $LASTEXITCODE",
     );
   });
 
   test("bash does the same, stopping at the first failing step", () => {
     expect(suiteCommand(SUITE_PLANS.debian)).toBe(
-      'export PATH="/home/goop/goop/bun:$PATH" && cd /home/goop/goop/repo && bun install --frozen-lockfile && bun run test',
+      'export PATH="/home/goop/goop/bun:$PATH" && export GOOP_REQUIRE_NATIVE=1 && cd /home/goop/goop/repo && bun install --frozen-lockfile && bun run test',
     );
   });
 });
