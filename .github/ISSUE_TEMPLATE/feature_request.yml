@@ -2,6 +2,22 @@ name: Feature request
 description: An idea or improvement for goop.
 labels: [enhancement]
 body:
+  - type: checkboxes
+    id: before
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched open and closed issues and did not find this request.
+          required: true
+        - label: This request holds no CV, secrets or personal data.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [offers, discovery, profile, matching, chat, scheduler, models, learner, other]
+    validations:
+      required: true
   - type: textarea
     id: problem
     attributes:
