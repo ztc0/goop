@@ -2,6 +2,7 @@
 // sha256, and goop checks a copy against it before every load. Pure: no file is read here.
 import { join } from "node:path";
 import type {
+  NativeLibrarySource,
   NativeManifest,
   NativePlatform,
   PinnedFile,
@@ -107,6 +108,29 @@ export function nativeLibraryPath(goopHome: string, pinned: PinnedLibrary) {
   checkPinnedFile(pinned, pinned.name);
   const folder = join(goopHome, "lib", "native", pinned.sha256);
   return { folder, file: join(folder, pinned.file) };
+}
+
+/** The manifest's name among the files `bun run build` embeds next to the libraries. */
+export const EMBEDDED_MANIFEST = "manifest.json";
+
+export function missingEmbeddedManifest() {
+  return new NativeLibraryError(
+    "This goop executable has no embedded native library manifest. Build goop with: bun run build",
+  );
+}
+
+/**
+ * The compiled executable loads only the libraries embedded in it (S6): it has no `.local/` to
+ * fall back to, so one without the embedded manifest is refused. From source, goop loads the
+ * libraries `bun run native-libs:build` wrote (S5).
+ */
+export function nativeLibrarySource(
+  standalone: boolean,
+  embeddedNames: readonly string[],
+): NativeLibrarySource {
+  if (!standalone) return "built";
+  if (!embeddedNames.includes(EMBEDDED_MANIFEST)) throw missingEmbeddedManifest();
+  return "embedded";
 }
 
 /** Read-only: 0500 on Linux (dlopen maps it), 0400 on Windows (only the read-only attribute). */

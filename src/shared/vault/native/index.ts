@@ -7,18 +7,26 @@ export {
   builtNativeLibrary,
 } from "@/shared/vault/native/adapters/built-native-library";
 export {
+  bunEmbeddedFiles,
+  type EmbeddedNativeLibraryOptions,
+  embeddedNativeLibrary,
+} from "@/shared/vault/native/adapters/embedded-native-library";
+export {
   type NativeLibraryFolderOptions,
   nativeLibraryFolder,
 } from "@/shared/vault/native/adapters/native-library-folder";
 export {
   NativeLibraryError,
   NativeManifestError,
+  nativeLibrarySource,
   nativePlatform,
   parseNativeManifest,
   pinnedLibrary,
 } from "@/shared/vault/native/model/native-library";
 export type {
+  EmbeddedFile,
   NativeFiles,
+  NativeLibrarySource,
   NativeManifest,
   NativePlatform,
   PinnedFile,

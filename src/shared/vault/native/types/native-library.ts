@@ -22,6 +22,15 @@ export interface PinnedLibrary extends PinnedFile {
   name: string;
 }
 
+/** Where goop takes its native libraries from: the build folder (S5) or itself (S6). */
+export type NativeLibrarySource = "built" | "embedded";
+
+/** A file `bun run build` embedded in the executable, found by its plain name. */
+export interface EmbeddedFile {
+  name: string;
+  bytes(): Promise<Uint8Array>;
+}
+
 declare const verified: unique symbol;
 
 /**
