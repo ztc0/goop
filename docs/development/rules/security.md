@@ -16,6 +16,12 @@
 - No personal data in logs. No real CV in the repo, the eval set or the calibration data.
 - The database and files with personal data are encrypted; keys never live in `config.toml`.
 
+## The channel between `goop` and `goop daemon`
+
+- Only the same user can open it: on Linux the socket `goop.sock` is 0600 in a 0700 runtime folder (`GOOP_RUNTIME_DIR`, else `$XDG_RUNTIME_DIR/goop`). A folder that exists with wider modes, another owner or as a symbolic link is refused, never changed.
+- Every message is checked with zod and limited to `MAX_MESSAGE_BYTES`; a longer frame closes the connection. Errors never repeat the input.
+- It will carry the vault passphrase: never log a message or its params.
+
 ## Model servers
 
 - Bind to `127.0.0.1` with an API key file; restrict `--cors-origins`; always pass `--no-ui --offline --no-slots`.

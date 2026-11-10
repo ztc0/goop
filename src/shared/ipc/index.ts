@@ -2,6 +2,7 @@
 // newline-delimited framing and the channel that carries them. The rest of goop imports only this
 // entry (`@/shared/ipc`).
 
+export { unixSocketChannel } from "@/shared/ipc/adapters/unix-socket-channel";
 export { encodeFrame, frameReader } from "@/shared/ipc/model/framing";
 export {
   encodeMessage,
