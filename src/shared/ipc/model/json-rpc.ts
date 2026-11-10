@@ -59,9 +59,17 @@ export function parseMessage(text: string): ParsedMessage {
   return { ok: true, message: parsed.data as JsonRpcMessage };
 }
 
-/** Writes one message; refuses one the other side would refuse as too large. */
+/**
+ * Writes one message; refuses one the other side would refuse, as too large or as not JSON-RPC.
+ * The check runs on the written text, so a value JSON drops (such as an undefined result) counts.
+ */
 export function encodeMessage(message: JsonRpcMessage): string {
-  const text = JSON.stringify(message);
-  if (byteLength(text) > MAX_MESSAGE_BYTES) throw new Error(TOO_LARGE.message);
+  const text: string | undefined = JSON.stringify(message);
+  if (text !== undefined && byteLength(text) > MAX_MESSAGE_BYTES) {
+    throw new Error(TOO_LARGE.message);
+  }
+  if (text === undefined || !messageSchema.safeParse(JSON.parse(text)).success) {
+    throw new Error(JSON_RPC_ERRORS.invalidRequest.message);
+  }
   return text;
 }
