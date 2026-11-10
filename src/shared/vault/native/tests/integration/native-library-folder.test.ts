@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import { NativeLibraryError, nativeLibraryCache } from "@/shared/vault/native";
+import { NativeLibraryError, nativeLibraryFolder } from "@/shared/vault/native";
 import type { PinnedLibrary } from "@/shared/vault/native/types/native-library";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..", "..");
@@ -34,7 +34,7 @@ beforeEach(() => {
   root = join(repo, ".temp", "tests", `native-library-${crypto.randomUUID()}`);
   home = join(root, "home");
   source = join(root, "embedded", PINNED.file);
-  folder = join(home, "cache", "native", PINNED.sha256);
+  folder = join(home, "lib", "native", PINNED.sha256);
   target = join(folder, PINNED.file);
   mkdirSync(join(root, "embedded"), { recursive: true });
   writeFileSync(source, LIBRARY);
@@ -45,7 +45,7 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-const libraries = () => nativeLibraryCache({ goopHome: home });
+const libraries = () => nativeLibraryFolder({ goopHome: home });
 
 async function rejection(promise: Promise<unknown>): Promise<Error> {
   try {
@@ -56,7 +56,7 @@ async function rejection(promise: Promise<unknown>): Promise<Error> {
   throw new Error("expected a rejection");
 }
 
-describe("native library cache (real folder)", () => {
+describe("native library folder (real folder)", () => {
   test("a fresh install copies the library under its sha256 and leaves no temporary file", async () => {
     const path = await libraries().verifiedPath(PINNED, source);
 
@@ -81,7 +81,7 @@ describe("native library cache (real folder)", () => {
     expect(statSync(folder).mode & 0o777).toBe(0o700);
   });
 
-  test("a valid cache is reused: the same file, not rewritten", async () => {
+  test("a valid copy is reused: the same file, not rewritten", async () => {
     await libraries().verifiedPath(PINNED, source);
     const first = statSync(target);
 
@@ -92,7 +92,7 @@ describe("native library cache (real folder)", () => {
     expect(statSync(target).mtimeMs).toBe(first.mtimeMs);
   });
 
-  test("a tampered cached file is replaced from the verified source", async () => {
+  test("a tampered extracted file is replaced from the verified source", async () => {
     await libraries().verifiedPath(PINNED, source);
     chmodSync(target, 0o600);
     writeFileSync(target, "tampered");
@@ -104,7 +104,7 @@ describe("native library cache (real folder)", () => {
     expect(readdirSync(folder)).toEqual([PINNED.file]);
   });
 
-  test("a tampered source is refused and the cache is never created", async () => {
+  test("a tampered source is refused and the folder is never created", async () => {
     writeFileSync(source, "tampered");
 
     const error = await rejection(libraries().verifiedPath(PINNED, source));
@@ -113,7 +113,7 @@ describe("native library cache (real folder)", () => {
     expect(error.message).toBe(
       `The native library sqlite3mc (libsqlite3mc.so) does not match its pinned sha256 in ${source}: expected ${PINNED.sha256.slice(0, 12)}, got ${sha256(new TextEncoder().encode("tampered")).slice(0, 12)}. goop did not load it.`,
     );
-    expect(existsSync(join(home, "cache"))).toBe(false);
+    expect(existsSync(join(home, "lib"))).toBe(false);
   });
 
   test("a wrong pinned hash is refused and nothing is installed", async () => {
@@ -125,6 +125,6 @@ describe("native library cache (real folder)", () => {
     expect(error.message).toContain(
       `expected ${wrong.sha256.slice(0, 12)}, got ${PINNED.sha256.slice(0, 12)}`,
     );
-    expect(existsSync(join(home, "cache"))).toBe(false);
+    expect(existsSync(join(home, "lib"))).toBe(false);
   });
 });

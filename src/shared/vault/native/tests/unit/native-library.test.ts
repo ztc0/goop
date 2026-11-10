@@ -116,17 +116,17 @@ describe("native platform", () => {
   });
 });
 
-describe("native library cache layout", () => {
-  test("a library lives in GOOP_HOME/cache/native/<sha256>/<file>", () => {
+describe("native library folder layout", () => {
+  test("a library lives in GOOP_HOME/lib/native/<sha256>/<file>", () => {
     const pinned = { name: "sqlite3mc", file: "libsqlite3mc.so", sha256: SHA };
 
     expect(nativeLibraryPath("/home/u/.goop", pinned)).toEqual({
-      folder: join("/home/u/.goop", "cache", "native", SHA),
-      file: join("/home/u/.goop", "cache", "native", SHA, "libsqlite3mc.so"),
+      folder: join("/home/u/.goop", "lib", "native", SHA),
+      file: join("/home/u/.goop", "lib", "native", SHA, "libsqlite3mc.so"),
     });
   });
 
-  test("the cached file is read-only: 0500 on Linux, 0400 (read-only attribute) on Windows", () => {
+  test("the extracted file is read-only: 0500 on Linux, 0400 (read-only attribute) on Windows", () => {
     expect(nativeFileMode("linux")).toBe(0o500);
     expect(nativeFileMode("win32")).toBe(0o400);
   });

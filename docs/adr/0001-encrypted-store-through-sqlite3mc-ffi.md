@@ -27,7 +27,7 @@ The encrypted database uses sqlite3mc through `bun:ffi` (option 6):
 - The key is set with `sqlite3_key` or `PRAGMA hexkey`, never as passphrase text in SQL, and is verified with a read of `sqlite_master`.
 - sqlite-vec is loaded only into the sqlite3mc copy. `bun:sqlite` never loads it, because loading it into both copies crashes the process.
 - Each database file is opened by exactly one SQLite copy, because the copies' locks do not see each other.
-- The native libraries are embedded in the executable, copied to `GOOP_HOME/cache/native/<hash>/` and checked against sha256 values pinned at CI build time before every load.
+- The native libraries are embedded in the executable, copied by goop itself (never by Bun's automatic extraction) to the private folder `GOOP_HOME/lib/native/<hash>/` and checked against sha256 values pinned at CI build time before every load.
 - On Linux, CI builds sqlite3mc with `SQLITE3MC_USE_DISPATCH_TABLE` and FTS5 enabled. On Windows, CI uses the official DLL after checking that `PRAGMA compile_options` lists FTS5.
 
 ## Consequences

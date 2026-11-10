@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
-import { NativeLibraryError, NativeManifestError, nativeLibraryCache } from "@/shared/vault/native";
+import {
+  NativeLibraryError,
+  NativeManifestError,
+  nativeLibraryFolder,
+} from "@/shared/vault/native";
 import type { NativeFiles, PinnedLibrary } from "@/shared/vault/native/types/native-library";
 
 const LIBRARY = new TextEncoder().encode("a dummy sqlite3mc library");
@@ -14,12 +18,12 @@ const PINNED: PinnedLibrary = {
   sha256: sha256(LIBRARY),
 };
 const HOME = "/goop-home";
-const FOLDER = join(HOME, "cache", "native", PINNED.sha256);
+const FOLDER = join(HOME, "lib", "native", PINNED.sha256);
 const TARGET = join(FOLDER, "libsqlite3mc.so");
 
 /**
  * An in-memory file system that records every change. `onRename` lets a test play a same-user
- * process that rewrites the cached file right after goop installs it.
+ * process that rewrites the extracted file right after goop installs it.
  */
 function fakeFiles(initial: Record<string, Uint8Array> = {}) {
   const files = new Map(Object.entries(initial));
@@ -67,7 +71,8 @@ function fakeFiles(initial: Record<string, Uint8Array> = {}) {
   };
   return {
     fake,
-    cache: (platform = "linux") => nativeLibraryCache({ goopHome: HOME, files: native, platform }),
+    folder: (platform = "linux") =>
+      nativeLibraryFolder({ goopHome: HOME, files: native, platform }),
   };
 }
 
@@ -83,11 +88,11 @@ async function rejection(promise: Promise<unknown>): Promise<Error> {
 /** The temporary file goop wrote, taken from the recorded `write`. */
 const tempOf = (ops: string[]) => ops.find((op) => op.startsWith("write "))?.split(" ")[1] ?? "";
 
-describe("native library cache (fake file system)", () => {
+describe("native library folder (fake file system)", () => {
   test("a fresh install: 0700 folder, temp file in it, read-only, renamed, then re-verified", async () => {
-    const { fake, cache } = fakeFiles();
+    const { fake, folder } = fakeFiles();
 
-    const path = await cache().verifiedPath(PINNED, LIBRARY);
+    const path = await folder().verifiedPath(PINNED, LIBRARY);
 
     const temp = tempOf(fake.ops);
     expect<string>(path).toBe(TARGET);
@@ -103,17 +108,17 @@ describe("native library cache (fake file system)", () => {
     expect(fake.reads).toEqual([TARGET, TARGET]);
   });
 
-  test("on Windows the cached file gets the read-only attribute (0400)", async () => {
-    const { fake, cache } = fakeFiles();
+  test("on Windows the extracted file gets the read-only attribute (0400)", async () => {
+    const { fake, folder } = fakeFiles();
 
-    await cache("win32").verifiedPath(PINNED, LIBRARY);
+    await folder("win32").verifiedPath(PINNED, LIBRARY);
 
     expect(fake.ops[2]).toBe(`setMode ${tempOf(fake.ops)} 400`);
   });
 
-  test("a valid cache is reused and hashed again before every load", async () => {
-    const { fake, cache } = fakeFiles({ [TARGET]: LIBRARY });
-    const libraries = cache();
+  test("a valid copy is reused and hashed again before every load", async () => {
+    const { fake, folder } = fakeFiles({ [TARGET]: LIBRARY });
+    const libraries = folder();
 
     expect<string>(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
     expect<string>(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
@@ -122,10 +127,10 @@ describe("native library cache (fake file system)", () => {
     expect(fake.reads).toEqual([TARGET, TARGET]);
   });
 
-  test("the source is read from a path and checked before the cache is touched", async () => {
-    const { fake, cache } = fakeFiles({ "/embedded/libsqlite3mc.so": TAMPERED });
+  test("the source is read from a path and checked before the folder is touched", async () => {
+    const { fake, folder } = fakeFiles({ "/embedded/libsqlite3mc.so": TAMPERED });
 
-    const error = await rejection(cache().verifiedPath(PINNED, "/embedded/libsqlite3mc.so"));
+    const error = await rejection(folder().verifiedPath(PINNED, "/embedded/libsqlite3mc.so"));
 
     expect(error).toBeInstanceOf(NativeLibraryError);
     expect(error.message).toBe(
@@ -136,9 +141,9 @@ describe("native library cache (fake file system)", () => {
   });
 
   test("a missing source is refused by path", async () => {
-    const { fake, cache } = fakeFiles();
+    const { fake, folder } = fakeFiles();
 
-    const error = await rejection(cache().verifiedPath(PINNED, "/embedded/libsqlite3mc.so"));
+    const error = await rejection(folder().verifiedPath(PINNED, "/embedded/libsqlite3mc.so"));
 
     expect(error).toBeInstanceOf(NativeLibraryError);
     expect(error.message).toBe(
@@ -147,10 +152,10 @@ describe("native library cache (fake file system)", () => {
     expect(fake.ops).toEqual([]);
   });
 
-  test("source bytes that do not match the pin are refused without touching the cache", async () => {
-    const { fake, cache } = fakeFiles();
+  test("source bytes that do not match the pin are refused without touching the folder", async () => {
+    const { fake, folder } = fakeFiles();
 
-    const error = await rejection(cache().verifiedPath(PINNED, TAMPERED));
+    const error = await rejection(folder().verifiedPath(PINNED, TAMPERED));
 
     expect(error.message).toBe(
       `The native library sqlite3mc (libsqlite3mc.so) does not match its pinned sha256 in the embedded copy: expected ${short(LIBRARY)}, got ${short(TAMPERED)}. goop did not load it.`,
@@ -159,10 +164,10 @@ describe("native library cache (fake file system)", () => {
     expect(fake.ops).toEqual([]);
   });
 
-  test("a tampered cached file is made writable, replaced from the source and re-verified", async () => {
-    const { fake, cache } = fakeFiles({ [TARGET]: TAMPERED });
+  test("a tampered extracted file is made writable, replaced from the source and re-verified", async () => {
+    const { fake, folder } = fakeFiles({ [TARGET]: TAMPERED });
 
-    const path = await cache().verifiedPath(PINNED, LIBRARY);
+    const path = await folder().verifiedPath(PINNED, LIBRARY);
 
     const temp = tempOf(fake.ops);
     expect<string>(path).toBe(TARGET);
@@ -176,11 +181,11 @@ describe("native library cache (fake file system)", () => {
     expect(fake.files.get(TARGET)).toEqual(LIBRARY);
   });
 
-  test("a cached file still wrong after one replacement is refused, naming both hashes", async () => {
-    const { fake, cache } = fakeFiles();
+  test("a extracted file still wrong after one replacement is refused, naming both hashes", async () => {
+    const { fake, folder } = fakeFiles();
     fake.onRename = (to) => fake.files.set(to, TAMPERED);
 
-    const error = await rejection(cache().verifiedPath(PINNED, LIBRARY));
+    const error = await rejection(folder().verifiedPath(PINNED, LIBRARY));
 
     expect(error).toBeInstanceOf(NativeLibraryError);
     expect(error.message).toBe(
@@ -190,10 +195,10 @@ describe("native library cache (fake file system)", () => {
   });
 
   test("a failed install removes its temporary file and keeps the error", async () => {
-    const { fake, cache } = fakeFiles();
+    const { fake, folder } = fakeFiles();
     fake.failRename = true;
 
-    const error = await rejection(cache().verifiedPath(PINNED, LIBRARY));
+    const error = await rejection(folder().verifiedPath(PINNED, LIBRARY));
 
     expect(error.message).toBe("rename failed");
     expect(fake.ops.at(-1)).toBe(`remove ${tempOf(fake.ops)}`);
@@ -201,10 +206,10 @@ describe("native library cache (fake file system)", () => {
   });
 
   test("a pinned file name with a path is refused before any file is read", async () => {
-    const { fake, cache } = fakeFiles();
+    const { fake, folder } = fakeFiles();
 
     const error = await rejection(
-      cache().verifiedPath({ ...PINNED, file: "../libsqlite3mc.so" }, LIBRARY),
+      folder().verifiedPath({ ...PINNED, file: "../libsqlite3mc.so" }, LIBRARY),
     );
 
     expect(error).toBeInstanceOf(NativeManifestError);

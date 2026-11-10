@@ -3,7 +3,7 @@
 // library again, so a file changed since the last load is refused (S4). Nothing is written here:
 // the folder belongs to the build script.
 import { join } from "node:path";
-import { nodeNativeFiles } from "@/shared/vault/native/adapters/native-library-cache";
+import { nodeNativeFiles } from "@/shared/vault/native/adapters/native-library-folder";
 import {
   hashMismatch,
   missingBuiltLibrary,

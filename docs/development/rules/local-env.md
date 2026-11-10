@@ -15,7 +15,7 @@ Without `GOOP_HOME`, goop uses the normal user paths (XDG on Linux, `%APPDATA%` 
 
 ## `.local/`: persistent
 
-`config/`, `data/`, `state/`, `cache/{bun,uv,hf}/`, `models/`, `bin/`, `build/`. Kept between sessions; only `bun run clean:local` deletes it, after typing `delete`.
+`config/`, `data/`, `state/`, `cache/{bun,uv,hf}/`, `models/`, `bin/`, `build/`, and `lib/native/` once a built `goop` runs with it (the native libraries it extracts, never a cache). Kept between sessions; only `bun run clean:local` deletes it, after typing `delete`.
 
 ## `.temp/`: disposable
 
