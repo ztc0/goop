@@ -1,5 +1,10 @@
-// Native libraries (S8): the build's pinned sha256 is checked on a cached copy before every load.
+// Native libraries (S8): the build's pinned sha256 is checked before every load, on the built
+// copy while developing and on a cached copy in the distributed executable.
 
+export {
+  type BuiltNativeLibraryOptions,
+  builtNativeLibrary,
+} from "@/shared/vault/native/adapters/built-native-library";
 export {
   type NativeLibraryCacheOptions,
   nativeLibraryCache,
@@ -17,4 +22,5 @@ export type {
   NativePlatform,
   PinnedFile,
   PinnedLibrary,
+  VerifiedLibraryPath,
 } from "@/shared/vault/native/types/native-library";

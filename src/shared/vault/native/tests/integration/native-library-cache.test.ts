@@ -60,7 +60,7 @@ describe("native library cache (real folder)", () => {
   test("a fresh install copies the library under its sha256 and leaves no temporary file", async () => {
     const path = await libraries().verifiedPath(PINNED, source);
 
-    expect(path).toBe(target);
+    expect<string>(path).toBe(target);
     expect(new Uint8Array(readFileSync(target))).toEqual(LIBRARY);
     expect(readdirSync(folder)).toEqual([PINNED.file]);
   });
@@ -87,7 +87,7 @@ describe("native library cache (real folder)", () => {
 
     const path = await libraries().verifiedPath(PINNED, source);
 
-    expect(path).toBe(target);
+    expect<string>(path).toBe(target);
     expect(statSync(target).ino).toBe(first.ino);
     expect(statSync(target).mtimeMs).toBe(first.mtimeMs);
   });
@@ -99,7 +99,7 @@ describe("native library cache (real folder)", () => {
 
     const path = await libraries().verifiedPath(PINNED, source);
 
-    expect(path).toBe(target);
+    expect<string>(path).toBe(target);
     expect(new Uint8Array(readFileSync(target))).toEqual(LIBRARY);
     expect(readdirSync(folder)).toEqual([PINNED.file]);
   });

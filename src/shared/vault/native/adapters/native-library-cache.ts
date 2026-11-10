@@ -14,7 +14,11 @@ import {
   nativeFileMode,
   nativeLibraryPath,
 } from "@/shared/vault/native/model/native-library";
-import type { NativeFiles, PinnedLibrary } from "@/shared/vault/native/types/native-library";
+import type {
+  NativeFiles,
+  PinnedLibrary,
+  VerifiedLibraryPath,
+} from "@/shared/vault/native/types/native-library";
 
 const FOLDER_MODE = 0o700;
 const WRITABLE_MODE = 0o600;
@@ -79,7 +83,10 @@ export function nativeLibraryCache(options: NativeLibraryCacheOptions) {
      * `sqlite3mcEngine({ library })`. Call it before every load: it hashes the copy each time.
      * `source` is the embedded library, as bytes or a path; it is checked first.
      */
-    async verifiedPath(pinned: PinnedLibrary, source: Uint8Array | string): Promise<string> {
+    async verifiedPath(
+      pinned: PinnedLibrary,
+      source: Uint8Array | string,
+    ): Promise<VerifiedLibraryPath> {
       const { folder, file: target } = nativeLibraryPath(options.goopHome, pinned);
       const bytes = typeof source === "string" ? await files.read(source) : source;
       if (!bytes) throw missingLibrary(pinned, String(source));
@@ -93,7 +100,7 @@ export function nativeLibraryCache(options: NativeLibraryCacheOptions) {
       }
 
       const cached = await files.read(target);
-      if (cached && sha256(cached) === pinned.sha256) return target;
+      if (cached && sha256(cached) === pinned.sha256) return target as VerifiedLibraryPath;
 
       // Missing or changed: replace it once from the verified source, then check it again.
       await install(folder, target, bytes, cached !== undefined);
@@ -101,7 +108,7 @@ export function nativeLibraryCache(options: NativeLibraryCacheOptions) {
       if (!installed) throw missingLibrary(pinned, target);
       const installedHash = sha256(installed);
       if (installedHash !== pinned.sha256) throw hashMismatch(pinned, target, installedHash);
-      return target;
+      return target as VerifiedLibraryPath;
     },
   };
 }

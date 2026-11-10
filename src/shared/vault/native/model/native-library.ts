@@ -117,6 +117,20 @@ export function hashMismatch(pinned: PinnedLibrary, where: string, actual: strin
   );
 }
 
+const BUILD_HINT = "Build the libraries with: bun run native-libs:build";
+
+export function missingManifest(path: string) {
+  return new NativeLibraryError(
+    `The native library manifest is missing from ${path}. ${BUILD_HINT}`,
+  );
+}
+
+export function missingBuiltLibrary(pinned: PinnedLibrary, path: string) {
+  return new NativeLibraryError(
+    `The native library ${pinned.name} (${pinned.file}) is missing from ${path}. ${BUILD_HINT}`,
+  );
+}
+
 export function missingLibrary(pinned: PinnedLibrary, path: string) {
   return new NativeLibraryError(
     `The native library ${pinned.name} (${pinned.file}) is missing from ${path}. goop did not load it.`,
