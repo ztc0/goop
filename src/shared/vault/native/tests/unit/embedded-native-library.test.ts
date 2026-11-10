@@ -155,7 +155,7 @@ describe("embeddedNativeLibrary (S6)", () => {
     expect(disk.ops[2]).toBe(`setMode ${tempOf(disk.ops)} 400`);
   });
 
-  test("an extracted copy that still matches is reused after it is hashed again", async () => {
+  test("an extracted copy that still matches is reused after it is hashed, its modes set again", async () => {
     const disk = fakeFiles();
     const entries = { "libsqlite3mc.so": LIBRARY, "manifest.json": manifest() };
     await extract(entries, "linux-x64", disk).result;
@@ -164,7 +164,7 @@ describe("embeddedNativeLibrary (S6)", () => {
 
     expect<string>(await extract(entries, "linux-x64", disk).result).toBe(SO);
 
-    expect(disk.ops).toEqual([]);
+    expect(disk.ops).toEqual([`makeFolder ${SO_FOLDER} 700`, `setMode ${SO} 500`]);
     expect(disk.reads).toEqual([SO]);
   });
 

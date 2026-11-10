@@ -101,7 +101,12 @@ export function nativeLibraryFolder(options: NativeLibraryFolderOptions) {
       }
 
       const extracted = await files.read(target);
-      if (extracted && sha256(extracted) === pinned.sha256) return target as VerifiedLibraryPath;
+      if (extracted && sha256(extracted) === pinned.sha256) {
+        // The bytes are right, but their modes may have been widened since the install.
+        await files.makeFolder(folder, FOLDER_MODE);
+        await files.setMode(target, nativeFileMode(platform));
+        return target as VerifiedLibraryPath;
+      }
 
       // Missing or changed: replace it once from the verified source, then check it again.
       await install(folder, target, bytes, extracted !== undefined);

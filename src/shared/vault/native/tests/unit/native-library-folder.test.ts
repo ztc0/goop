@@ -116,14 +116,15 @@ describe("native library folder (fake file system)", () => {
     expect(fake.ops[2]).toBe(`setMode ${tempOf(fake.ops)} 400`);
   });
 
-  test("a valid copy is reused and hashed again before every load", async () => {
+  test("a valid copy is reused, hashed again and its modes set again before every load", async () => {
     const { fake, folder } = fakeFiles({ [TARGET]: LIBRARY });
     const libraries = folder();
 
     expect<string>(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
     expect<string>(await libraries.verifiedPath(PINNED, LIBRARY)).toBe(TARGET);
 
-    expect(fake.ops).toEqual([]);
+    const modes = [`makeFolder ${FOLDER} 700`, `setMode ${TARGET} 500`];
+    expect(fake.ops).toEqual([...modes, ...modes]);
     expect(fake.reads).toEqual([TARGET, TARGET]);
   });
 
