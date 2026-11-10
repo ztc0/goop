@@ -24,8 +24,10 @@ import {
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..");
 const created: string[] = [];
 const listeners: ChannelListener[] = [];
+const children: Bun.Subprocess[] = [];
 
 afterEach(async () => {
+  for (const child of children.splice(0)) child.kill("SIGKILL");
   for (const listener of listeners.splice(0)) await listener.close();
   for (const folder of created.splice(0)) rmSync(folder, { recursive: true, force: true });
 });
@@ -87,6 +89,18 @@ async function echoDaemon(folder: string) {
   }));
   listeners.push(listener);
   return { server, listener };
+}
+
+/** The first line a process prints, without waiting for it to exit. */
+async function firstLine(stream: ReadableStream<Uint8Array>) {
+  const reader = stream.getReader();
+  let text = "";
+  while (!text.includes("\n")) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    text += new TextDecoder().decode(value);
+  }
+  return text.trim();
 }
 
 /** A client that writes raw bytes, for what the channel's own `send` never writes. */
@@ -304,6 +318,52 @@ describe.skipIf(process.platform === "win32")("unixSocketChannel (S2, S4, S5, S8
     await expect(unixSocketChannel(folder).listen(() => recorder().events)).rejects.toThrow(
       new ChannelError("goop daemon is already running"),
     );
+    const client = recorder();
+    const connection = await unixSocketChannel(folder).connect(client.events);
+    connection.send({ jsonrpc: "2.0", id: 1, method: "ping" });
+    await client.received(1);
+  });
+
+  test("two daemons starting at once after a crash: one listens, the other is refused", async () => {
+    const folder = join(scratch(), "run");
+    mkdirSync(folder, { mode: 0o700 });
+    const path = join(folder, "goop.sock");
+    const fixture = join(import.meta.dir, "listen-fixture.ts");
+    const dead = Bun.spawn([process.execPath, fixture, folder, "0"], { stdout: "ignore" });
+    await until(() => existsSync(path), "the first daemon");
+    dead.kill("SIGKILL");
+    await dead.exited;
+
+    // Every round starts from the socket of the daemon killed in the round before.
+    for (let round = 0; round < 5; round++) {
+      expect(lstatSync(path).isSocket()).toBe(true);
+      const start = String(Date.now() + 500);
+      const daemons = [0, 1].map(() =>
+        Bun.spawn([process.execPath, fixture, folder, start], { stdout: "pipe" }),
+      );
+      children.push(...daemons);
+      const said = await Promise.all(daemons.map((daemon) => firstLine(daemon.stdout)));
+      expect(said.toSorted()).toEqual(["goop daemon is already running", "ok"]);
+
+      const client = recorder();
+      const connection = await unixSocketChannel(folder).connect(client.events);
+      connection.send({ jsonrpc: "2.0", id: round, method: "pid" });
+      await client.received(1);
+      const winner = daemons[said.indexOf("ok")] as Bun.Subprocess;
+      expect(client.messages).toEqual([
+        { ok: true, message: { jsonrpc: "2.0", id: round, result: winner.pid } },
+      ]);
+      for (const daemon of daemons) daemon.kill("SIGKILL");
+      await Promise.all(daemons.map((daemon) => daemon.exited));
+    }
+  }, 30_000);
+
+  test("closing the listener lets the next daemon listen", async () => {
+    const folder = join(scratch(), "run");
+    const { listener } = await echoDaemon(folder);
+    await listener.close();
+
+    await echoDaemon(folder);
     const client = recorder();
     const connection = await unixSocketChannel(folder).connect(client.events);
     connection.send({ jsonrpc: "2.0", id: 1, method: "ping" });
