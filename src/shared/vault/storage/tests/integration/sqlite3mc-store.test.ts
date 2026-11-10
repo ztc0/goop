@@ -11,18 +11,29 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { newDataKey } from "@/shared/vault/keys";
-import { builtNativeLibrary, type VerifiedLibraryPath } from "@/shared/vault/native";
+import {
+  builtNativeLibrary,
+  nativePlatform,
+  type VerifiedLibraryPath,
+} from "@/shared/vault/native";
 import { type EncryptedStore, StoreLibraryError, sqlite3mcEngine } from "@/shared/vault/storage";
 import { encryptedStoreContract } from "@/shared/vault/storage/tests/integration/encrypted-store-contract";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..", "..");
 // Built by `bun run native-libs:build`; CI has no build until native-library T7, so these tests
-// skip there. A built library that does not match its manifest fails here instead of skipping.
+// skip there. A built library that does not match its manifest fails here instead of skipping,
+// and so does a missing one with GOOP_REQUIRE_NATIVE=1, which `sandbox:test` sets.
 const folder = join(repo, ".local", "build", "native");
-const missing = process.platform !== "linux" || !existsSync(join(folder, "manifest.json"));
+const linux = process.platform === "linux";
+const missing =
+  process.env.GOOP_REQUIRE_NATIVE !== "1" && !existsSync(join(folder, "manifest.json"));
 const library = missing
   ? ("" as VerifiedLibraryPath)
-  : await builtNativeLibrary({ folder, name: "sqlite3mc", platform: "linux-x64" });
+  : await builtNativeLibrary({
+      folder,
+      name: "sqlite3mc",
+      platform: nativePlatform(process.platform, process.arch),
+    });
 
 /** Runs `work` on a fresh store in its own folder under `.temp/tests/`, removed afterwards. */
 function withStore(work: (store: EncryptedStore) => void) {
@@ -84,7 +95,8 @@ describe.skipIf(missing)(
       });
     });
 
-    test("a temporary table larger than its cache opens no temporary file", () => {
+    // The probe reads /proc/self/fd, which only Linux has.
+    test.skipIf(!linux)("a temporary table larger than its cache opens no temporary file", () => {
       withStore((store) => {
         expect(tempFilesOf(store)).toEqual([]);
       });
@@ -95,7 +107,7 @@ describe.skipIf(missing)(
       });
     });
 
-    test("the temporary file probe sees a file deleted while still open", () => {
+    test.skipIf(!linux)("the temporary file probe sees a file deleted while still open", () => {
       const folder = join(repo, ".temp", "tests", `probe-${crypto.randomUUID()}`);
       mkdirSync(folder, { recursive: true });
       const path = join(folder, "scratch");
@@ -118,6 +130,6 @@ describe.skipIf(missing)(
 );
 
 test("a missing library is a library error", () => {
-  const library = join(repo, ".temp", "no-such-lib.so") as VerifiedLibraryPath;
+  const library = join(repo, ".temp", "no-such-lib") as VerifiedLibraryPath;
   expect(() => sqlite3mcEngine({ library })).toThrow(StoreLibraryError);
 });

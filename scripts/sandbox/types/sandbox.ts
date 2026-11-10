@@ -87,9 +87,17 @@ export interface PinnedBun {
   binarySha256: string;
 }
 
+/**
+ * The native platforms `bun run native-libs:build` writes to `.local/build/native/`. A copy of the
+ * build's names, since the sandbox never imports the build's internals.
+ */
+export type NativePlatform = "linux-x64" | "win32-x64";
+
 /** How a system runs the whole suite (T8): adding a system is one more plan. */
 export interface SuitePlan {
   bun: PinnedBun;
+  /** The folder of `.local/build/native/` the suite's machine loads its native libraries from. */
+  native: NativePlatform;
   /** The shell the suite command is written for. */
   shell: "powershell" | "bash";
   /** Where `--copy` puts the uploads in the sandbox. */

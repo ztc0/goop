@@ -37,6 +37,16 @@ const RELEASE = {
 };
 const SHASUMS = `${"0".repeat(64)}  bun-linux-x64-baseline.zip\n${sha256Hex(ZIP)}  bun-linux-x64.zip\n`;
 const CACHE = `.local/cache/sandbox-bun/1.4.2-${sha256Hex(ZIP).slice(0, 16)}/bun`;
+const NATIVE = join(".local", "build", "native");
+const NATIVE_FILES = {
+  [join(NATIVE, "manifest.json")]: '{ "libraries": {} }\n',
+  [join(NATIVE, "linux-x64", "libsqlite3mc.so")]: "linux library",
+  [join(NATIVE, "win32-x64", "sqlite3mc.dll")]: "windows library",
+  [join(".local", "build", "sqlite", "old.so")]: "not copied",
+  [join(".local", "secrets.txt")]: "not copied",
+};
+const missingNative = (platform: string) =>
+  `err: No native libraries for ${platform}: run \`bun run native-libs:build --target ${platform}\` first.`;
 
 class FakeRunner implements ProcessRunner {
   readonly calls: ProcessRequest[] = [];
@@ -65,6 +75,11 @@ beforeEach(() => {
   mkdirSync(join(fixture, "src"), { recursive: true });
   writeFileSync(join(fixture, "package.json"), '{ "packageManager": "bun@1.4.2" }\n');
   writeFileSync(join(fixture, "src", "a.ts"), "export {};\n");
+  // What `bun run native-libs:build` leaves, next to other .local/ content the copy never takes.
+  for (const [name, content] of Object.entries(NATIVE_FILES)) {
+    mkdirSync(join(fixture, name, ".."), { recursive: true });
+    writeFileSync(join(fixture, name), content);
+  }
   lines = [];
   downloads = [];
   staged = {};
@@ -175,13 +190,23 @@ describeOnLinuxHost("runSuite on debian (T8)", () => {
       ],
       ["rm", "--force", "--time", "10", NAME],
     ]);
-    // Only the files git lists and that exist, never .local/, .temp/ or node_modules/.
-    expect(staged).toEqual({ repo: [".git/", "package.json", "src/a.ts"], bun: ["bun"] });
+    // The files git lists and that exist, plus the manifest and the linux-x64 libraries; nothing
+    // else from .local/, and never .temp/ or node_modules/.
+    expect(staged).toEqual({
+      repo: [
+        ".git/",
+        ".local/build/native/linux-x64/libsqlite3mc.so",
+        ".local/build/native/manifest.json",
+        "package.json",
+        "src/a.ts",
+      ],
+      bun: ["bun"],
+    });
     expect(existsSync(staging)).toBe(false);
     expect(lines).toEqual([
       "out: Downloading Bun 1.4.2 (bun-linux-x64.zip) from GitHub...",
       `out: sha256 ok: bun-linux-x64.zip and bun-linux-x64/bun, kept in ${CACHE}`,
-      "out: Copying 2 repo files and Bun 1.4.2 into .temp/sandbox-test/r1/...",
+      "out: Copying 2 repo files, the linux-x64 native libraries and Bun 1.4.2 into .temp/sandbox-test/r1/...",
       `out: Starting ${NAME}...`,
       "out: Waiting for systemd...",
       "out: systemd is running.",
@@ -276,6 +301,34 @@ describeOnLinuxHost("runSuite on debian (T8)", () => {
     ]);
   });
 
+  test.each([
+    ["without the manifest", () => rmSync(join(fixture, NATIVE, "manifest.json"))],
+    [
+      "without the linux-x64 folder",
+      () => rmSync(join(fixture, NATIVE, "linux-x64"), { recursive: true }),
+    ],
+    [
+      "with an empty linux-x64 folder",
+      () => rmSync(join(fixture, NATIVE, "linux-x64", "libsqlite3mc.so")),
+    ],
+  ])(
+    "%s it exits 1 with the build hint, before downloading or running anything",
+    async (_, remove) => {
+      remove();
+      const fake = runner();
+
+      const code = await runSuite(deps(fake, RELEASE_FILES), "debian", "r1", PLANS);
+
+      expect(code).toBe(1);
+      expect(lines).toEqual([missingNative("linux-x64")]);
+      expect(downloads).toEqual([]);
+      expect(existsSync(join(fixture, CACHE))).toBe(false);
+      expect(fake.podman()).toEqual([["image", "inspect", "--format", "{{.Size}}", IMAGE]]);
+      expect(fake.calls.some((call) => call.command[0] === "git")).toBe(false);
+      expect(existsSync(join(fixture, ".temp", "sandbox-test"))).toBe(false);
+    },
+  );
+
   test("without the Debian image it exits 1 with the install hint before downloading", async () => {
     const fake = runner((request) =>
       request.command.includes("inspect") ? { exitCode: 125, stderr: "no such image" } : {},
@@ -322,12 +375,40 @@ describeOnLinuxHost("runSuite on windows (T8)", () => {
       [join(staging, "repo"), "goop@127.0.0.1:C:/goop/"],
       [join(staging, "bun"), "goop@127.0.0.1:C:/goop/"],
     ]);
-    expect(staged).toEqual({ repo: [".git/", "package.json", "src/a.ts"], bun: ["bun.exe"] });
+    expect(staged).toEqual({
+      repo: [
+        ".git/",
+        ".local/build/native/manifest.json",
+        ".local/build/native/win32-x64/sqlite3mc.dll",
+        "package.json",
+        "src/a.ts",
+      ],
+      bun: ["bun.exe"],
+    });
     const suite = fake.calls.find((call) => call.stdin !== undefined);
     expect(suite?.stdin).toBe(`${suiteCommand(SUITE_PLANS.windows)}\r\n`);
     expect(suite?.stream).toBe(true);
     expect(existsSync(staging)).toBe(false);
     expect(lines.at(-1)).toBe("out: The whole suite passed on windows in 0m 0s.");
+  });
+
+  test("without the win32-x64 folder it exits 1 with the build hint, before downloading or starting the VM", async () => {
+    const base = join(fixture, ".local", "windows", "base");
+    mkdirSync(base, { recursive: true });
+    writeFileSync(join(base, "data.qcow2"), "base-disk");
+    rmSync(join(fixture, NATIVE, "win32-x64"), { recursive: true });
+    const fake = runner();
+
+    const code = await runSuite(deps(fake, FILES), "windows", "r1", {
+      ...SUITE_PLANS,
+      windows: { ...SUITE_PLANS.windows, bun: WINDOWS },
+    });
+
+    expect(code).toBe(1);
+    expect(lines).toEqual([missingNative("win32-x64")]);
+    expect(downloads).toEqual([]);
+    expect(fake.calls).toEqual([]);
+    expect(existsSync(join(fixture, ".temp", "sandbox-test"))).toBe(false);
   });
 
   test("without a base it exits 1 with the install hint before downloading", async () => {
