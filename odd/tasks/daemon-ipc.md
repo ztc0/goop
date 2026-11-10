@@ -15,14 +15,15 @@ goop's two modes, `goop` (TUI) and `goop daemon`, and the private channel betwee
 
 ## Tasks
 
-| ID  | Specs      | Task                                                                                       | Route  | Commit |
-| --- | ---------- | ------------------------------------------------------------------------------------------ | ------ | ------ |
-| T1  | S2, S4     | A: JSON-RPC 2.0 messages: types, zod schemas, a maximum size, parse and build (pure)       | inline | -      |
-| T2  | S5, S8     | B: the channel port and the Linux adapter (socket in a 0700 folder)                        | inline | -      |
-| T3  | S1, S3     | D: `goop` and `goop daemon`, talking over the channel on Linux                             | inline | -      |
-| T4  | S7         | E: unlocking the vault from the TUI through the daemon                                     | inline | -      |
-| T5  | S5, S6, S8 | C: the Windows adapter (FFI pipe, owner-only DACL, server owner check), real run in the VM | inline | -      |
+| ID  | Specs      | Task                                                                                       | Route  | Commit  |
+| --- | ---------- | ------------------------------------------------------------------------------------------ | ------ | ------- |
+| T1  | S2, S4     | A: JSON-RPC 2.0 messages: types, zod schemas, a maximum size, parse and build (pure)       | inline | 4b8f895 |
+| T2  | S5, S8     | B: the channel port and the Linux adapter (socket in a 0700 folder)                        | inline | -       |
+| T3  | S1, S3     | D: `goop` and `goop daemon`, talking over the channel on Linux                             | inline | -       |
+| T4  | S7         | E: unlocking the vault from the TUI through the daemon                                     | inline | -       |
+| T5  | S5, S6, S8 | C: the Windows adapter (FFI pipe, owner-only DACL, server owner check), real run in the VM | inline | -       |
 
 ## Log
 
 - L1: "podemos seguir para delantar trabajo", then "antes de continuar usa la skill de maestro juinor". In mentor mode the maintainer chose the order "d,a,e,b,c"; the mentor explained that E travels over the channel, so it goes after it, and D first only works as a walking skeleton. Agreed order: A -> B -> D -> E -> C. The maintainer explained back why A, D and E must not know the channel: "por que es una sola logica".
+- L2: "ok puede hacerlo tu es decir tu implemantas y lo revisamos juntos como me dijeste pero tu lo implemtas ya que no tengo tiempo": the mentor implements and explains; the maintainer reviews. zod 4.6.7 became the first runtime dependency (`f73d415`) with `THIRD_PARTY_LICENSES.md` and a test that lists every runtime dependency there. T1 in `4b8f895`: RED on the missing module, then 19 tests (four kinds of message, parse and invalid-request errors, the 1 MiB limit counted in UTF-8 bytes and checked before parsing, no error repeats its input).
