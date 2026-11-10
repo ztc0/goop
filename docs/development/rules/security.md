@@ -26,6 +26,7 @@
 - Pinned versions and sha256 embedded in the app; reject any mismatch.
 - Extract each archive into a fresh empty folder under `.temp/extract/` and block paths that escape it.
 - Pin GitHub Actions by commit SHA. Keep dependencies few and exact.
+- Native libraries are built by `bun run native-libs:build` from signature-checked, pinned source, and each output must equal its pinned sha256. CI attests the libraries and their manifest on pushes to `dev` and `main` only, never on a pull request; only that job gets `id-token` and `attestations` write.
 
 ## Locked settings
 
