@@ -290,6 +290,24 @@ describe.skipIf(process.platform === "win32")("unixSocketChannel (S2, S4, S5, S8
     expect(existsSync(join(target, "goop.sock"))).toBe(false);
   });
 
+  test("a symbolic link spelled with a trailing separator is refused too", async () => {
+    const parent = scratch();
+    const target = join(parent, "target");
+    mkdirSync(target, { mode: 0o700 });
+    const link = join(parent, "run");
+    symlinkSync(target, link);
+    const error = new ChannelError(`The runtime folder is not a folder: ${link}`);
+
+    for (const folder of [`${link}/`, `${link}//`]) {
+      await expect(unixSocketChannel(folder).listen(() => recorder().events)).rejects.toThrow(
+        error,
+      );
+      await expect(unixSocketChannel(folder).connect(recorder().events)).rejects.toThrow(error);
+    }
+    expect(existsSync(join(target, "goop.sock"))).toBe(false);
+    expect(existsSync(join(target, "goop.lock"))).toBe(false);
+  });
+
   test("a socket left by a daemon that died is replaced", async () => {
     const folder = join(scratch(), "run");
     mkdirSync(folder, { mode: 0o700 });

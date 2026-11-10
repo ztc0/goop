@@ -137,7 +137,9 @@ async function claim(path: string) {
 }
 
 /** The channel in `folder`, for example `runtimeFolder(process.env)`. Linux only. */
-export function unixSocketChannel(folder: string): Channel {
+export function unixSocketChannel(runtimeFolder: string): Channel {
+  // lstat follows a symbolic link spelled with a trailing separator ("run/"), so strip it first.
+  const folder = runtimeFolder.replace(/(?<=.)\/+$/, "");
   const path = socketPath(folder);
 
   return {
