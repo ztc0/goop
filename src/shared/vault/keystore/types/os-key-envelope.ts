@@ -3,9 +3,11 @@ import type { Bytes, DataKey } from "@/shared/vault/keys";
 /**
  * Why this machine cannot use its OS key store. The caller then uses the passphrase envelope
  * (S4), except for `busy`: the key store works but did not answer for a while (DPAPI after
- * another user's logon), so the caller tries again later.
+ * another user's logon), so the caller tries again later. `turned-off`: goop chose not to use it
+ * (development, goop S25).
  */
 export type OsEnvelopeUnavailableReason =
+  | "turned-off"
   | "unsupported-platform"
   | "missing-tool"
   | "old-version"

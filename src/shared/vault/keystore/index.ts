@@ -2,6 +2,7 @@
 // `OsKeyEnvelope`; T6 picks one or the passphrase.
 
 export { dpapiEnvelope } from "@/shared/vault/keystore/adapters/dpapi-envelope";
+export { noOsKeyEnvelope } from "@/shared/vault/keystore/adapters/no-os-envelope";
 export { systemdCredsEnvelope } from "@/shared/vault/keystore/adapters/systemd-creds-envelope";
 export {
   OsEnvelopeOpenError,
