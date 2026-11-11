@@ -131,15 +131,18 @@ describe("goop --help", () => {
 });
 
 describe.skipIf(process.platform === "win32")("goop", () => {
-  test("asks the running daemon and prints its answer, exiting 0", async () => {
+  test("asks the running daemon; a new vault needs a passphrase, and none typed changes nothing", async () => {
     const runtime = runtimeFolder();
     await startDaemon(runtime);
 
+    // The unlocked path, `goop daemon answered: pong`, is in daemon-vault.test.ts: it needs the
+    // native library to open the store.
     expect(await goop([], runtime)).toEqual({
-      exitCode: 0,
-      stdout: "goop daemon answered: pong\n",
-      stderr: "",
+      exitCode: 1,
+      stdout: "goop has no vault yet. Choose a passphrase to protect it.\nPassphrase: \n",
+      stderr: "Nothing was typed. Nothing was changed.\n",
     });
+    expect(existsSync(join(dirname(runtime), "home", "data"))).toBe(false);
   });
 
   test("without a daemon it says how to start one, exits 1 and starts nothing", async () => {

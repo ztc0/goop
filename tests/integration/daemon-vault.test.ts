@@ -86,6 +86,23 @@ async function request(folder: Folder, method: string, params?: unknown): Promis
   return JSON.parse(reply);
 }
 
+/** Runs `goop` to the end with `input` on its stdin (a pipe, so it reads one line per question). */
+async function goop(folder: Folder, input: string) {
+  const child = Bun.spawn([process.execPath, "src/main.ts"], {
+    cwd: repo,
+    env: { ...process.env, GOOP_RUNTIME_DIR: folder.runtime, GOOP_HOME: folder.home },
+    stdin: new Blob([input]),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([
+    child.exited,
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+  ]);
+  return { exitCode, stdout, stderr };
+}
+
 /** Every byte of every file in the vault folder, to look for a secret in plain text. */
 function vaultBytes(folder: Folder): string {
   const data = join(folder.home, "data");
@@ -256,6 +273,86 @@ describe.skipIf(missing || process.platform === "win32")(
             "goop cannot start the vault: the store exists but every envelope of its data key is missing; restore the vault folder from a backup. goop never creates a new data key over existing data.\n",
         });
         expect(existsSync(join(folder.runtime, "goop.sock"))).toBe(false);
+      },
+      TIMEOUT,
+    );
+  },
+);
+
+const PONG = "goop daemon answered: pong\n";
+const KEY_LINE = /^ {4}([0-9A-HJKMNP-TV-Z]{4}(?:-[0-9A-HJKMNP-TV-Z]{4}){7})$/m;
+
+describe.skipIf(missing || process.platform === "win32")(
+  "goop unlocks the vault through goop daemon, two processes (skipped without the native library)",
+  () => {
+    test(
+      "a first run asks the passphrase twice, shows the recovery key once and pings",
+      async () => {
+        const folder = testFolder();
+        const daemon = await startDaemon(folder);
+
+        const first = await goop(folder, `${PASSPHRASE}\n${PASSPHRASE}\n`);
+        const recoveryKey = KEY_LINE.exec(first.stdout)?.[1] ?? "";
+        expect(recoveryKey).toMatch(RECOVERY_KEY);
+        expect(first).toEqual({
+          exitCode: 0,
+          stdout: [
+            "goop has no vault yet. Choose a passphrase to protect it.",
+            "Passphrase: ",
+            "Passphrase again: ",
+            "Your recovery key:",
+            `    ${recoveryKey}`,
+            "Write it down now and keep it somewhere safe: goop shows it only this once, and it is the only way back in if the passphrase is lost.",
+            PONG,
+          ].join("\n"),
+          stderr: "",
+        });
+        // Unlocked now: the next goop asks nothing.
+        expect(await goop(folder, "")).toEqual({ exitCode: 0, stdout: PONG, stderr: "" });
+
+        const output = await daemon.stop();
+        expect(output).toEqual({
+          exitCode: 0,
+          stdout: `${LISTENING}${FIRST_RUN}${UNLOCKED}`,
+          stderr: "",
+        });
+        expect(output.stdout).not.toContain(recoveryKey);
+        expect(output.stdout).not.toContain(PASSPHRASE);
+      },
+      TIMEOUT,
+    );
+
+    test(
+      "after a restart: a wrong passphrase exits 1 and keeps it locked, the right one unlocks",
+      async () => {
+        const folder = testFolder();
+        await setUp(folder);
+        const daemon = await startDaemon(folder);
+        expect(daemon.firstLines).toBe(`${LISTENING}${LOCKED}`);
+
+        expect(await goop(folder, `${WRONG}\n`)).toEqual({
+          exitCode: 1,
+          stdout: "Passphrase: \n",
+          stderr: "The passphrase or recovery key is not right. Nothing was changed.\n",
+        });
+        expect(await request(folder, "vault.status")).toMatchObject({
+          result: { state: "locked" },
+        });
+        expect(await goop(folder, `${PASSPHRASE}\n`)).toEqual({
+          exitCode: 0,
+          stdout: `Passphrase: \n${PONG}`,
+          stderr: "",
+        });
+
+        const output = await daemon.stop();
+        expect(output).toEqual({
+          exitCode: 0,
+          stdout: `${LISTENING}${LOCKED}${REFUSED}${UNLOCKED}`,
+          stderr: "",
+        });
+        for (const secret of [PASSPHRASE, WRONG]) {
+          expect(output.stdout + output.stderr).not.toContain(secret);
+        }
       },
       TIMEOUT,
     );
