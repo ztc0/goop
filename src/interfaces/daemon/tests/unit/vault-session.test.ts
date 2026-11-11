@@ -174,6 +174,26 @@ describe("vaultSession: a working OS key store (daemon-ipc L8)", () => {
 
     expect(await rejection(sessionOf(vault).open())).toBeInstanceOf(KeyStoreUnavailableError);
   });
+
+  test("a busy OS key store with a passphrase envelope too is still never locked: open fails", async () => {
+    const vault = fakeVault({ available: true });
+    const first = sessionOf(vault);
+    await first.open();
+    await first.setup(PASSPHRASE);
+    first.close();
+    vault.data.set(
+      "data-key.passphrase",
+      await vault.keys.sealWithPassphrase(new Uint8Array(32).fill(7), PASSPHRASE),
+    );
+    vault.os.availability = { available: false, reason: "busy", message: "DPAPI is busy." };
+    const session = sessionOf(vault);
+
+    const error = await rejection(session.open());
+
+    expect(error).toBeInstanceOf(KeyStoreUnavailableError);
+    expect((error as KeyStoreUnavailableError).reason).toBe("busy");
+    expect(session.store()).toBeUndefined();
+  });
 });
 
 describe("vaultSession: recovery (daemon-ipc S7)", () => {

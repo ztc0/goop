@@ -113,6 +113,32 @@ describe("serveDaemon (daemon-ipc S3, S7, L8)", () => {
     expect(lines).toEqual({ stdout: ["goop daemon is listening.", line], stderr: [] });
   });
 
+  test("a busy OS key store, even with a passphrase envelope, says try again (not locked) and exits 1", async () => {
+    const vault = fakeVault({ available: true });
+    const first = sessionOf(vault);
+    await first.open();
+    await first.setup(PASSPHRASE);
+    first.close();
+    vault.data.set(
+      "data-key.passphrase",
+      await vault.keys.sealWithPassphrase(new Uint8Array(32).fill(7), PASSPHRASE),
+    );
+    vault.os.availability = { available: false, reason: "busy", message: "DPAPI is busy." };
+    const { channel, state } = fakeChannel();
+    const { lines, output } = recordOutput();
+
+    expect(await serveDaemon(() => channel, output, new Promise(() => {}), sessionOf(vault))).toBe(
+      1,
+    );
+    expect(state.closed).toBe(true);
+    expect(lines).toEqual({
+      stdout: [],
+      stderr: [
+        "The OS key store is unavailable right now (busy), so goop will try again later. The data key is not lost.",
+      ],
+    });
+  });
+
   test("a vault only a backup can help: says why, closes the channel and exits 1", async () => {
     const vault = await lockedVault();
     vault.data.delete("data-key.passphrase");

@@ -134,6 +134,8 @@ export function keyService(options: KeyServiceOptions) {
         if (error instanceof OsEnvelopeOpenError) {
           osProblem = new VaultStateError("needs-recovery", "start");
         } else if (error instanceof OsEnvelopeUnavailableError) {
+          // Busy means try again later, never a switch to the passphrase (daemon-ipc L8).
+          if (error.reason === "busy") throw new KeyStoreUnavailableError("busy");
           osProblem = new KeyStoreUnavailableError(error.reason);
         } else {
           throw error;
