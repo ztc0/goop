@@ -2,7 +2,13 @@
 // goop, Bun, uv and Hugging Face write to .local/, temporary files go to .temp/.
 import { mkdirSync } from "node:fs";
 import { repoRoot } from "@scripts/shared/repo-root";
-import { devEnvironment, devLayout, layoutDirectories } from "@/shared/dev";
+import {
+  devEnvironment,
+  devLayout,
+  ensurePrivateFolder,
+  layoutDirectories,
+  privateDirectories,
+} from "@/shared/dev";
 
 const command = process.argv.slice(2);
 if (command.length === 0) {
@@ -14,6 +20,8 @@ const layout = devLayout(repoRoot());
 for (const directory of layoutDirectories(layout)) {
   mkdirSync(directory, { recursive: true });
 }
+// The runtime folder holds the daemon's socket: only this user may open it (S5).
+for (const directory of privateDirectories(layout)) ensurePrivateFolder(directory);
 
 const child = Bun.spawn(command, {
   env: { ...process.env, ...devEnvironment(layout) },

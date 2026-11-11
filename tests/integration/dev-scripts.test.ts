@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 
 const repo = resolve(import.meta.dir, "..", "..");
@@ -79,6 +87,41 @@ describe("scripts/dev-env/run.ts", () => {
       expect(existsSync(join(fixture, ".temp", dir))).toBe(true);
     }
   });
+
+  test("creates the runtime folder .temp/run/ 0700, so only this user can open the socket", () => {
+    const result = run(runScript, ["bun", "-e", "0"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(lstatSync(join(fixture, ".temp", "run")).mode & 0o777).toBe(0o700);
+  });
+
+  test("tightens a runtime folder it owns that is open to others to 0700", () => {
+    mkdirSync(join(fixture, ".temp", "run"), { recursive: true });
+    chmodSync(join(fixture, ".temp", "run"), 0o755);
+
+    const result = run(runScript, ["bun", "-e", "0"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(lstatSync(join(fixture, ".temp", "run")).mode & 0o777).toBe(0o700);
+  });
+
+  test.skipIf(process.platform === "win32")(
+    "leaves a runtime folder that is a symbolic link and its target unchanged",
+    () => {
+      const target = join(fixture, "elsewhere");
+      mkdirSync(target);
+      chmodSync(target, 0o755);
+      mkdirSync(join(fixture, ".temp"));
+      symlinkSync(target, join(fixture, ".temp", "run"));
+
+      const result = run(runScript, ["bun", "-e", "0"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(lstatSync(join(fixture, ".temp", "run")).isSymbolicLink()).toBe(true);
+      expect(lstatSync(target).mode & 0o777).toBe(0o755);
+    },
+  );
 
   test("exits with the command's exit code", () => {
     const result = run(runScript, ["bun", "-e", "process.exit(3)"]);
