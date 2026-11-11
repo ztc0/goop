@@ -87,6 +87,20 @@ describe("terminalPrompt on a terminal (no echo)", () => {
 
     expect(await answer).toBeUndefined();
   });
+
+  test("a failure after entering raw mode still leaves raw mode", async () => {
+    const stdin = fakeInput(true);
+    stdin.input.resume = () => {
+      throw new Error("read failed");
+    };
+    const { written, output } = fakeOutput();
+
+    await expect(terminalPrompt(stdin.input, output).ask("Passphrase: ")).rejects.toThrow(
+      "read failed",
+    );
+    expect(stdin.state).toEqual({ raw: [true, false], paused: true });
+    expect(written).toEqual(["Passphrase: ", "\n"]);
+  });
 });
 
 describe("terminalPrompt on a pipe", () => {
