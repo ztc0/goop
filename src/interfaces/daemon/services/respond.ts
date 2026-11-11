@@ -18,7 +18,13 @@ import {
   type VaultMethod,
   wrongStateError,
 } from "@/shared/ipc";
-import { KeyStoreUnavailableError } from "@/shared/vault";
+import {
+  KeyStoreUnavailableError,
+  NativeLibraryError,
+  NativeManifestError,
+  StoreLibraryError,
+  VaultStateError,
+} from "@/shared/vault";
 
 export const UNLOCKED_LINE = "The vault is unlocked.";
 export const REFUSED_LINE = "A wrong passphrase or recovery key was refused.";
@@ -39,11 +45,26 @@ async function run(method: VaultMethod, params: unknown, vault: VaultSession): P
 
 class InvalidParams extends Error {}
 
-/** The kind of an unexpected error, without its message, which might hold anything. */
-const kind = (error: unknown) => {
+/** Errors whose fixed text says what to do and never holds a secret. */
+const EXPLAINED = [
+  VaultStateError,
+  KeyStoreUnavailableError,
+  NativeLibraryError,
+  NativeManifestError,
+  StoreLibraryError,
+];
+
+/** The fixed text of a known error, or undefined for any other, whose message might hold anything. */
+export const explanation = (error: unknown): string | undefined =>
+  EXPLAINED.some((type) => error instanceof type) ? (error as Error).message : undefined;
+
+/** `what` failed, as a line: with the known error's text, else with only the error's kind. */
+export function failureLine(what: string, error: unknown): string {
+  const known = explanation(error);
+  if (known) return `${what}: ${known}`;
   const name = error instanceof Error ? error.name : "";
-  return /^\w{1,64}$/.test(name) ? name : "Error";
-};
+  return `${what} (${/^\w{1,64}$/.test(name) ? name : "Error"}).`;
+}
 
 function failure(error: unknown, method: VaultMethod, report: Report): JsonRpcErrorObject {
   if (error instanceof InvalidParams) return { ...JSON_RPC_ERRORS.invalidParams };
@@ -53,7 +74,7 @@ function failure(error: unknown, method: VaultMethod, report: Report): JsonRpcEr
     return { ...VAULT_ERRORS.wrongSecret };
   }
   if (error instanceof KeyStoreUnavailableError) return { ...VAULT_ERRORS.keyStoreUnavailable };
-  report(`goop daemon could not run ${method} (${kind(error)}).`);
+  report(failureLine(`goop daemon could not run ${method}`, error));
   return { ...JSON_RPC_ERRORS.internalError };
 }
 

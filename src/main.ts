@@ -1,7 +1,9 @@
 // goop's single executable (S1, S2): `goop` opens the TUI, `goop daemon` runs the service, and
 // the two talk over the private channel. This file only wires the process to the modes.
+
+import { resolve } from "node:path";
 import { parseCommandLine, platformProblem, USAGE } from "@/interfaces/command-line";
-import { serveDaemon } from "@/interfaces/daemon";
+import { daemonVault, serveDaemon } from "@/interfaces/daemon";
 import { pingDaemon } from "@/interfaces/tui";
 import { runtimeFolder, unixSocketChannel } from "@/shared/ipc";
 
@@ -34,7 +36,15 @@ async function main(): Promise<number> {
   }
   // The Linux channel; the Windows one comes with daemon-ipc T5.
   const openChannel = () => unixSocketChannel(runtimeFolder(process.env));
-  if (command.kind === "daemon") return serveDaemon(openChannel, output, stopSignal());
+  if (command.kind === "daemon") {
+    // The daemon owns the vault (S3); from source, the built native libraries are in the repo.
+    const vault = daemonVault({ env: process.env, repoRoot: resolve(import.meta.dir, "..") });
+    if (typeof vault === "string") {
+      output.fail(vault);
+      return 1;
+    }
+    return serveDaemon(openChannel, output, stopSignal(), vault);
+  }
   return pingDaemon(openChannel, output);
 }
 
