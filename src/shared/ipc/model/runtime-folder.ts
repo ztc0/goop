@@ -1,6 +1,7 @@
 // Where the Linux channel lives and whether that place can be trusted (S5). Pure: the adapter
 // reads the environment and the folder and hands the facts here.
-import { isAbsolute, join } from "node:path";
+// Unix socket paths always use `/`, whatever system runs the code (and the tests).
+import { isAbsolute, join } from "node:path/posix";
 import type { FolderFacts } from "@/shared/ipc/types/runtime-folder";
 
 export const SOCKET_FILE = "goop.sock";
