@@ -10,7 +10,9 @@
     "bun": ">=1.3.14"
   },
   "scripts": {
-    "dev": "bun scripts/dev-env/run.ts bun --watch src/main.ts",
+    "dev": "bun scripts/dev-env/run.ts bun scripts/dev/cli.ts goop",
+    "dev:logs": "bun scripts/dev-env/run.ts bun scripts/dev/cli.ts logs",
+    "dev:stop": "bun scripts/dev-env/run.ts bun scripts/dev/cli.ts stop",
     "check": "bun run lint && bun run typecheck && bun run test",
     "test": "bun scripts/dev-env/run.ts bun test ./ ./.agents",
     "typecheck": "bun scripts/dev-env/run.ts tsc --noEmit",
