@@ -18,6 +18,17 @@ export {
   SOCKET_FILE,
   socketPath,
 } from "@/shared/ipc/model/runtime-folder";
+export {
+  isVaultMethod,
+  MAX_PASSPHRASE_CHARS,
+  MAX_RECOVERY_KEY_CHARS,
+  parseVaultParams,
+  readVaultFailure,
+  readVaultResult,
+  VAULT_ERRORS,
+  VAULT_METHODS,
+  wrongStateError,
+} from "@/shared/ipc/model/vault-protocol";
 export type {
   Channel,
   ChannelConnection,
@@ -36,3 +47,10 @@ export type {
   ParsedMessage,
 } from "@/shared/ipc/types/json-rpc";
 export type { FolderFacts } from "@/shared/ipc/types/runtime-folder";
+export type {
+  VaultFailure,
+  VaultMethod,
+  VaultParams,
+  VaultResults,
+  VaultStatus,
+} from "@/shared/ipc/types/vault-protocol";
