@@ -11,3 +11,4 @@ All notable changes to goop are documented here. The format follows [Keep a Chan
 - `AGENTS.md` with progressive-disclosure rule files for contributors and coding agents.
 - Licensing (GPL-3.0-only), security policy, code of conduct and contributing guide.
 - Pinned native libraries: goop loads its encrypted SQLite library (sqlite3mc) only after checking its sha256 against the build's manifest; `bun run build` embeds the library, and goop extracts it to a private `lib/native/` folder. CI builds, checks and attests the libraries and runs the tests against them on Linux and Windows.
+- `goop` and `goop daemon`: one executable with two modes that talk JSON-RPC 2.0 over a socket only the same user can open (Linux). The daemon owns the encrypted vault and waits locked until `goop` unlocks it; the passphrase is typed without echo and never reaches a log. Windows support follows.
