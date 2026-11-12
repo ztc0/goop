@@ -9,7 +9,9 @@ const PRIVATE_MODE = 0o700;
  * Creates `folder` 0700, or tightens it to 0700 when it is a folder this user owns. A symbolic
  * link or a folder owned by someone else is left unchanged, for the channel to refuse.
  */
-export function ensurePrivateFolder(folder: string): void {
+export function ensurePrivateFolder(path: string): void {
+  // lstat follows a symbolic link spelled with a trailing separator ("run/"), so strip it first.
+  const folder = path.replace(/(?<=.)\/+$/, "");
   mkdirSync(folder, { recursive: true, mode: PRIVATE_MODE });
   const facts = lstatSync(folder);
   if (!facts.isDirectory() || facts.uid !== process.getuid?.()) return;
