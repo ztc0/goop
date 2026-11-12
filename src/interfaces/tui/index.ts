@@ -7,6 +7,7 @@ export {
   type PromptOutput,
   terminalPrompt,
 } from "@/interfaces/tui/adapters/terminal-prompt";
+export { openGoop, type Timeouts, VAULT_TIMEOUT_MS } from "@/interfaces/tui/services/open-goop";
 export {
   pingDaemon,
   REPLY_TIMEOUT_MS,
