@@ -447,6 +447,38 @@ describe("start", () => {
     expect(h.vault.snapshot()).toEqual(before);
   });
 
+  test("a busy OS key store with a passphrase envelope too: try again, never the passphrase (L8)", async () => {
+    let asked = 0;
+    const h = harness({
+      askPassphrase: async () => {
+        asked++;
+        return USER_PASSPHRASE;
+      },
+    });
+    await h.service().setup({});
+    h.vault.data.set(
+      PASSPHRASE,
+      await h.keys.keys.sealWithPassphrase(new Uint8Array(32).fill(DEK_BYTE), USER_PASSPHRASE),
+    );
+    const before = h.vault.snapshot();
+    const opens = h.vault.opened.length;
+
+    for (const busy of ["availability", "open"] as const) {
+      if (busy === "availability") h.os.state.availability = BUSY;
+      else {
+        h.os.state.availability = { available: true };
+        h.os.state.busyOnOpen = true;
+      }
+      const error = await rejection(h.service().start());
+
+      expect(error).toBeInstanceOf(KeyStoreUnavailableError);
+      expect((error as KeyStoreUnavailableError).reason).toBe("busy");
+    }
+    expect(asked).toBe(0);
+    expect(h.vault.opened).toHaveLength(opens);
+    expect(h.vault.snapshot()).toEqual(before);
+  });
+
   test("an OS key store gone unavailable, with no passphrase envelope, is unavailable", async () => {
     const h = harness();
     await h.service().setup({});

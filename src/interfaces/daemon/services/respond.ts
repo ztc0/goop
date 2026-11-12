@@ -22,7 +22,9 @@ import {
   KeyStoreUnavailableError,
   NativeLibraryError,
   NativeManifestError,
+  type OsEnvelopeUnavailableReason,
   StoreLibraryError,
+  type VaultState,
   VaultStateError,
 } from "@/shared/vault";
 
@@ -45,25 +47,65 @@ async function run(method: VaultMethod, params: unknown, vault: VaultSession): P
 
 class InvalidParams extends Error {}
 
-/** Errors whose fixed text says what to do and never holds a secret. */
-const EXPLAINED = [
-  VaultStateError,
-  KeyStoreUnavailableError,
-  NativeLibraryError,
-  NativeManifestError,
-  StoreLibraryError,
-];
+/**
+ * The fixed line of each state a `VaultStateError` names. Never the error's message: only text
+ * written here reaches a line, so nothing an error quotes (a manifest value, a param) can.
+ */
+const STATE_LINES: Readonly<Record<VaultState, string>> = {
+  "first-run": "goop cannot start the vault: the vault has no data key yet; run setup first.",
+  ready:
+    "goop cannot start the vault: the vault already has a data key; goop never creates a new data key over existing data.",
+  "needs-recovery":
+    "goop cannot start the vault: the OS or passphrase envelope of the data key is missing or cannot be opened here; enter the recovery key.",
+  "needs-backup":
+    "goop cannot start the vault: the store exists but every envelope of its data key is missing; restore the vault folder from a backup. goop never creates a new data key over existing data.",
+  "store-missing":
+    "goop cannot start the vault: the envelopes of the data key exist but the store is missing; restore the store from a backup. goop changed nothing.",
+};
 
-/** The fixed text of a known error, or undefined for any other, whose message might hold anything. */
-export const explanation = (error: unknown): string | undefined =>
-  EXPLAINED.some((type) => error instanceof type) ? (error as Error).message : undefined;
+const unavailable = (reason: OsEnvelopeUnavailableReason) =>
+  `The OS key store is unavailable right now (${reason}), so goop will try again later. The data key is not lost.`;
 
-/** `what` failed, as a line: with the known error's text, else with only the error's kind. */
+/** The fixed line of each reason a `KeyStoreUnavailableError` names. */
+const KEY_STORE_LINES: Readonly<Record<OsEnvelopeUnavailableReason, string>> = {
+  "turned-off": unavailable("turned-off"),
+  "unsupported-platform": unavailable("unsupported-platform"),
+  "missing-tool": unavailable("missing-tool"),
+  "old-version": unavailable("old-version"),
+  "no-tpm2": unavailable("no-tpm2"),
+  busy: unavailable("busy"),
+};
+
+/** The line `table` holds for `key`, only when `key` is one of its own keys. */
+const lineOf = (table: Readonly<Record<string, string>>, key: unknown): string | undefined =>
+  typeof key === "string" && Object.hasOwn(table, key) ? table[key] : undefined;
+
+/**
+ * goop's own fixed sentence for a vault that cannot be used as it is, or undefined. Never
+ * `error.message` nor `error.name`: a message may quote an outside value, such as a param.
+ */
+export function explanation(error: unknown): string | undefined {
+  if (error instanceof VaultStateError) return lineOf(STATE_LINES, error.state);
+  if (error instanceof KeyStoreUnavailableError) return lineOf(KEY_STORE_LINES, error.reason);
+  return undefined;
+}
+
+/** goop's own fixed detail for a native library that cannot be used; its message quotes files. */
+function libraryDetail(error: unknown): string | undefined {
+  if (error instanceof NativeManifestError) {
+    return "the native library manifest of this build cannot be trusted or lacks a library goop needs.";
+  }
+  if (error instanceof NativeLibraryError) {
+    return "a native library of this build is missing or differs from the one the build pinned.";
+  }
+  if (error instanceof StoreLibraryError) return "the encrypted store library could not be loaded.";
+  return undefined;
+}
+
+/** `what` failed, as a line: with a known error's fixed text, else nothing about the error. */
 export function failureLine(what: string, error: unknown): string {
-  const known = explanation(error);
-  if (known) return `${what}: ${known}`;
-  const name = error instanceof Error ? error.name : "";
-  return `${what} (${/^\w{1,64}$/.test(name) ? name : "Error"}).`;
+  const known = explanation(error) ?? libraryDetail(error);
+  return known ? `${what}: ${known}` : `${what}.`;
 }
 
 function failure(error: unknown, method: VaultMethod, report: Report): JsonRpcErrorObject {

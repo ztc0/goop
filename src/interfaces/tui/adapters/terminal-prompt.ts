@@ -122,9 +122,10 @@ export function terminalPrompt(input: PromptInput, output: PromptOutput): Prompt
       const raw = input.isTTY === true && typeof input.setRawMode === "function";
       output.write(question);
       if (raw) input.setRawMode?.(true);
-      listen();
-      input.resume();
+      // Everything after raw mode is entered is inside `try`: raw mode is always left.
       try {
+        listen();
+        input.resume();
         return await (raw ? rawLine() : pipedLine());
       } finally {
         if (raw) input.setRawMode?.(false);

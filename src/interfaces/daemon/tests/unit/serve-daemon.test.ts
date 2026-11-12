@@ -8,6 +8,7 @@ import {
   SECRETS,
 } from "@/interfaces/daemon/tests/unit/fake-vault";
 import { type Channel, type ChannelEvents, type JsonRpcMessage, parseMessage } from "@/shared/ipc";
+import { NativeLibraryError } from "@/shared/vault";
 
 /** An in-memory channel: `client()` opens one connection to the listening daemon. */
 function fakeChannel() {
@@ -113,6 +114,32 @@ describe("serveDaemon (daemon-ipc S3, S7, L8)", () => {
     expect(lines).toEqual({ stdout: ["goop daemon is listening.", line], stderr: [] });
   });
 
+  test("a busy OS key store, even with a passphrase envelope, says try again (not locked) and exits 1", async () => {
+    const vault = fakeVault({ available: true });
+    const first = sessionOf(vault);
+    await first.open();
+    await first.setup(PASSPHRASE);
+    first.close();
+    vault.data.set(
+      "data-key.passphrase",
+      await vault.keys.sealWithPassphrase(new Uint8Array(32).fill(7), PASSPHRASE),
+    );
+    vault.os.availability = { available: false, reason: "busy", message: "DPAPI is busy." };
+    const { channel, state } = fakeChannel();
+    const { lines, output } = recordOutput();
+
+    expect(await serveDaemon(() => channel, output, new Promise(() => {}), sessionOf(vault))).toBe(
+      1,
+    );
+    expect(state.closed).toBe(true);
+    expect(lines).toEqual({
+      stdout: [],
+      stderr: [
+        "The OS key store is unavailable right now (busy), so goop will try again later. The data key is not lost.",
+      ],
+    });
+  });
+
   test("a vault only a backup can help: says why, closes the channel and exits 1", async () => {
     const vault = await lockedVault();
     vault.data.delete("data-key.passphrase");
@@ -130,5 +157,53 @@ describe("serveDaemon (daemon-ipc S3, S7, L8)", () => {
         "goop cannot start the vault: the store exists but every envelope of its data key is missing; restore the vault folder from a backup. goop never creates a new data key over existing data.",
       ],
     });
+  });
+});
+
+describe("serveDaemon: a vault that cannot be opened says only fixed text (daemon-ipc S7)", () => {
+  test("a native library failure prints one fixed line, never its message", async () => {
+    const vault = await lockedVault();
+    vault.os.availability = { available: true };
+    const session = vaultSession({
+      files: vault.files,
+      os: vault.osEnvelope,
+      keys: vault.keys,
+      loadEngine: async () => {
+        throw new NativeLibraryError(`the copy near ${PASSPHRASE} is different`);
+      },
+    });
+    vault.data.set("data-key.os", await vault.osEnvelope.seal(new Uint8Array(32).fill(7)));
+    const { channel } = fakeChannel();
+    const { lines, output } = recordOutput();
+
+    expect(await serveDaemon(() => channel, output, new Promise(() => {}), session)).toBe(1);
+    expect(lines).toEqual({
+      stdout: [],
+      stderr: [
+        "goop daemon could not open the vault: a native library of this build is missing or differs from the one the build pinned.",
+      ],
+    });
+  });
+
+  test("an unexpected failure prints one fixed line, without the error's name or message", async () => {
+    const vault = await lockedVault();
+    const error = new Error(PASSPHRASE);
+    error.name = "SECRET";
+    vault.os.availability = { available: true };
+    vault.data.set("data-key.os", await vault.osEnvelope.seal(new Uint8Array(32).fill(7)));
+    const session = vaultSession({
+      files: vault.files,
+      os: vault.osEnvelope,
+      keys: vault.keys,
+      loadEngine: async () => {
+        throw error;
+      },
+    });
+    const { channel } = fakeChannel();
+    const { lines, output } = recordOutput();
+
+    expect(await serveDaemon(() => channel, output, new Promise(() => {}), session)).toBe(1);
+    expect(lines).toEqual({ stdout: [], stderr: ["goop daemon could not open the vault."] });
+    for (const secret of SECRETS) expect(lines.stderr.join("\n")).not.toContain(secret);
   });
 });

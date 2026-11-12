@@ -4,7 +4,7 @@
 import { resolve } from "node:path";
 import { parseCommandLine, platformProblem, USAGE } from "@/interfaces/command-line";
 import { daemonVault, serveDaemon } from "@/interfaces/daemon";
-import { pingDaemon } from "@/interfaces/tui";
+import { openGoop, terminalPrompt } from "@/interfaces/tui";
 import { runtimeFolder, unixSocketChannel } from "@/shared/ipc";
 
 const output = {
@@ -45,7 +45,8 @@ async function main(): Promise<number> {
     }
     return serveDaemon(openChannel, output, stopSignal(), vault);
   }
-  return pingDaemon(openChannel, output);
+  // Asks for the passphrase on the terminal without echo, or reads it from a pipe.
+  return openGoop(openChannel, output, terminalPrompt(process.stdin, process.stdout));
 }
 
 // Exits explicitly: under `bun --watch` a script that only ends would leave the watcher running.

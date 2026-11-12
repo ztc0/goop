@@ -34,4 +34,6 @@ bun run dev          # goop, which connects to it
 
 ## What stays out of development
 
-Things that must touch the system are not installed while developing: the systemd timer, the Windows scheduled task, TPM credentials, the keyring and DPAPI. Development uses a clearly marked insecure key in `.local/`. The real TPM and DPAPI are exercised only in their spike, with the maintainer's permission, and undone afterwards.
+Things that must touch the system are not installed while developing: the systemd timer, the Windows scheduled task, TPM credentials, the keyring and DPAPI. The real TPM and DPAPI are exercised only in their spike, with the maintainer's permission, and undone afterwards.
+
+The vault lives in `<GOOP_HOME>/data/` (`.local/data/`). goop uses the OS key store only as the compiled executable without `GOOP_HOME`; from source or with `GOOP_HOME` the passphrase seals the data key, so the first `goop` asks for one and every daemon start waits locked until `goop` unlocks it. There is no insecure development key yet.
