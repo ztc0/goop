@@ -112,7 +112,7 @@ describe("dev container arguments", () => {
     expect(isRunning({ exitCode: 125, stdout: "", stderr: "no such container" })).toBe(false);
   });
 
-  test("goop gets -it only with a terminal, and its arguments unchanged", () => {
+  test("goop always gets -i, so piped input reaches it; -t only with a terminal", () => {
     const goop = ["bun", "--no-env-file", "src/main.ts", "--help", "two words"];
     expect(goopArgs(paths, ["--help", "two words"], true)).toEqual([
       "exec",
@@ -124,6 +124,7 @@ describe("dev container arguments", () => {
     ]);
     expect(goopArgs(paths, ["--help", "two words"], false)).toEqual([
       "exec",
+      "-i",
       "--workdir",
       "/repo",
       "goop-dev",
