@@ -1,0 +1,20 @@
+# The dev container of `bun run dev` (dev-sandbox S7): Debian 13 and the pinned Bun, nothing else.
+# The source is mounted, never copied, so a source change never rebuilds this image.
+# Bump IMAGE in scripts/dev/model/container-args.ts whenever this file changes.
+# Base: the same pinned digest as scripts/sandbox/debian/Containerfile (a unit test keeps them equal).
+FROM docker.io/library/debian:trixie@sha256:e2914ec98e08b24b4cee3cefcb9f90dfb5519f8d215a2ccf0c9a49b10b6e43de
+
+# Bun pinned in scripts/sandbox/model/bun-release.ts (BUN_RELEASES["linux-x64"]): the zip and the
+# executable are both checked by sha256; curl and unzip leave once Bun is installed.
+RUN set -eu \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl unzip \
+ && curl -fsSL --proto '=https' --tlsv1.2 -o /tmp/bun.zip \
+      https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-linux-x64.zip \
+ && echo "36368faef7527875d5ffa52e53cd48021741f2a83eb6208a8dd64068d422a913  /tmp/bun.zip" | sha256sum -c - \
+ && unzip -q /tmp/bun.zip -d /tmp/bun \
+ && install -m 0755 /tmp/bun/bun-linux-x64/bun /usr/local/bin/bun \
+ && echo "a83d263767d839e4d2649ca8e35d07159c7afc99afdc96d731ced29e056dda0c  /usr/local/bin/bun" | sha256sum -c - \
+ && rm -rf /tmp/bun /tmp/bun.zip \
+ && apt-get purge -y --auto-remove curl unzip \
+ && rm -rf /var/lib/apt/lists/*
