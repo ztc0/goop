@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { encodeMessage, JSON_RPC_ERRORS, MAX_MESSAGE_BYTES, parseMessage } from "@/shared/ipc";
+import {
+  encodeMessage,
+  JSON_RPC_ERRORS,
+  type JsonRpcMessage,
+  MAX_MESSAGE_BYTES,
+  parseMessage,
+} from "@/shared/ipc";
 
 const invalid = { ok: false, error: { code: -32600, message: "Invalid Request" } } as const;
 const tooLarge = { ok: false, error: { code: -32600, message: "Message too large" } } as const;
@@ -87,6 +93,21 @@ describe("encodeMessage (S2, S4)", () => {
       params: ["a".repeat(MAX_MESSAGE_BYTES)],
     } as const;
     expect(() => encodeMessage(message)).toThrow("Message too large");
+  });
+
+  // The types allow some of these; the other side would still refuse them, so they are never sent.
+  test.each([
+    ["a reserved rpc. method", { jsonrpc: "2.0", id: 1, method: "rpc.discover" }],
+    ["an empty method", { jsonrpc: "2.0", method: "" }],
+    ["an id that is an object", { jsonrpc: "2.0", id: {}, method: "m" }],
+    ["a result that JSON drops", { jsonrpc: "2.0", id: 1, result: undefined }],
+    [
+      "an error code that is not an integer",
+      { jsonrpc: "2.0", id: 1, error: { code: 1.5, message: "x" } },
+    ],
+    ["an unknown field", { jsonrpc: "2.0", method: "m", extra: true }],
+  ])("refuses to write a message with %s", (_, message) => {
+    expect(() => encodeMessage(message as unknown as JsonRpcMessage)).toThrow("Invalid Request");
   });
 });
 
