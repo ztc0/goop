@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { usesOsKeyStore, vaultLocation } from "@/interfaces/daemon/model/vault-location";
+import {
+  DEV_KEY_REFUSED,
+  DEV_KEY_WARNING,
+  osKeyStoreChoice,
+  vaultLocation,
+} from "@/interfaces/daemon/model/vault-location";
 
 describe("vaultLocation (goop S25)", () => {
   test("GOOP_HOME holds everything: the vault in its data/ folder", () => {
@@ -31,11 +36,92 @@ describe("vaultLocation (goop S25)", () => {
   });
 });
 
-describe("usesOsKeyStore (goop S25)", () => {
-  test("only the compiled executable without GOOP_HOME uses the OS key store", () => {
-    expect(usesOsKeyStore({}, true)).toBe(true);
-    expect(usesOsKeyStore({ GOOP_HOME: "/repo/.local" }, true)).toBe(false);
-    expect(usesOsKeyStore({}, false)).toBe(false);
-    expect(usesOsKeyStore({ GOOP_HOME: "/repo/.local" }, false)).toBe(false);
+const REPO = join("/work", "goop");
+const LOCAL = join(REPO, ".local");
+const DEV_FOLDER = join(REPO, ".temp", "dev");
+
+/** From source in the goop repository, unless a test says otherwise. */
+const choice = (
+  env: Record<string, string>,
+  facts: { standalone?: boolean; isGoopRepo?: boolean } = {},
+) =>
+  osKeyStoreChoice({
+    env,
+    standalone: facts.standalone ?? false,
+    repoRoot: REPO,
+    isGoopRepo: facts.isGoopRepo ?? true,
+  });
+
+describe("osKeyStoreChoice (goop S25, dev-sandbox S8)", () => {
+  test("the compiled executable without GOOP_HOME uses the system key store", () => {
+    expect(choice({}, { standalone: true })).toEqual({ kind: "system" });
+    expect(choice({ HOME: "/home/u" }, { standalone: true, isGoopRepo: false })).toEqual({
+      kind: "system",
+    });
+  });
+
+  test("the compiled executable never uses the development key, whatever its environment", () => {
+    for (const env of [
+      { GOOP_HOME: LOCAL },
+      { GOOP_HOME: join(LOCAL, "sub") },
+      { GOOP_HOME: LOCAL, GOOP_DEV_KEY: "1", GOOP_INSECURE_DEV_KEY: "1" },
+      { GOOP_HOME: "/elsewhere" },
+      { GOOP_HOME: "" },
+      { GOOP_HOME: ".local" },
+    ]) {
+      expect(choice(env, { standalone: true })).toEqual({ kind: "none" });
+    }
+  });
+
+  test("from source with GOOP_HOME in the repo's .local/, the development key in .temp/dev/", () => {
+    for (const home of [LOCAL, `${LOCAL}/`, join(LOCAL, "sub", "home")]) {
+      expect(choice({ GOOP_HOME: home })).toEqual({ kind: "dev-insecure", folder: DEV_FOLDER });
+    }
+  });
+
+  test("from source anywhere else: the passphrase only, as before", () => {
+    for (const env of [
+      {},
+      { HOME: "/home/u" },
+      { GOOP_HOME: join(REPO, ".temp", "tests", "x", "home") },
+      { GOOP_HOME: REPO },
+      { GOOP_HOME: join(REPO, ".localx") },
+      { GOOP_HOME: join(REPO, "..", ".local") },
+      { GOOP_HOME: `${LOCAL}/../elsewhere` },
+      { GOOP_HOME: join("/other", "goop", ".local") },
+      { GOOP_HOME: ".local" },
+      { GOOP_HOME: "" },
+    ]) {
+      expect(choice(env)).toEqual({ kind: "none" });
+    }
+  });
+
+  test("no environment variable alone turns the development key on", () => {
+    for (const env of [
+      { GOOP_DEV_KEY: "1" },
+      { GOOP_INSECURE_DEV_KEY: "1" },
+      { NODE_ENV: "development" },
+    ]) {
+      expect(choice(env)).toEqual({ kind: "none" });
+      expect(choice(env, { standalone: true })).toEqual({ kind: "system" });
+    }
+  });
+
+  test("the development key outside a confirmed goop repository is refused", () => {
+    expect(choice({ GOOP_HOME: LOCAL }, { isGoopRepo: false })).toEqual({
+      kind: "refused",
+      problem: DEV_KEY_REFUSED,
+    });
+    expect(DEV_KEY_REFUSED).toBe(
+      "goop will not use the insecure development key: GOOP_HOME is in .local/, but the folder above src/ is not the goop repository.",
+    );
+    // Only the development key needs the repository.
+    expect(choice({}, { isGoopRepo: false })).toEqual({ kind: "none" });
+  });
+
+  test("the warning names the key's folder and never the key", () => {
+    expect(DEV_KEY_WARNING).toBe(
+      "goop daemon is using the insecure development key in .temp/dev/ (never use this for real data).",
+    );
   });
 });

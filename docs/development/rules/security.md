@@ -22,6 +22,11 @@
 - Every message is checked with zod and limited to `MAX_MESSAGE_BYTES`; a longer frame closes the connection. Errors never repeat the input.
 - It carries the vault passphrase and recovery key: never log a message or its params. A wrong passphrase or recovery key gets one fixed error that never says what was wrong, and a method the vault's state does not allow gets an error that names only the state.
 
+## The data key in development
+
+- The insecure development key (`.temp/dev/INSECURE-DEV-KEY`, see `local-env.md`) seals the data key only when goop runs from source with `GOOP_HOME` in the repo's `.local/`. The compiled executable never uses it: the daemon never picks it there, and the envelope itself refuses to run in it. No environment variable turns it on.
+- The key is never printed, logged or committed: the daemon prints one fixed warning that names its folder, `.temp/` is ignored by git, and `bun run clean` deletes it.
+
 ## Model servers
 
 - Bind to `127.0.0.1` with an API key file; restrict `--cors-origins`; always pass `--no-ui --offline --no-slots`.

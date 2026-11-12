@@ -1,12 +1,16 @@
-// The daemon's vault wired to the real pieces (daemon-ipc S3, goop S25): the vault folder on disk,
-// the OS key store only in the compiled executable outside the repo-local layout, and the store
-// engine on the native library checked against its pin before every open (built while developing,
-// embedded in the executable).
+// The daemon's vault wired to the real pieces (daemon-ipc S3, goop S25, dev-sandbox S8): the vault
+// folder on disk, the OS key store only in the compiled executable outside the repo-local layout,
+// the insecure development key only from source in the repo's layout, and the store engine on the
+// native library checked against its pin before every open (built while developing, embedded in
+// the executable).
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  DEV_KEY_WARNING,
   NO_LOCATION,
   NO_OS_KEY_STORE,
-  usesOsKeyStore,
+  type OsKeyStoreChoice,
+  osKeyStoreChoice,
   vaultLocation,
 } from "@/interfaces/daemon/model/vault-location";
 import { type VaultSession, vaultSession } from "@/interfaces/daemon/services/vault-session";
@@ -14,10 +18,12 @@ import {
   builtNativeLibrary,
   bunEmbeddedFiles,
   embeddedNativeLibrary,
+  insecureDevKeyEnvelope,
   nativeLibrarySource,
   nativePlatform,
   nodeVaultFiles,
   noOsKeyEnvelope,
+  type OsKeyEnvelope,
   sqlite3mcEngine,
   systemdCredsEnvelope,
 } from "@/shared/vault";
@@ -29,14 +35,50 @@ export interface DaemonVaultOptions {
   standalone?: boolean;
 }
 
-/** The daemon's vault, or the reason there is none (no data folder can be found). */
-export function daemonVault(options: DaemonVaultOptions): VaultSession | string {
+export interface DaemonVault {
+  session: VaultSession;
+  /** A fixed line the daemon prints at start when it uses the insecure development key. */
+  warning: string | undefined;
+}
+
+/** Whether `repoRoot` holds goop's `package.json`: the development key needs the goop repo. */
+function isGoopRepo(repoRoot: string): boolean {
+  try {
+    return JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"))?.name === "goop";
+  } catch {
+    return false;
+  }
+}
+
+function osKeyEnvelope(choice: OsKeyStoreChoice, standalone: boolean): OsKeyEnvelope {
+  switch (choice.kind) {
+    case "system":
+      return systemdCredsEnvelope();
+    // The envelope refuses the compiled executable too, whatever the choice said.
+    case "dev-insecure":
+      return insecureDevKeyEnvelope(choice.folder, { standalone });
+    default:
+      return noOsKeyEnvelope(NO_OS_KEY_STORE);
+  }
+}
+
+/**
+ * The daemon's vault, or the reason there is none: no data folder can be found, or the
+ * development key would be used outside the goop repository.
+ */
+export function daemonVault(options: DaemonVaultOptions): DaemonVault | string {
   const standalone = options.standalone ?? Bun.isStandaloneExecutable;
   const location = vaultLocation(options.env);
   if (!location) return NO_LOCATION;
-  const os = usesOsKeyStore(options.env, standalone)
-    ? systemdCredsEnvelope()
-    : noOsKeyEnvelope(NO_OS_KEY_STORE);
+  const choice = osKeyStoreChoice({
+    env: options.env,
+    standalone,
+    repoRoot: options.repoRoot,
+    // Read only from source: the compiled executable has no repository.
+    isGoopRepo: !standalone && isGoopRepo(options.repoRoot),
+  });
+  if (choice.kind === "refused") return choice.problem;
+  const os = osKeyEnvelope(choice, standalone);
 
   async function loadEngine() {
     const platform = nativePlatform(process.platform, process.arch);
@@ -61,5 +103,8 @@ export function daemonVault(options: DaemonVaultOptions): VaultSession | string 
     return sqlite3mcEngine({ library });
   }
 
-  return vaultSession({ files: nodeVaultFiles(location.data), os, loadEngine });
+  return {
+    session: vaultSession({ files: nodeVaultFiles(location.data), os, loadEngine }),
+    warning: choice.kind === "dev-insecure" ? DEV_KEY_WARNING : undefined,
+  };
 }
