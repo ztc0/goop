@@ -1,6 +1,6 @@
 // The insecure development key end to end (dev-sandbox S8), two real processes: `goop daemon` and
 // `goop` from source, in a copy of the repository under `.temp/tests/` (its `src/`, `package.json`,
-// `tsconfig.json` and built native libraries), with `GOOP_HOME` in the copy's `.local/` like
+// `tsconfig.json` and built native libraries), with `GOOP_HOME` in the copy's `.temp/dev/home/` like
 // `bun run dev`. The copy keeps the test's key and vault out of the real `.temp/dev/` and
 // `.local/`. Skipped without `bun run build:native`, except with GOOP_REQUIRE_NATIVE=1.
 import { afterEach, describe, expect, test } from "bun:test";
@@ -59,10 +59,14 @@ function repoCopy(packageName = "goop") {
   mkdirSync(runtime, { mode: 0o700 });
   return {
     root,
-    env: { ...process.env, GOOP_HOME: join(root, ".local"), GOOP_RUNTIME_DIR: runtime },
+    env: {
+      ...process.env,
+      GOOP_HOME: join(root, ".temp", "dev", "home"),
+      GOOP_RUNTIME_DIR: runtime,
+    },
     socket: join(runtime, "goop.sock"),
     key: join(root, ".temp", "dev", "INSECURE-DEV-KEY"),
-    data: join(root, ".local", "data"),
+    data: join(root, ".temp", "dev", "home", "data"),
   };
 }
 
@@ -142,7 +146,10 @@ describe.skipIf(missing || process.platform === "win32")(
           "data-key.recovery",
           "goop.db",
         ]);
-        expect(readdirSync(join(copy.root, ".temp", "dev"))).toEqual(["INSECURE-DEV-KEY"]);
+        expect(readdirSync(join(copy.root, ".temp", "dev")).sort()).toEqual([
+          "INSECURE-DEV-KEY",
+          "home",
+        ]);
         expect(statSync(join(copy.root, ".temp", "dev")).mode & 0o777).toBe(0o700);
         expect(statSync(copy.key).mode & 0o777).toBe(0o600);
         const key = readFileSync(copy.key, "utf8");
@@ -192,7 +199,7 @@ describe.skipIf(missing || process.platform === "win32")(
           exitCode: 1,
           stdout: "",
           stderr:
-            "goop will not use the insecure development key: GOOP_HOME is in .local/, but the folder above src/ is not the goop repository.\n",
+            "goop will not use the insecure development key: GOOP_HOME is in .temp/dev/, but the folder above src/ is not the goop repository.\n",
         });
         expect(existsSync(join(copy.root, ".temp"))).toBe(false);
         expect(existsSync(copy.data)).toBe(false);

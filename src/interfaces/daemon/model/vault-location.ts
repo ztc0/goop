@@ -51,9 +51,10 @@ function inside(path: string, folder: string): boolean {
 
 /**
  * Development never touches the real TPM2 or DPAPI (goop S25): only the compiled executable
- * without `GOOP_HOME` uses them. From source with `GOOP_HOME` in the repo's `.local/` (the layout
- * of `scripts/dev-env/run.ts`), the insecure development key unlocks the vault by itself
- * (dev-sandbox S8); the compiled executable never uses it, and no variable alone turns it on.
+ * without `GOOP_HOME` uses them. From source with `GOOP_HOME` in the repo's `.temp/dev/` (the
+ * layout of `bun run dev`), the insecure development key in that same folder unlocks the vault by
+ * itself (dev-sandbox S8), so `bun run clean` resets the data and the key together; the compiled
+ * executable never uses it, and no variable alone turns it on.
  */
 export function osKeyStoreChoice(facts: OsKeyStoreFacts): OsKeyStoreChoice {
   // Any GOOP_HOME, even an empty or relative one, keeps the compiled goop off the system store.
@@ -61,11 +62,10 @@ export function osKeyStoreChoice(facts: OsKeyStoreFacts): OsKeyStoreChoice {
     return facts.env.GOOP_HOME === undefined ? { kind: "system" } : { kind: "none" };
   }
   const goopHome = absolute(facts.env.GOOP_HOME);
-  if (goopHome === undefined || !inside(goopHome, join(facts.repoRoot, ".local"))) {
-    return { kind: "none" };
-  }
+  const devFolder = join(facts.repoRoot, ".temp", "dev");
+  if (goopHome === undefined || !inside(goopHome, devFolder)) return { kind: "none" };
   if (!facts.isGoopRepo) return { kind: "refused", problem: DEV_KEY_REFUSED };
-  return { kind: "dev-insecure", folder: join(facts.repoRoot, ".temp", "dev") };
+  return { kind: "dev-insecure", folder: devFolder };
 }
 
 export const NO_OS_KEY_STORE =
@@ -75,4 +75,4 @@ export const DEV_KEY_WARNING =
   "goop daemon is using the insecure development key in .temp/dev/ (never use this for real data).";
 
 export const DEV_KEY_REFUSED =
-  "goop will not use the insecure development key: GOOP_HOME is in .local/, but the folder above src/ is not the goop repository.";
+  "goop will not use the insecure development key: GOOP_HOME is in .temp/dev/, but the folder above src/ is not the goop repository.";

@@ -46,7 +46,7 @@ afterEach(async () => {
     daemon.kill("SIGKILL");
     await daemon.exited;
   }
-  for (const home of ["home", ".local"]) {
+  for (const home of ["home", join(".temp", "dev", "home")]) {
     const extracted = join(fixture, home, "lib", "native");
     if (!existsSync(extracted)) continue;
     for (const folder of readdirSync(extracted)) {
@@ -181,7 +181,7 @@ async function request(socketPath: string, method: string, params?: unknown): Pr
 
 describe("the compiled goop and the insecure development key (dev-sandbox S8)", () => {
   test.skipIf(missing || !linux)(
-    "with GOOP_HOME in a goop repository's .local/ it never uses it: the passphrase seals the vault",
+    "with GOOP_HOME in a goop repository's .temp/dev/ it never uses it: the passphrase seals the vault",
     async () => {
       const outfile = join(fixture, "goop");
       const built = await buildExecutable(
@@ -198,7 +198,7 @@ describe("the compiled goop and the insecure development key (dev-sandbox S8)", 
       mkdirSync(tmp);
       const env = {
         ...process.env,
-        GOOP_HOME: join(fixture, ".local"),
+        GOOP_HOME: join(fixture, ".temp", "dev", "home"),
         GOOP_RUNTIME_DIR: runtime,
         GOOP_DEV_KEY: "1",
         TMPDIR: tmp,
@@ -234,7 +234,7 @@ describe("the compiled goop and the insecure development key (dev-sandbox S8)", 
       });
       first.child.kill("SIGTERM");
       expect(await first.child.exited).toBe(0);
-      expect(readdirSync(join(fixture, ".local", "data")).sort()).toEqual([
+      expect(readdirSync(join(fixture, ".temp", "dev", "home", "data")).sort()).toEqual([
         "data-key.passphrase",
         "data-key.recovery",
         "goop.db",

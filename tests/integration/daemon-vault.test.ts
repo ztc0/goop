@@ -1,6 +1,6 @@
 // The real `goop daemon` owning a real vault (daemon-ipc T4, S3, S4, S7, L8): `src/main.ts` runs
 // with `GOOP_HOME` and `GOOP_RUNTIME_DIR` in a fresh 0700 folder under `.temp/tests/`. From source
-// with GOOP_HOME outside the repo's `.local/`, goop uses no OS key store (goop S25, dev-sandbox S8),
+// with GOOP_HOME outside the repo's `.temp/dev/`, goop uses no OS key store (goop S25, dev-sandbox S8),
 // so the passphrase seals the data key and nothing touches the system. The store opens through the built native library: skipped without
 // `bun run build:native`, except with GOOP_REQUIRE_NATIVE=1, where a missing library fails.
 import { afterEach, describe, expect, test } from "bun:test";
