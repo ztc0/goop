@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { devEnvironment, devLayout } from "@/shared/dev/model/dev-layout";
+import { devEnvironment, devLayout, privateDirectories } from "@/shared/dev/model/dev-layout";
 
 const root = join("/", "work", "goop");
 
@@ -45,5 +45,11 @@ describe("devEnvironment", () => {
       TMP: join(root, ".temp", "tmp"),
       TEMP: join(root, ".temp", "tmp"),
     });
+  });
+});
+
+describe("privateDirectories", () => {
+  test("names only the runtime folder, which holds the socket and must stay 0700", () => {
+    expect(privateDirectories(devLayout(root))).toEqual([join(root, ".temp", "run")]);
   });
 });

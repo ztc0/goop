@@ -80,3 +80,8 @@ export function devEnvironment(layout: DevLayout): Record<string, string> {
 export function layoutDirectories(layout: DevLayout): string[] {
   return [...Object.values(layout.local), ...Object.values(layout.temp)];
 }
+
+/** The directories only this user may open: the runtime folder carries the daemon's socket (S5). */
+export function privateDirectories(layout: DevLayout): string[] {
+  return [layout.temp.run];
+}

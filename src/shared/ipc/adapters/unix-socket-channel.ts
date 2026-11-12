@@ -1,9 +1,13 @@
 // The Linux channel (S5, S8): a Unix socket, `goop.sock`, in a runtime folder only this user can
 // open. The folder is created 0700, or refused when it exists and another user owns it or can
 // open it; it is never changed, since it may not be ours. The socket is 0600 as well, for a folder
-// that is relaxed later. One daemon at a time: a socket that answers is a running daemon; one that
-// does not is left by a daemon that died and is replaced.
+// that is relaxed later. One daemon at a time: the daemon holds an exclusive lock on `goop.lock`
+// while it listens, so a second one is refused before it touches the socket, and the kernel drops
+// the lock when the daemon dies. A socket found with the lock free was left by a dead daemon.
+import { dlopen, FFIType } from "bun:ffi";
+import { closeSync, openSync } from "node:fs";
 import { chmod, lstat, mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
 import { encodeFrame, frameReader } from "@/shared/ipc/model/framing";
 import { parseMessage } from "@/shared/ipc/model/json-rpc";
 import { ChannelError, runtimeFolderProblem, socketPath } from "@/shared/ipc/model/runtime-folder";
@@ -17,6 +21,9 @@ import type { FrameReader } from "@/shared/ipc/types/framing";
 
 const FOLDER_MODE = 0o700;
 const SOCKET_MODE = 0o600;
+const LOCK_MODE = 0o600;
+const LOCK_EX = 2;
+const LOCK_NB = 4;
 
 const NOT_RUNNING = "goop daemon is not running";
 const ALREADY_RUNNING = "goop daemon is already running";
@@ -90,6 +97,19 @@ async function checkFolder(folder: string, create: boolean): Promise<"ready" | "
   return "ready";
 }
 
+const loadLibc = () =>
+  dlopen("libc.so.6", { flock: { args: [FFIType.i32, FFIType.i32], returns: FFIType.i32 } });
+let libc: ReturnType<typeof loadLibc> | undefined;
+
+/** Takes the one-daemon lock in `folder` and returns its descriptor; closing it frees the lock. */
+function lock(folder: string): number {
+  const fd = openSync(join(folder, "goop.lock"), "a", LOCK_MODE);
+  libc ??= loadLibc();
+  if (libc.symbols.flock(fd, LOCK_EX | LOCK_NB) === 0) return fd;
+  closeSync(fd);
+  throw new ChannelError(ALREADY_RUNNING);
+}
+
 /** Whether a daemon answers at `path`. */
 async function answers(path: string): Promise<boolean> {
   try {
@@ -117,13 +137,25 @@ async function claim(path: string) {
 }
 
 /** The channel in `folder`, for example `runtimeFolder(process.env)`. Linux only. */
-export function unixSocketChannel(folder: string): Channel {
+export function unixSocketChannel(runtimeFolder: string): Channel {
+  // lstat follows a symbolic link spelled with a trailing separator ("run/"), so strip it first.
+  const folder = runtimeFolder.replace(/(?<=.)\/+$/, "");
   const path = socketPath(folder);
 
   return {
     async listen(accept): Promise<ChannelListener> {
       await checkFolder(folder, true);
-      await claim(path);
+      let held: number | undefined = lock(folder);
+      const unlock = () => {
+        if (held !== undefined) closeSync(held);
+        held = undefined;
+      };
+      try {
+        await claim(path);
+      } catch (error) {
+        unlock();
+        throw error;
+      }
       let server: Bun.UnixSocketListener<Link>;
       try {
         server = Bun.listen<Link>({
@@ -137,6 +169,7 @@ export function unixSocketChannel(folder: string): Channel {
           },
         });
       } catch (error) {
+        unlock();
         // Another daemon bound the path between the check and here.
         if (errorCode(error) === "EADDRINUSE") throw new ChannelError(ALREADY_RUNNING);
         throw error;
@@ -145,12 +178,15 @@ export function unixSocketChannel(folder: string): Channel {
         await chmod(path, SOCKET_MODE);
       } catch (error) {
         server.stop(true);
+        unlock();
         throw error;
       }
       return {
         async close() {
+          if (held === undefined) return; // closed already: the socket may be the next daemon's
           server.stop(true);
           await rm(path, { force: true });
+          unlock();
         },
       };
     },
