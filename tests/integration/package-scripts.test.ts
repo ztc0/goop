@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 const repo = resolve(import.meta.dir, "..", "..");
 const pkg = await Bun.file(join(repo, "package.json")).json();
 
-test("check runs lint, typecheck and test in that order and stops at the first failure", () => {
+test("check chains lint, typecheck and test with &&, so the first failure stops it", () => {
   expect(pkg.scripts.check).toBe("bun run lint && bun run typecheck && bun run test");
 });
 
