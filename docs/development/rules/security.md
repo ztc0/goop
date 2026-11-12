@@ -20,7 +20,7 @@
 
 - Only the same user can open it: on Linux the socket `goop.sock` is 0600 in a 0700 runtime folder (`GOOP_RUNTIME_DIR`, else `$XDG_RUNTIME_DIR/goop`). A folder that exists with wider modes, another owner or as a symbolic link is refused, never changed.
 - Every message is checked with zod and limited to `MAX_MESSAGE_BYTES`; a longer frame closes the connection. Errors never repeat the input.
-- It will carry the vault passphrase: never log a message or its params.
+- It carries the vault passphrase and recovery key: never log a message or its params. A wrong passphrase or recovery key gets one fixed error that never says what was wrong, and a method the vault's state does not allow gets an error that names only the state.
 
 ## Model servers
 

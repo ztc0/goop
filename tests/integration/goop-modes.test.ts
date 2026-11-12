@@ -1,12 +1,13 @@
 // The real entry, `src/main.ts`, run as goop runs it: `goop`, `goop daemon` and `goop --help`
 // (daemon-ipc T3, S1, S2). Each test gets a fresh 0700 folder under `.temp/tests/`, and the runtime
-// folder (`GOOP_RUNTIME_DIR`) goes inside it.
+// folder (`GOOP_RUNTIME_DIR`) and `GOOP_HOME` go inside it, so the vault is a new one (first run).
 import { afterEach, describe, expect, test } from "bun:test";
 import { chmodSync, existsSync, mkdirSync, rmSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 const repo = resolve(import.meta.dir, "..", "..");
 const LISTENING = "goop daemon is listening.\n";
+const FIRST_RUN = "The vault is not set up yet. Set it up with: goop\n";
 const NOT_RUNNING = "goop daemon is not running. Start it in another terminal with: goop daemon\n";
 const USAGE = [
   "Usage:",
@@ -36,7 +37,12 @@ function runtimeFolder(): string {
 }
 
 function environment(runtime: string | undefined): Record<string, string | undefined> {
-  const env: Record<string, string | undefined> = { ...process.env, GOOP_RUNTIME_DIR: runtime };
+  const env: Record<string, string | undefined> = {
+    ...process.env,
+    GOOP_RUNTIME_DIR: runtime,
+    // Never the developer's `.local/` vault, and never the user's.
+    GOOP_HOME: join(dirname(runtime ?? runtimeFolder()), "home"),
+  };
   if (runtime === undefined) delete env.XDG_RUNTIME_DIR;
   return env;
 }
@@ -58,7 +64,10 @@ async function goop(args: string[], runtime?: string) {
   return { exitCode, stdout, stderr };
 }
 
-/** Starts `goop daemon` and waits for its first line; the rest of stdout stays readable. */
+/**
+ * Starts `goop daemon` and waits for its first two lines (listening, then the vault's state); the
+ * rest of stdout stays readable.
+ */
 async function startDaemon(runtime: string) {
   const child = Bun.spawn([process.execPath, "src/main.ts", "daemon"], {
     cwd: repo,
@@ -71,7 +80,7 @@ async function startDaemon(runtime: string) {
   const reader = child.stdout.getReader();
   const decoder = new TextDecoder();
   let stdout = "";
-  while (!stdout.includes("\n")) {
+  while (stdout.split("\n").length < 3) {
     const chunk = await reader.read();
     if (chunk.done) break;
     stdout += decoder.decode(chunk.value, { stream: true });
@@ -82,7 +91,7 @@ async function startDaemon(runtime: string) {
     }
     return stdout;
   };
-  return { child, firstLine: stdout, rest, stderr: () => new Response(child.stderr).text() };
+  return { child, firstLines: stdout, rest, stderr: () => new Response(child.stderr).text() };
 }
 
 /** Sends raw lines to the daemon's socket and collects what comes back until `count` lines. */
@@ -172,11 +181,11 @@ describe.if(process.platform === "win32")("goop on Windows", () => {
 });
 
 describe.skipIf(process.platform === "win32")("goop daemon", () => {
-  test("listens in the runtime folder and says so in one line", async () => {
+  test("listens in the runtime folder, says so and says the new vault is not set up", async () => {
     const runtime = runtimeFolder();
     const daemon = await startDaemon(runtime);
 
-    expect(daemon.firstLine).toBe(LISTENING);
+    expect(daemon.firstLines).toBe(`${LISTENING}${FIRST_RUN}`);
     expect(existsSync(join(runtime, "goop.sock"))).toBe(true);
   });
 
@@ -210,7 +219,7 @@ describe.skipIf(process.platform === "win32")("goop daemon", () => {
       daemon.child.kill(signal);
 
       expect(await daemon.child.exited).toBe(0);
-      expect(await daemon.rest()).toBe(LISTENING);
+      expect(await daemon.rest()).toBe(`${LISTENING}${FIRST_RUN}`);
       expect(await daemon.stderr()).toBe("");
       expect(existsSync(join(runtime, "goop.sock"))).toBe(false);
     });
