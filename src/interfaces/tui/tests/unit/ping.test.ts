@@ -1,53 +1,36 @@
 import { describe, expect, test } from "bun:test";
-import { connectProblem, PING, pingReply } from "@/interfaces/tui/model/ping";
+import { connectProblem, pingOutcome } from "@/interfaces/tui/model/ping";
 import { JSON_RPC_ERRORS } from "@/shared/ipc";
 
-describe("PING", () => {
-  test("is a JSON-RPC request with an id, so the daemon answers it", () => {
-    expect(PING).toEqual({ jsonrpc: "2.0", id: 1, method: "ping" });
-  });
-});
-
-describe("pingReply", () => {
-  test("`pong` to our id is the answer, on stdout with exit 0", () => {
-    expect(pingReply({ ok: true, message: { jsonrpc: "2.0", id: 1, result: "pong" } })).toEqual({
+describe("pingOutcome", () => {
+  test("`pong` is the answer, on stdout with exit 0", () => {
+    expect(pingOutcome({ kind: "result", result: "pong" })).toEqual({
       exitCode: 0,
       stdout: "goop daemon answered: pong",
     });
   });
 
-  test("another result to our id is an unexpected answer, never shown", () => {
-    expect(
-      pingReply({ ok: true, message: { jsonrpc: "2.0", id: 1, result: "\u001b[2J" } }),
-    ).toEqual({ exitCode: 1, stderr: "goop daemon gave an unexpected answer." });
-  });
-
-  test("an error to our id is a refusal, without its text", () => {
-    expect(
-      pingReply({
-        ok: true,
-        message: { jsonrpc: "2.0", id: 1, error: { ...JSON_RPC_ERRORS.methodNotFound } },
-      }),
-    ).toEqual({ exitCode: 1, stderr: "goop daemon refused the ping." });
-  });
-
-  test("an invalid message is an answer goop cannot read", () => {
-    expect(pingReply({ ok: false, error: { ...JSON_RPC_ERRORS.parseError } })).toEqual({
+  test("another result is an unexpected answer, never shown", () => {
+    expect(pingOutcome({ kind: "result", result: "\u001b[2J" })).toEqual({
       exitCode: 1,
-      stderr: "goop daemon sent a message goop cannot read.",
+      stderr: "goop daemon gave an unexpected answer.",
     });
   });
 
-  test("a response to another id, a request or a notification is not the answer", () => {
+  test("an error is a refusal, without its text", () => {
+    expect(pingOutcome({ kind: "error", error: { ...JSON_RPC_ERRORS.methodNotFound } })).toEqual({
+      exitCode: 1,
+      stderr: "goop daemon refused the ping.",
+    });
+  });
+
+  test("no answer says why, in goop's words", () => {
     expect(
-      pingReply({ ok: true, message: { jsonrpc: "2.0", id: 2, result: "pong" } }),
-    ).toBeUndefined();
-    expect(
-      pingReply({ ok: true, message: { jsonrpc: "2.0", id: 1, method: "ping" } }),
-    ).toBeUndefined();
-    expect(
-      pingReply({ ok: true, message: { jsonrpc: "2.0", method: "progress" } }),
-    ).toBeUndefined();
+      pingOutcome({ kind: "problem", line: "goop daemon sent a message goop cannot read." }),
+    ).toEqual({
+      exitCode: 1,
+      stderr: "goop daemon sent a message goop cannot read.",
+    });
   });
 });
 

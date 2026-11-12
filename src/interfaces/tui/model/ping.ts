@@ -1,23 +1,24 @@
-// What `goop` makes of the daemon's answer to its ping (S1). Pure: the TUI's service reads the
-// channel and writes what this returns. Nothing the daemon sends is shown as it came.
-import type { JsonRpcRequest, ParsedMessage } from "@/shared/ipc";
-
-export const PING: JsonRpcRequest = { jsonrpc: "2.0", id: 1, method: "ping" };
+// What `goop` makes of the daemon's answer to its ping (S1). Pure: the TUI's service sends the
+// ping and prints what this returns. Nothing the daemon sends is shown as it came.
+import type { DaemonReply } from "@/interfaces/tui/types/daemon-reply";
 
 /** The line to print and the exit code. */
 export type PingOutcome = { exitCode: 0; stdout: string } | { exitCode: 1; stderr: string };
 
 const failure = (stderr: string): PingOutcome => ({ exitCode: 1, stderr });
 
-/** The outcome of one message from the daemon, or undefined when it is not the ping's answer. */
-export function pingReply(parsed: ParsedMessage): PingOutcome | undefined {
-  if (!parsed.ok) return failure("goop daemon sent a message goop cannot read.");
-  const message = parsed.message;
-  if ("method" in message || message.id !== PING.id) return undefined;
-  if ("error" in message) return failure("goop daemon refused the ping.");
-  if (message.result === "pong") return { exitCode: 0, stdout: "goop daemon answered: pong" };
-  return failure("goop daemon gave an unexpected answer.");
+/** The outcome of the daemon's reply to the ping. */
+export function pingOutcome(reply: DaemonReply): PingOutcome {
+  if (reply.kind === "problem") return failure(reply.line);
+  if (reply.kind === "error") return failure("goop daemon refused the ping.");
+  if (reply.result === "pong") return { exitCode: 0, stdout: "goop daemon answered: pong" };
+  return failure(UNEXPECTED);
 }
+
+export const UNEXPECTED = "goop daemon gave an unexpected answer.";
+export const UNREADABLE = "goop daemon sent a message goop cannot read.";
+export const CLOSED = "goop daemon closed the connection before it answered.";
+export const tooSlow = (ms: number) => `goop daemon did not answer within ${ms} ms.`;
 
 /** The channel's own words for "nobody listens"; the adapter throws a ChannelError with them. */
 const NOT_RUNNING = "goop daemon is not running";
