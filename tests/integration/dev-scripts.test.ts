@@ -88,23 +88,31 @@ describe("scripts/dev-env/run.ts", () => {
     }
   });
 
-  test("creates the runtime folder .temp/run/ 0700, so only this user can open the socket", () => {
-    const result = run(runScript, ["bun", "-e", "0"]);
+  // POSIX modes: Windows has none, and its runtime folder is a named pipe (dev-sandbox T8).
+  test.skipIf(process.platform === "win32")(
+    "creates the runtime folder .temp/run/ 0700, so only this user can open the socket",
+    () => {
+      const result = run(runScript, ["bun", "-e", "0"]);
 
-    expect(result.exitCode).toBe(0);
-    expect(lstatSync(join(fixture, ".temp", "run")).mode & 0o777).toBe(0o700);
-  });
+      expect(result.exitCode).toBe(0);
+      expect(lstatSync(join(fixture, ".temp", "run")).mode & 0o777).toBe(0o700);
+    },
+  );
 
-  test("tightens a runtime folder it owns that is open to others to 0700", () => {
-    mkdirSync(join(fixture, ".temp", "run"), { recursive: true });
-    chmodSync(join(fixture, ".temp", "run"), 0o755);
+  // POSIX modes: Windows has none, and its runtime folder is a named pipe (dev-sandbox T8).
+  test.skipIf(process.platform === "win32")(
+    "tightens a runtime folder it owns that is open to others to 0700",
+    () => {
+      mkdirSync(join(fixture, ".temp", "run"), { recursive: true });
+      chmodSync(join(fixture, ".temp", "run"), 0o755);
 
-    const result = run(runScript, ["bun", "-e", "0"]);
+      const result = run(runScript, ["bun", "-e", "0"]);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
-    expect(lstatSync(join(fixture, ".temp", "run")).mode & 0o777).toBe(0o700);
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(lstatSync(join(fixture, ".temp", "run")).mode & 0o777).toBe(0o700);
+    },
+  );
 
   test.skipIf(process.platform === "win32")(
     "leaves a runtime folder that is a symbolic link and its target unchanged",
