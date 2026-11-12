@@ -122,7 +122,7 @@ export function missingEmbeddedManifest() {
 /**
  * The compiled executable loads only the libraries embedded in it (S6): it has no `.local/` to
  * fall back to, so one without the embedded manifest is refused. From source, goop loads the
- * libraries `bun run native-libs:build` wrote (S5).
+ * libraries `bun run build:native` wrote (S5).
  */
 export function nativeLibrarySource(
   standalone: boolean,
@@ -144,7 +144,7 @@ export function hashMismatch(pinned: PinnedLibrary, where: string, actual: strin
   );
 }
 
-const BUILD_HINT = "Build the libraries with: bun run native-libs:build";
+const BUILD_HINT = "Build the libraries with: bun run build:native";
 
 export function missingManifest(path: string) {
   return new NativeLibraryError(

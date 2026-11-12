@@ -18,7 +18,7 @@ const cliScript = join(repo, "scripts", "sandbox", "cli.ts");
 const IMAGE = "docker.io/dockurr/windows:6.06";
 const FAKE_PUBLIC_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKeyForTests";
 
-const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> <system> [options]
+const USAGE = `Usage: bun run sandbox <command> <system> [options]
 
 Commands:
   install <system>  Install Windows once into .local/windows/base/ (about 25 min),
@@ -39,12 +39,12 @@ Options:
   --engine <engine> podman or docker; by default Podman if installed, else Docker
 
 Examples:
-  bun run sandbox:install debian
-  bun run sandbox:run debian           # opens a shell; exit deletes the container
-  bun run sandbox:run debian uname -a
-  bun run sandbox:run windows --copy dist 'Get-ChildItem C:\\goop'
-  bun run sandbox:test windows
-  bun run sandbox:status windows
+  bun run sandbox install debian
+  bun run sandbox run debian           # opens a shell; exit deletes the container
+  bun run sandbox run debian uname -a
+  bun run sandbox run windows --copy dist 'Get-ChildItem C:\\goop'
+  bun run sandbox test windows
+  bun run sandbox status windows
 `;
 
 const LOG_ARGS = `{ printf '%s' "$(basename "$0")"; for arg in "$@"; do printf '\\037%s' "$arg"; done; printf '\\n'; } >> "$FAKE_LOG"`;
@@ -338,7 +338,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
       expect(result.exitCode).toBe(2);
       expect(result.stdout).toBe("");
       expect(result.stderr).toBe(
-        `--os was replaced: write the system right after the command, like: bun run sandbox:run debian uname -a\n${USAGE}`,
+        `--os was replaced: write the system right after the command, like: bun run sandbox run debian uname -a\n${USAGE}`,
       );
     }
     expect(calls()).toEqual([]);
@@ -351,7 +351,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
       expect(result.exitCode).toBe(2);
       expect(result.stdout).toBe("");
       expect(result.stderr).toBe(
-        `${command} takes no command; to run one, use: bun run sandbox:run <system> <command>\n${USAGE}`,
+        `${command} takes no command; to run one, use: bun run sandbox run <system> <command>\n${USAGE}`,
       );
     }
     expect(calls()).toEqual([]);
@@ -367,7 +367,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts usage", () => {
       expect(result.exitCode).toBe(2);
       expect(result.stdout).toBe("");
       expect(result.stderr).toBe(
-        "run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox:run debian uname -a\n",
+        "run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox run debian uname -a\n",
       );
     }
     expect(calls()).toEqual([]);
@@ -390,7 +390,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts test (T8)", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("No Windows base: run `bun run sandbox:install windows` first.\n");
+    expect(result.stderr).toBe("No Windows base: run `bun run sandbox install windows` first.\n");
     expect(readdirSync(root)).toEqual([]);
     expect(calls()).toEqual([]);
   });
@@ -400,7 +400,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts test (T8)", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("No Debian image: run `bun run sandbox:install debian` first.\n");
+    expect(result.stderr).toBe("No Debian image: run `bun run sandbox install debian` first.\n");
     expect(podmanCalls()).toEqual([
       ["image", "inspect", "--format", "{{.Size}}", "localhost/goop-sandbox-debian:2"],
     ]);
@@ -414,7 +414,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts run", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("No Windows base: run `bun run sandbox:install windows` first.\n");
+    expect(result.stderr).toBe("No Windows base: run `bun run sandbox install windows` first.\n");
     expect(readdirSync(root)).toEqual([]);
     expect(calls()).toEqual([]);
   });
@@ -662,7 +662,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts status", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(
-      "Windows base: none (run `bun run sandbox:install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+      "Windows base: none (run `bun run sandbox install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
     );
     expect(podmanCalls()).toEqual([
       ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
@@ -689,7 +689,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(
-      "Windows base: none (run `bun run sandbox:install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+      "Windows base: none (run `bun run sandbox install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
     );
     expect(podmanCalls()).toEqual([
       ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
@@ -704,7 +704,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts --engine (S3)", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe(`${DOCKER_WARNING}\n`);
     expect(result.stdout).toBe(
-      "Windows base: none (run `bun run sandbox:install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
+      "Windows base: none (run `bun run sandbox install windows`)\nRunning VMs:\n  goop-windows-run-test\tUp 2 minutes\n",
     );
     expect(dockerCalls()).toEqual([
       ["ps", "--filter", "name=goop-windows", "--format", "{{.Names}}\t{{.Status}}"],
@@ -800,7 +800,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts debian (S2)", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("No Debian image: run `bun run sandbox:install debian` first.\n");
+    expect(result.stderr).toBe("No Debian image: run `bun run sandbox install debian` first.\n");
     expect(podmanCalls()).toEqual([["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE]]);
   });
 
@@ -936,7 +936,7 @@ describeOnLinuxHost("scripts/sandbox/cli.ts debian (S2)", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(
-      "Debian image: none (run `bun run sandbox:install debian`)\nRunning containers: none\n",
+      "Debian image: none (run `bun run sandbox install debian`)\nRunning containers: none\n",
     );
     expect(podmanCalls()).toEqual([
       ["image", "inspect", "--format", "{{.Size}}", DEBIAN_IMAGE],

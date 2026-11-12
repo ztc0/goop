@@ -88,7 +88,7 @@ export interface PinnedBun {
 }
 
 /**
- * The native platforms `bun run native-libs:build` writes to `.local/build/native/`. A copy of the
+ * The native platforms `bun run build:native` writes to `.local/build/native/`. A copy of the
  * build's names, since the sandbox never imports the build's internals.
  */
 export type NativePlatform = "linux-x64" | "win32-x64";

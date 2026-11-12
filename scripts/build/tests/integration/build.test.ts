@@ -28,8 +28,9 @@ const cli = join(repo, "scripts", "build", "cli.ts");
 const native = join(repo, ".local", "build", "native");
 const platform = nativePlatform(process.platform, process.arch);
 const linux = process.platform === "linux";
-// Built by `bun run native-libs:build`; CI has no build until native-library T7, so the real
-// compile skips there. `sandbox:test` sets GOOP_REQUIRE_NATIVE=1, so it never skips in a sandbox.
+// Built by `bun run build:native`; without it the real compile skips. CI downloads the built
+// libraries and `bun run sandbox test` copies them, and both set GOOP_REQUIRE_NATIVE=1, so it
+// never skips there.
 const missing =
   process.env.GOOP_REQUIRE_NATIVE !== "1" && !existsSync(join(native, "manifest.json"));
 
@@ -79,7 +80,7 @@ describe("bun run build", () => {
     expect(run()).toEqual({
       exitCode: 1,
       stdout: "",
-      stderr: `The native library manifest is missing from ${manifest}. Build the libraries with: bun run native-libs:build\n${notBuilt(platform)}\n`,
+      stderr: `The native library manifest is missing from ${manifest}. Build the libraries with: bun run build:native\n${notBuilt(platform)}\n`,
     });
     expect(readdirSync(fixture)).toEqual([]);
   });

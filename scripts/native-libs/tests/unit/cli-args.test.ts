@@ -91,7 +91,7 @@ describe("parseBuildArgs", () => {
 
   test("the usage names the command, the library and every option", () => {
     expect(USAGE).toStartWith(
-      "Usage: bun run native-libs:build [<library>...] [--target linux-x64|win32-x64] [--engine podman|docker] [--verify-signature]\n",
+      "Usage: bun run build:native [<library>...] [--target linux-x64|win32-x64] [--engine podman|docker] [--verify-signature]\n",
     );
     for (const word of [
       "sqlite3mc",

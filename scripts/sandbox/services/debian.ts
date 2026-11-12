@@ -56,7 +56,7 @@ export async function runInDebian(
   const { paths, files, output, engine } = deps;
   if (request.command === "" && !deps.terminal) {
     output.error(
-      "run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox:run debian uname -a",
+      "run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox run debian uname -a",
     );
     return 2;
   }
@@ -71,7 +71,7 @@ export async function runInDebian(
   }
   prepareContainerStorage(deps);
   if ((await engine.imageSize(DEBIAN_IMAGE)).exitCode !== 0) {
-    output.error("No Debian image: run `bun run sandbox:install debian` first.");
+    output.error("No Debian image: run `bun run sandbox install debian` first.");
     return 1;
   }
 
@@ -170,7 +170,7 @@ export async function showDebianStatus(deps: SandboxDeps): Promise<number> {
   if (size.exitCode === 0) {
     output.info(`Debian image: ${DEBIAN_IMAGE} (${formatBytes(Number(size.stdout.trim()))})`);
   } else {
-    output.info("Debian image: none (run `bun run sandbox:install debian`)");
+    output.info("Debian image: none (run `bun run sandbox install debian`)");
   }
   return await listContainers(deps, DEBIAN_PREFIX, "Running containers");
 }

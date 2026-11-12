@@ -21,8 +21,8 @@ export function defaultBuild(root: string) {
   return { entry: join(root, "src", "main.ts"), outfile: join(root, "dist", "goop") };
 }
 
-/** `.local/build/native/`, where `bun run native-libs:build` writes the libraries. */
+/** `.local/build/native/`, where `bun run build:native` writes the libraries. */
 export const nativeFolder = (root: string) => join(root, ".local", "build", "native");
 
 export const notBuilt = (platform: NativePlatform) =>
-  `goop was not built: run \`bun run native-libs:build --target ${platform}\` first.`;
+  `goop was not built: run \`bun run build:native --target ${platform}\` first.`;

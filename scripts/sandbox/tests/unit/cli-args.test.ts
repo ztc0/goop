@@ -17,11 +17,11 @@ describe("parseCliArgs", () => {
     expect(parseCliArgs(["status", "debian"])).toEqual({ kind: "status", os: "debian" });
     expect(parseCliArgs(["install", "debian", "systemctl --version"])).toEqual({
       kind: "usage",
-      error: "install takes no command; to run one, use: bun run sandbox:run <system> <command>",
+      error: "install takes no command; to run one, use: bun run sandbox run <system> <command>",
     });
     expect(parseCliArgs(["status", ...OS, "--engine", "podman", "-v"])).toEqual({
       kind: "usage",
-      error: "status takes no command; to run one, use: bun run sandbox:run <system> <command>",
+      error: "status takes no command; to run one, use: bun run sandbox run <system> <command>",
     });
   });
 
@@ -34,7 +34,7 @@ describe("parseCliArgs", () => {
     });
     expect(parseCliArgs(["test", "debian", "bun", "test"])).toEqual({
       kind: "usage",
-      error: "test takes no command; to run one, use: bun run sandbox:run <system> <command>",
+      error: "test takes no command; to run one, use: bun run sandbox run <system> <command>",
     });
     expect(parseCliArgs(["test"])).toEqual({
       kind: "usage",
@@ -79,7 +79,7 @@ describe("parseCliArgs", () => {
 
   test("--os is rejected with the new form, wherever it is among the options (S1)", () => {
     const error =
-      "--os was replaced: write the system right after the command, like: bun run sandbox:run debian uname -a";
+      "--os was replaced: write the system right after the command, like: bun run sandbox run debian uname -a";
     for (const command of ["install", "status", "run"]) {
       for (const args of [
         ["--os", "debian"],

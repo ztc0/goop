@@ -26,7 +26,7 @@ function run(...args: string[]) {
   };
 }
 
-describe("native-libs:build", () => {
+describe("build:native", () => {
   test("--help prints the usage and exits 0", () => {
     expect(run("--help")).toEqual({ exitCode: 0, stdout: USAGE, stderr: "" });
   });
@@ -56,7 +56,7 @@ describe("native-libs:build", () => {
       expect(result).toEqual({
         exitCode: 1,
         stdout: "",
-        stderr: "native-libs:build runs on Linux x86_64 only.\n",
+        stderr: "build:native runs on Linux x86_64 only.\n",
       });
     } else {
       expect(result).toEqual({

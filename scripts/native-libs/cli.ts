@@ -37,7 +37,7 @@ if (command.kind === "usage") {
   process.exit(2);
 }
 if (process.platform !== "linux" || process.arch !== "x64") {
-  process.stderr.write("native-libs:build runs on Linux x86_64 only.\n");
+  process.stderr.write("build:native runs on Linux x86_64 only.\n");
   process.exit(1);
 }
 const choice = chooseEngine(command.engine, installedEngines());

@@ -5,7 +5,7 @@
 FROM docker.io/library/debian:trixie@sha256:e2914ec98e08b24b4cee3cefcb9f90dfb5519f8d215a2ccf0c9a49b10b6e43de
 
 # systemd as init, dbus for systemctl, and logind plus the user bus for user sessions.
-# git for the suite (`sandbox:test`): commitlint calls `git config`. Pinned to trixie's version.
+# git for the suite (`bun run sandbox test`): commitlint calls `git config`. Pinned to trixie's version.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends systemd systemd-sysv dbus dbus-user-session libpam-systemd \
       git=1:2.47.3-0+deb13u1 \

@@ -120,7 +120,7 @@ export async function runSuite(
 
 /**
  * The manifest and the platform's libraries, relative to the repo root, as `bun run
- * native-libs:build` left them; undefined when either is missing. Nothing else from .local/.
+ * build:native` left them; undefined when either is missing. Nothing else from .local/.
  */
 function nativeFiles(deps: SandboxDeps, platform: NativePlatform): string[] | undefined {
   const { paths, files } = deps;
@@ -137,7 +137,7 @@ function nativeFiles(deps: SandboxDeps, platform: NativePlatform): string[] | un
 
 async function windowsReady(deps: SandboxDeps): Promise<boolean> {
   if (deps.files.exists(deps.paths.baseDisk)) return true;
-  deps.output.error("No Windows base: run `bun run sandbox:install windows` first.");
+  deps.output.error("No Windows base: run `bun run sandbox install windows` first.");
   return false;
 }
 
@@ -145,7 +145,7 @@ async function debianReady(deps: SandboxDeps): Promise<boolean> {
   const { output, engine } = deps;
   prepareContainerStorage(deps);
   if ((await engine.imageSize(DEBIAN_IMAGE)).exitCode === 0) return true;
-  output.error("No Debian image: run `bun run sandbox:install debian` first.");
+  output.error("No Debian image: run `bun run sandbox install debian` first.");
   return false;
 }
 

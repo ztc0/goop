@@ -11,7 +11,7 @@ export async function showStatus(deps: SandboxDeps): Promise<number> {
     const size = files.listFiles(paths.base).reduce((total, file) => total + file.size, 0);
     output.info(`Windows base: ${displayPath(paths, paths.base)} (${formatBytes(size)})`);
   } else {
-    output.info("Windows base: none (run `bun run sandbox:install windows`)");
+    output.info("Windows base: none (run `bun run sandbox install windows`)");
   }
 
   prepareContainerStorage(deps);

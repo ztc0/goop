@@ -13,7 +13,7 @@ export type BuildCommand =
   | { kind: "help" }
   | { kind: "usage"; error: string };
 
-export const USAGE = `Usage: bun run native-libs:build [<library>...] [--target linux-x64|win32-x64] [--engine podman|docker] [--verify-signature]
+export const USAGE = `Usage: bun run build:native [<library>...] [--target linux-x64|win32-x64] [--engine podman|docker] [--verify-signature]
 
 Downloads each pinned native library's source, checks its sha256, builds it for each target
 in a fresh container without network and checks every output against its pinned sha256. Only

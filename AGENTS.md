@@ -8,22 +8,20 @@ This file is the entry point. It stays short on purpose: read the detailed rule 
 
 All scripts run inside the repo-local environment (`scripts/dev-env/run.ts`).
 
-| Command                     | What it does                                                                                                                                                 |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `bun install`               | Install dependencies (cache in `.local/cache/bun`)                                                                                                           |
-| `bun run dev`               | Run goop from source and restart on file changes                                                                                                             |
-| `bun run test`              | Run the test suite                                                                                                                                           |
-| `bun run typecheck`         | TypeScript check, no output files                                                                                                                            |
-| `bun run lint`              | Biome lint and format check                                                                                                                                  |
-| `bun run format`            | Apply Biome formatting                                                                                                                                       |
-| `bun run build`             | Compile the single `goop` executable into `dist/` with the host's native libraries embedded (needs `bun run native-libs:build` first)                        |
-| `bun run clean`             | Delete `.temp/` (never `.local/`)                                                                                                                            |
-| `bun run clean:local`       | Delete `.local/` after an interactive confirmation                                                                                                           |
-| `bun run native-libs:build` | Build the pinned native libraries into `.local/build/native/` (`[sqlite3mc] [--target linux-x64\|win32-x64] [--engine podman\|docker] [--verify-signature]`) |
-| `bun run sandbox:install`   | Install a sandbox once (`windows`: Windows, about 25 min; `debian`: a systemd container)                                                                     |
-| `bun run sandbox:run`       | Run a command in a throwaway sandbox (`windows\|debian <command>`, `--copy`, `--fetch`; `--` optional; `debian` alone opens a shell)                         |
-| `bun run sandbox:status`    | Show the Windows base or the Debian image, and the running sandboxes (`windows\|debian`)                                                                     |
-| `bun run sandbox:test`      | Run the whole test suite in a throwaway sandbox (`windows\|debian`) on a copy of the repo with the pinned, hash-checked Bun                                  |
+| Command                | What it does                                                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bun install`          | Install dependencies (cache in `.local/cache/bun`)                                                                                                                                                                             |
+| `bun run dev`          | Run goop from source and restart on file changes                                                                                                                                                                               |
+| `bun run check`        | Run lint, typecheck and test in that order, stopping at the first failure                                                                                                                                                      |
+| `bun run test`         | Run the test suite                                                                                                                                                                                                             |
+| `bun run typecheck`    | TypeScript check, no output files                                                                                                                                                                                              |
+| `bun run lint`         | Biome lint and format check                                                                                                                                                                                                    |
+| `bun run format`       | Apply Biome formatting                                                                                                                                                                                                         |
+| `bun run build`        | Compile the single `goop` executable into `dist/` with the host's native libraries embedded (needs `bun run build:native` first)                                                                                               |
+| `bun run build:native` | Build the pinned native libraries into `.local/build/native/` (`[sqlite3mc] [--target linux-x64\|win32-x64] [--engine podman\|docker] [--verify-signature]`)                                                                   |
+| `bun run sandbox`      | `install\|run\|status\|test windows\|debian`: install a sandbox once, run a command in a throwaway one (`debian` alone opens a shell), show the status, or run the whole suite in one ([details](docs/development/sandbox.md)) |
+| `bun run clean`        | Delete `.temp/` (never `.local/`)                                                                                                                                                                                              |
+| `bun run clean:local`  | Delete `.local/` after an interactive confirmation                                                                                                                                                                             |
 
 ## Golden rules
 

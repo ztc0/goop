@@ -24,7 +24,7 @@ export async function runInWindows(
 ): Promise<number> {
   const { paths, files, output, engine, guest } = deps;
   if (!files.exists(paths.baseDisk)) {
-    output.error("No Windows base: run `bun run sandbox:install windows` first.");
+    output.error("No Windows base: run `bun run sandbox install windows` first.");
     return 1;
   }
   const uploads: string[] = [];

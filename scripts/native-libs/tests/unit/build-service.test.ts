@@ -36,7 +36,7 @@ async function failing(h: Harness, options = OFF, recipes = [RECIPE]) {
   return h.output.lines.filter((line) => line.startsWith("error: ")).slice(0, -1);
 }
 
-// native-libs:build runs on Linux x86_64 only; these suites fake POSIX host paths and tools.
+// build:native runs on Linux x86_64 only; these suites fake POSIX host paths and tools.
 const describeOnLinuxHost = describe.skipIf(process.platform === "win32");
 
 describeOnLinuxHost("buildLibrary", () => {

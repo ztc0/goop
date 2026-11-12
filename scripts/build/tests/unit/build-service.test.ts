@@ -89,7 +89,7 @@ describe("bun run build (S6)", () => {
     [
       "a missing manifest",
       new NativeLibraryError(
-        `The native library manifest is missing from ${join(NATIVE, "manifest.json")}. Build the libraries with: bun run native-libs:build`,
+        `The native library manifest is missing from ${join(NATIVE, "manifest.json")}. Build the libraries with: bun run build:native`,
       ),
     ],
     [
@@ -109,7 +109,7 @@ describe("bun run build (S6)", () => {
 
     expect(run.errors).toEqual([error.message, notBuilt("linux-x64")]);
     expect(notBuilt("linux-x64")).toBe(
-      "goop was not built: run `bun run native-libs:build --target linux-x64` first.",
+      "goop was not built: run `bun run build:native --target linux-x64` first.",
     );
     expect(run.compiles).toEqual([]);
     expect(run.info).toEqual([]);

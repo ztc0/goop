@@ -1,7 +1,7 @@
 import type { CliCommand, SandboxOs } from "@scripts/sandbox/types/sandbox";
 import type { EngineName } from "@scripts/shared/containers";
 
-export const USAGE = `Usage: bun scripts/sandbox/cli.ts <command> <system> [options]
+export const USAGE = `Usage: bun run sandbox <command> <system> [options]
 
 Commands:
   install <system>  Install Windows once into .local/windows/base/ (about 25 min),
@@ -22,12 +22,12 @@ Options:
   --engine <engine> podman or docker; by default Podman if installed, else Docker
 
 Examples:
-  bun run sandbox:install debian
-  bun run sandbox:run debian           # opens a shell; exit deletes the container
-  bun run sandbox:run debian uname -a
-  bun run sandbox:run windows --copy dist 'Get-ChildItem C:\\goop'
-  bun run sandbox:test windows
-  bun run sandbox:status windows
+  bun run sandbox install debian
+  bun run sandbox run debian           # opens a shell; exit deletes the container
+  bun run sandbox run debian uname -a
+  bun run sandbox run windows --copy dist 'Get-ChildItem C:\\goop'
+  bun run sandbox test windows
+  bun run sandbox status windows
 `;
 
 /** An absolute drive path without spaces or quotes, safe for scp on both sides. */
@@ -39,7 +39,7 @@ const OSES: readonly string[] = ["windows", "debian"] satisfies SandboxOs[];
 const ENGINES: readonly string[] = ["podman", "docker"] satisfies EngineName[];
 
 const OS_REPLACED =
-  "--os was replaced: write the system right after the command, like: bun run sandbox:run debian uname -a";
+  "--os was replaced: write the system right after the command, like: bun run sandbox run debian uname -a";
 
 function usage(error: string): CliCommand {
   return { kind: "usage", error };
@@ -78,7 +78,7 @@ function parseNoCommand(command: "install" | "status" | "test", args: string[]):
     if (args[index] === "--os") return usage(OS_REPLACED);
     if (args[index] !== "--engine") {
       return usage(
-        `${command} takes no command; to run one, use: bun run sandbox:run <system> <command>`,
+        `${command} takes no command; to run one, use: bun run sandbox run <system> <command>`,
       );
     }
     const value = readEngine(args, index, engine);
@@ -96,7 +96,8 @@ function parseRun(args: string[]): CliCommand {
   let engine: EngineName | undefined;
   let index = 1;
   // Options come first; the command starts after `--` or at the first word that is not an
-  // option, so the `--` is optional (and `bun run sandbox:run -- <command>` drops it anyway).
+  // option, so the `--` is optional (and bun drops a `--` right after the script name, as in
+  // `bun run sandbox -- run ...`).
   while (index < args.length && args[index] !== "--" && args[index]?.startsWith("--")) {
     const option = args[index] ?? "";
     const value = args[index + 1];

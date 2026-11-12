@@ -1,4 +1,4 @@
-// The libraries `bun run native-libs:build` writes to `.local/build/native/` (S5): while
+// The libraries `bun run build:native` writes to `.local/build/native/` (S5): while
 // developing, goop and the tests load them from there. Each call reads the manifest and hashes the
 // library again, so a file changed since the last load is refused (S4). Nothing is written here:
 // the folder belongs to the build script.
