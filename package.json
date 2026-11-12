@@ -11,18 +11,16 @@
   },
   "scripts": {
     "dev": "bun scripts/dev-env/run.ts bun --watch src/main.ts",
+    "check": "bun run lint && bun run typecheck && bun run test",
     "test": "bun scripts/dev-env/run.ts bun test ./ ./.agents",
     "typecheck": "bun scripts/dev-env/run.ts tsc --noEmit",
     "lint": "bun scripts/dev-env/run.ts biome check .",
     "format": "bun scripts/dev-env/run.ts biome format --write .",
     "build": "bun scripts/dev-env/run.ts bun scripts/build/cli.ts",
+    "build:native": "bun scripts/dev-env/run.ts bun scripts/native-libs/cli.ts",
+    "sandbox": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts",
     "clean": "bun scripts/dev-env/clean.ts",
     "clean:local": "bun scripts/dev-env/clean.ts --local",
-    "native-libs:build": "bun scripts/dev-env/run.ts bun scripts/native-libs/cli.ts",
-    "sandbox:install": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts install",
-    "sandbox:run": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts run",
-    "sandbox:status": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts status",
-    "sandbox:test": "bun scripts/dev-env/run.ts bun scripts/sandbox/cli.ts test",
     "prepare": "husky"
   },
   "devDependencies": {

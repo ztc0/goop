@@ -235,7 +235,7 @@ describe("runInDebian without a command (S2)", () => {
     expect(code).toBe(2);
     expect(runner.calls).toEqual([]);
     expect(lines).toEqual([
-      "err: run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox:run debian uname -a",
+      "err: run debian without a command opens a shell and needs a terminal; pass a command instead, like: bun run sandbox run debian uname -a",
     ]);
     expect(readdirSync(fixture)).toEqual([]);
   });

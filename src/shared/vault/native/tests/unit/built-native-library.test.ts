@@ -72,7 +72,7 @@ describe("builtNativeLibrary (S4, S5)", () => {
   test("a missing manifest names the command that builds it", async () => {
     await expect(load({ [SO]: LIBRARY })).rejects.toThrow(
       new NativeLibraryError(
-        `The native library manifest is missing from ${MANIFEST}. Build the libraries with: bun run native-libs:build`,
+        `The native library manifest is missing from ${MANIFEST}. Build the libraries with: bun run build:native`,
       ),
     );
   });
@@ -80,7 +80,7 @@ describe("builtNativeLibrary (S4, S5)", () => {
   test("a missing library names the command that builds it", async () => {
     await expect(load({ [MANIFEST]: manifest() })).rejects.toThrow(
       new NativeLibraryError(
-        `The native library sqlite3mc (libsqlite3mc.so) is missing from ${SO}. Build the libraries with: bun run native-libs:build`,
+        `The native library sqlite3mc (libsqlite3mc.so) is missing from ${SO}. Build the libraries with: bun run build:native`,
       ),
     );
   });

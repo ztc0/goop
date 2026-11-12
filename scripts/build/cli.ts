@@ -1,6 +1,6 @@
 // `bun run build` (odd/tasks/native-library.md, S6): compiles the single goop executable into
 // dist/ with the host platform's native libraries and their manifest embedded, after checking
-// them against the manifest. Without `bun run native-libs:build` first, it builds nothing.
+// them against the manifest. Without `bun run build:native` first, it builds nothing.
 // Usage: bun scripts/build/cli.ts
 
 import { bunCompiler } from "@scripts/build/adapters/compiler";

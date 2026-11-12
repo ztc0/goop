@@ -21,8 +21,8 @@ import {
 import { nativePlatform } from "@/shared/vault/native";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..");
-// Skips without `bun run native-libs:build`, except with GOOP_REQUIRE_NATIVE=1 (`sandbox:test`),
-// where a missing library fails the file.
+// Skips without `bun run build:native`, except with GOOP_REQUIRE_NATIVE=1 (`bun run sandbox
+// test`), where a missing library fails the file.
 const folder = join(repo, ".local", "build", "native");
 const linux = process.platform === "linux";
 const missing =
@@ -69,7 +69,7 @@ async function rejection(promise: Promise<unknown>): Promise<Error> {
 }
 
 describe.skipIf(missing)(
-  "key service end to end (skipped without .local/build/native/manifest.json; bun run native-libs:build)",
+  "key service end to end (skipped without .local/build/native/manifest.json; bun run build:native)",
   () => {
     let root = "";
     let folder = "";

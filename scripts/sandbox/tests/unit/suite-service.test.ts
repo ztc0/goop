@@ -46,7 +46,7 @@ const NATIVE_FILES = {
   [join(".local", "secrets.txt")]: "not copied",
 };
 const missingNative = (platform: string) =>
-  `err: No native libraries for ${platform}: run \`bun run native-libs:build --target ${platform}\` first.`;
+  `err: No native libraries for ${platform}: run \`bun run build:native --target ${platform}\` first.`;
 
 class FakeRunner implements ProcessRunner {
   readonly calls: ProcessRequest[] = [];
@@ -75,7 +75,7 @@ beforeEach(() => {
   mkdirSync(join(fixture, "src"), { recursive: true });
   writeFileSync(join(fixture, "package.json"), '{ "packageManager": "bun@1.4.2" }\n');
   writeFileSync(join(fixture, "src", "a.ts"), "export {};\n");
-  // What `bun run native-libs:build` leaves, next to other .local/ content the copy never takes.
+  // What `bun run build:native` leaves, next to other .local/ content the copy never takes.
   for (const [name, content] of Object.entries(NATIVE_FILES)) {
     mkdirSync(join(fixture, name, ".."), { recursive: true });
     writeFileSync(join(fixture, name), content);
@@ -338,7 +338,7 @@ describeOnLinuxHost("runSuite on debian (T8)", () => {
 
     expect(code).toBe(1);
     expect(downloads).toEqual([]);
-    expect(lines).toEqual(["err: No Debian image: run `bun run sandbox:install debian` first."]);
+    expect(lines).toEqual(["err: No Debian image: run `bun run sandbox install debian` first."]);
   });
 });
 
@@ -416,6 +416,6 @@ describeOnLinuxHost("runSuite on windows (T8)", () => {
 
     expect(code).toBe(1);
     expect(downloads).toEqual([]);
-    expect(lines).toEqual(["err: No Windows base: run `bun run sandbox:install windows` first."]);
+    expect(lines).toEqual(["err: No Windows base: run `bun run sandbox install windows` first."]);
   });
 });

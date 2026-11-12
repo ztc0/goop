@@ -75,7 +75,7 @@ export function repoFiles(output: string): string[] {
 
 /** The stop when the plan's native libraries are not built: the suite never skips them. */
 export function missingNativeLibraries(platform: NativePlatform): string {
-  return `No native libraries for ${platform}: run \`bun run native-libs:build --target ${platform}\` first.`;
+  return `No native libraries for ${platform}: run \`bun run build:native --target ${platform}\` first.`;
 }
 
 export function suiteSummary(os: SandboxOs, exitCode: number, elapsedMs: number): string {

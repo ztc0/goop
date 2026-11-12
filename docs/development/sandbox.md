@@ -23,25 +23,25 @@ The system is the word right after the command: `windows` or `debian`.
 
 | Command                           | What it does                                                                                                |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `bun run sandbox:install windows` | Installs Windows once into `.local/windows/base/`; about 25 minutes the first time (13 on the measured run) |
-| `bun run sandbox:install debian`  | Builds the Debian image; run it again to rebuild after the Containerfile changes                            |
-| `bun run sandbox:run windows`     | Boots a throwaway VM over the base, runs one PowerShell command, deletes the VM                             |
-| `bun run sandbox:run debian`      | Starts a throwaway container, runs one shell command as `goop`, deletes the container                       |
-| `bun run sandbox:status windows`  | Shows the base and its size, and any VM still running                                                       |
-| `bun run sandbox:status debian`   | Shows the Debian image and its size, and any container still running                                        |
-| `bun run sandbox:test windows`    | Runs the whole test suite in a throwaway VM on a copy of the repo (see [The whole suite](#the-whole-suite)) |
-| `bun run sandbox:test debian`     | Runs the whole test suite in a throwaway container, on a copy of the repo                                   |
+| `bun run sandbox install windows` | Installs Windows once into `.local/windows/base/`; about 25 minutes the first time (13 on the measured run) |
+| `bun run sandbox install debian`  | Builds the Debian image; run it again to rebuild after the Containerfile changes                            |
+| `bun run sandbox run windows`     | Boots a throwaway VM over the base, runs one PowerShell command, deletes the VM                             |
+| `bun run sandbox run debian`      | Starts a throwaway container, runs one shell command as `goop`, deletes the container                       |
+| `bun run sandbox status windows`  | Shows the base and its size, and any VM still running                                                       |
+| `bun run sandbox status debian`   | Shows the Debian image and its size, and any container still running                                        |
+| `bun run sandbox test windows`    | Runs the whole test suite in a throwaway VM on a copy of the repo (see [The whole suite](#the-whole-suite)) |
+| `bun run sandbox test debian`     | Runs the whole test suite in a throwaway container, on a copy of the repo                                   |
 
-`sandbox:run` takes the system first, then the options, then the command:
+`bun run sandbox run` takes the system first, then the options, then the command:
 
 ```sh
-bun run sandbox:run debian uname -a
-bun run sandbox:run debian 'systemctl --version; systemctl --user is-system-running'
-bun run sandbox:run debian --copy dist --fetch /home/goop/goop/out.txt -- 'ls -l dist > out.txt'
+bun run sandbox run debian uname -a
+bun run sandbox run debian 'systemctl --version; systemctl --user is-system-running'
+bun run sandbox run debian --copy dist --fetch /home/goop/goop/out.txt -- 'ls -l dist > out.txt'
 
-bun run sandbox:run windows 'Get-ComputerInfo | Select-Object OsName; exit 3'
+bun run sandbox run windows 'Get-ComputerInfo | Select-Object OsName; exit 3'
 
-bun run sandbox:run windows --copy .local/build/sqlite/windows/goop-spike-check.exe \
+bun run sandbox run windows --copy .local/build/sqlite/windows/goop-spike-check.exe \
   --fetch 'C:\goop\result.txt' -- \
   '& C:\goop\goop-spike-check.exe 2>&1 | Tee-Object -FilePath C:\goop\result.txt; exit $LASTEXITCODE'
 ```
@@ -49,30 +49,30 @@ bun run sandbox:run windows --copy .local/build/sqlite/windows/goop-spike-check.
 - `--copy <repo path>` uploads a file or folder from the repo before the command: to `C:\goop\` on Windows, to `/home/goop/goop/` on Debian (owned by `goop`). Paths outside the repo are refused. It can be repeated.
 - `--fetch <path>` downloads a file after the command, to `.temp/windows/results/<run id>/` or `.temp/debian/results/<run id>/`. It must be an absolute path without spaces or quotes: `C:\goop\out.xml` on Windows, `/home/goop/goop/out.txt` on Debian. A failed fetch turns a successful run into exit code 1. It can be repeated.
 - `--engine podman|docker` picks the engine (see [Engines](#engines)). `install` and `status` take it too.
-- The exit code of the command becomes the exit code of `sandbox:run`. Ctrl+C stops the run with exit code 130 and still cleans up.
+- The exit code of the command becomes the exit code of `sandbox run`. Ctrl+C stops the run with exit code 130 and still cleans up.
 - The `--` before the command is optional: the command starts at the first word that is not an option. Write it when the command itself starts with `--`.
 
-On Debian, the command runs with `bash -lc` as `goop` in `/home/goop/goop/`, and `systemctl --user` works because goop's user manager starts at boot. Without a command, `bun run sandbox:run debian` opens a login shell as `goop` in a fresh container; `exit` leaves it and deletes the container. The shell needs a terminal: without one, the run stops with exit code 2 and asks for a command.
+On Debian, the command runs with `bash -lc` as `goop` in `/home/goop/goop/`, and `systemctl --user` works because goop's user manager starts at boot. Without a command, `bun run sandbox run debian` opens a login shell as `goop` in a fresh container; `exit` leaves it and deletes the container. The shell needs a terminal: without one, the run stops with exit code 2 and asks for a command.
 
 On Windows, while a VM runs, its screen is visible in a browser at `http://127.0.0.1:8006`. SSH listens on `127.0.0.1:2222`. Both bind to loopback only.
 
 ## The whole suite
 
-`sandbox:test <system>` runs `bun run test` in a throwaway sandbox, so the suite runs on Windows and on Debian, not only on the host. It takes `--engine` and no command; its exit code is the suite's exit code.
+`bun run sandbox test <system>` runs `bun run test` in a throwaway sandbox, so the suite runs on Windows and on Debian, not only on the host. It takes `--engine` and no command; its exit code is the suite's exit code.
 
 ```sh
-bun run sandbox:test windows
-bun run sandbox:test debian
+bun run sandbox test windows
+bun run sandbox test debian
 ```
 
-1. It checks that the Windows base or the Debian image exists, that the native libraries for the system are built (`.local/build/native/manifest.json` and a non-empty `.local/build/native/win32-x64/` or `linux-x64/`), and that `package.json` pins the Bun the sandbox has hashes for (`"packageManager": "bun@1.4.2"`). Otherwise it stops before downloading anything; without the libraries it exits 1 with ``No native libraries for <platform>: run `bun run native-libs:build --target <platform>` first.``
+1. It checks that the Windows base or the Debian image exists, that the native libraries for the system are built (`.local/build/native/manifest.json` and a non-empty `.local/build/native/win32-x64/` or `linux-x64/`), and that `package.json` pins the Bun the sandbox has hashes for (`"packageManager": "bun@1.4.2"`). Otherwise it stops before downloading anything; without the libraries it exits 1 with ``No native libraries for <platform>: run `bun run build:native --target <platform>` first.``
 2. It takes Bun from `.local/cache/sandbox-bun/<version>-<hash>/` when the executable there still has its pinned sha256. Otherwise it downloads the release zip (`bun-windows-x64.zip` or `bun-linux-x64.zip`) and the release's `SHASUMS256.txt` from `github.com/oven-sh/bun` into a fresh folder under `.temp/downloads/`. The zip must be listed in `SHASUMS256.txt` with the sha256 pinned in `scripts/sandbox/model/bun-release.ts`, and must have it; the executable inside must have its own pinned sha256. Only then is the executable cached. Nothing from the download runs on the host.
 3. It copies the repo into `.temp/sandbox-test/<run id>/repo/`: the files `git ls-files --cached --others --exclude-standard` lists, so uncommitted work is tested too and `.local/`, `.temp/` and `node_modules/` never are. An empty `.git` folder marks the copy's root for tools that look for it (commitlint); no git history is copied. Into the copy's `.local/build/native/` it adds the manifest and only the system's platform folder (`win32-x64/` for Windows, `linux-x64/` for Debian); nothing else from `.local/` is copied, and the library is never built in the sandbox.
 4. It uploads the copy and Bun (to `C:\goop\repo` and `C:\goop\bun` on Windows, to `/home/goop/goop/` on Debian), puts that Bun first on `PATH`, sets `GOOP_REQUIRE_NATIVE=1`, and runs `bun install --frozen-lockfile` and `bun run test` there (PowerShell on Windows, `bash` as `goop` on Debian). The sandbox is deleted and the copy removed when the run ends.
 
 `bun install` downloads the dependencies from the npm registry inside the sandbox: both the Windows VM and the Debian container reach the network. The Debian image has `git` (pinned) because commitlint calls `git config`.
 
-Build the native libraries first: `bun run native-libs:build --target win32-x64` for Windows, `--target linux-x64` for Debian. With `GOOP_REQUIRE_NATIVE=1` the native integration tests never skip in the sandbox: a missing or changed library fails them. On the host, without the variable, they still skip when `.local/build/native/manifest.json` is missing. Linux in a VM (a Debian VM with a software TPM) comes with sandbox T7; until then the Linux suite runs in the container only.
+Build the native libraries first: `bun run build:native --target win32-x64` for Windows, `--target linux-x64` for Debian. With `GOOP_REQUIRE_NATIVE=1` the native integration tests never skip in the sandbox: a missing or changed library fails them. On the host, without the variable, they still skip when `.local/build/native/manifest.json` is missing. Linux in a VM (a Debian VM with a software TPM) comes with sandbox T7; until then the Linux suite runs in the container only.
 
 ## How a run works
 
@@ -82,7 +82,7 @@ Windows is installed once. Each run starts from that base on a new, empty disk l
 
 ```mermaid
 sequenceDiagram
-    participant Dev as sandbox:run windows
+    participant Dev as sandbox run windows
     participant Engine as Podman or Docker
     participant VM as Windows VM
     Dev->>Dev: create .temp/windows/runs/<id>/ with a qcow2 layer over the base
@@ -101,11 +101,11 @@ The install works the same way, once. The `dockurr/windows` image downloads the 
 
 ### Debian
 
-`sandbox:install debian` builds `scripts/sandbox/debian/Containerfile` into the image `localhost/goop-sandbox-debian:2`. The image is Debian 13 (`debian:trixie`, pinned by digest) with systemd, dbus, git and the user `goop` (UID 1000), whose user manager starts at boot. Only the Containerfile's folder is sent to the build.
+`bun run sandbox install debian` builds `scripts/sandbox/debian/Containerfile` into the image `localhost/goop-sandbox-debian:2`. The image is Debian 13 (`debian:trixie`, pinned by digest) with systemd, dbus, git and the user `goop` (UID 1000), whose user manager starts at boot. Only the Containerfile's folder is sent to the build.
 
 ```mermaid
 sequenceDiagram
-    participant Dev as sandbox:run debian
+    participant Dev as sandbox run debian
     participant Engine as Podman or Docker
     participant C as Debian container
     Dev->>Engine: start goop-debian-run-<id> with systemd as process 1
@@ -127,9 +127,9 @@ If the container cannot be removed, the run prints the command that removes it b
 | `.local/windows/ssh/`                  | The SSH key pair for the guest (mode 0600)                                              |
 | `.local/windows/password`              | The random guest password (mode 0600)                                                   |
 | `.local/containers/storage/`           | Podman's images and containers, `localhost/goop-sandbox-debian:2`                       |
-| `.local/cache/sandbox-bun/`            | The verified Bun executables of `sandbox:test`, by version and hash                     |
+| `.local/cache/sandbox-bun/`            | The verified Bun executables of `sandbox test`, by version and hash                     |
 | `.temp/downloads/bun-*/`               | A downloaded Bun zip, kept after its sha256 check                                       |
-| `.temp/sandbox-test/<id>/`             | The repo copy, native libraries and Bun of one `sandbox:test` run; deleted when it ends |
+| `.temp/sandbox-test/<id>/`             | The repo copy, native libraries and Bun of one `sandbox test` run; deleted when it ends |
 | `.temp/windows/runs/<id>/`             | The disk layer of one run; deleted when the run ends                                    |
 | `.temp/windows/results/`               | Files brought back with `--fetch` from Windows                                          |
 | `.temp/debian/results/`                | Files brought back with `--fetch` from Debian                                           |

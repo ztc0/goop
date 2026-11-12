@@ -37,7 +37,7 @@ Code that talks to the operating system (TPM2, DPAPI, `bun:ffi`, systemd, native
 
 - Fakes first, test-first: they cover every branch on any machine.
 - The whole suite runs on Linux and on Windows. CI does both on every pull request; locally, the host runs Linux and the Windows sandbox VM runs the Windows suite.
-- CI builds the native libraries once with `bun run native-libs:build --engine docker --verify-signature` and both test jobs run against that artifact with `GOOP_REQUIRE_NATIVE=1`, so the native tests fail instead of skipping there. Each runner then runs `bun run build` for its own system.
+- CI builds the native libraries once with `bun run build:native --engine docker --verify-signature` and both test jobs run against that artifact with `GOOP_REQUIRE_NATIVE=1`, so the native tests fail instead of skipping there. Each runner then runs `bun run build` for its own system.
 - Each OS-facing path also runs for real in a sandbox: the Debian container (Linux, no TPM2), the Debian VM with `swtpm` (TPM2), the Windows VM (DPAPI). Never on the maintainer's machine without consent.
 - "It cannot be tested on Windows" is never an answer: a missing sandbox capability is a task to add, not a reason to skip.
 - Each real run goes in the pull request's _How it was verified_: system, command and verbatim output (PASS/FAIL).

@@ -20,9 +20,9 @@ import { type EncryptedStore, StoreLibraryError, sqlite3mcEngine } from "@/share
 import { encryptedStoreContract } from "@/shared/vault/storage/tests/integration/encrypted-store-contract";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..", "..");
-// Built by `bun run native-libs:build`; CI has no build until native-library T7, so these tests
+// Built by `bun run build:native`; CI has no build until native-library T7, so these tests
 // skip there. A built library that does not match its manifest fails here instead of skipping,
-// and so does a missing one with GOOP_REQUIRE_NATIVE=1, which `sandbox:test` sets.
+// and so does a missing one with GOOP_REQUIRE_NATIVE=1, which `bun run sandbox test` sets.
 const folder = join(repo, ".local", "build", "native");
 const linux = process.platform === "linux";
 const missing =
@@ -79,7 +79,7 @@ function tempFilesOf(store: EncryptedStore): string[] {
 }
 
 describe.skipIf(missing)(
-  "sqlite3mc store (skipped without .local/build/native/manifest.json; bun run native-libs:build)",
+  "sqlite3mc store (skipped without .local/build/native/manifest.json; bun run build:native)",
   () => {
     encryptedStoreContract(() => sqlite3mcEngine({ library }));
 

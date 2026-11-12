@@ -67,7 +67,7 @@ describe("ci.yml native libraries (S9)", () => {
     const job = ci.jobs["native-libs"];
 
     expect(
-      stepRunning(job, "bun run native-libs:build --engine docker --verify-signature"),
+      stepRunning(job, "bun run build:native --engine docker --verify-signature"),
     ).toBeDefined();
     expect(job?.permissions).toEqual({ contents: "read" });
   });
