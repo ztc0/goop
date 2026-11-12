@@ -3,8 +3,8 @@
 // the insecure development key only from source in the repo's layout, and the store engine on the
 // native library checked against its pin before every open (built while developing, embedded in
 // the executable).
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import {
   DEV_KEY_WARNING,
   NO_LOCATION,
@@ -50,6 +50,17 @@ function isGoopRepo(repoRoot: string): boolean {
   }
 }
 
+/**
+ * `path` with every link resolved, even when its last folders do not exist yet: the nearest
+ * existing folder is resolved and the rest appended. A link inside `.local/` that points outside
+ * the repository must not pass for the development layout.
+ */
+function realPath(path: string): string {
+  if (existsSync(path)) return realpathSync(path);
+  const parent = dirname(path);
+  return parent === path ? path : join(realPath(parent), basename(path));
+}
+
 function osKeyEnvelope(choice: OsKeyStoreChoice, standalone: boolean): OsKeyEnvelope {
   switch (choice.kind) {
     case "system":
@@ -70,10 +81,15 @@ export function daemonVault(options: DaemonVaultOptions): DaemonVault | string {
   const standalone = options.standalone ?? Bun.isStandaloneExecutable;
   const location = vaultLocation(options.env);
   if (!location) return NO_LOCATION;
+  const goopHome = options.env.GOOP_HOME;
   const choice = osKeyStoreChoice({
-    env: options.env,
+    // Links resolved, so the `.local/` check compares where the folders really are.
+    env:
+      !standalone && goopHome && isAbsolute(goopHome)
+        ? { ...options.env, GOOP_HOME: realPath(goopHome) }
+        : options.env,
     standalone,
-    repoRoot: options.repoRoot,
+    repoRoot: standalone ? options.repoRoot : realPath(options.repoRoot),
     // Read only from source: the compiled executable has no repository.
     isGoopRepo: !standalone && isGoopRepo(options.repoRoot),
   });

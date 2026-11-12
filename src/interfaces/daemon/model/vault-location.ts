@@ -43,7 +43,7 @@ export interface OsKeyStoreFacts {
   isGoopRepo: boolean;
 }
 
-/** Whether `path` is `folder` or inside it, by name only (`..` resolved, links not followed). */
+/** Whether `path` is `folder` or inside it, by name only: the caller resolves links first. */
 function inside(path: string, folder: string): boolean {
   const rest = relative(folder, resolve(path));
   return rest === "" || (rest !== ".." && !rest.startsWith(`..${sep}`) && !isAbsolute(rest));
