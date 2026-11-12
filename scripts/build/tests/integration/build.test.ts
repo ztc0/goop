@@ -253,3 +253,52 @@ describe("the compiled goop and the insecure development key (dev-sandbox S8)", 
     120_000,
   );
 });
+
+describe("the compiled goop and the files Bun loads by itself (dev-sandbox S11)", () => {
+  test.skipIf(missing || !linux)(
+    "it reads no .env and no bunfig.toml from the folder it starts in",
+    async () => {
+      const outfile = join(fixture, "goop");
+      const built = await buildExecutable(
+        { verify: builtNativeLibrary, compiler: bunCompiler, output: terminalOutput },
+        { root: repo, platform, entry: join(repo, "src", "main.ts"), outfile },
+      );
+      expect(built).toBe(0);
+      // Without GOOP_RUNTIME_DIR, goop puts its socket in XDG_RUNTIME_DIR/goop/; a .env that
+      // sets GOOP_RUNTIME_DIR would move it, and a bunfig.toml preload would print a line.
+      const xdg = join(fixture, "xdg");
+      const fromEnvFile = join(fixture, "from-env-file");
+      mkdirSync(xdg, { mode: 0o700 });
+      mkdirSync(fromEnvFile, { mode: 0o700 });
+      writeFileSync(join(fixture, ".env"), `GOOP_RUNTIME_DIR=${fromEnvFile}\n`);
+      writeFileSync(join(fixture, "preload.js"), 'console.log("bunfig.toml was loaded");\n');
+      writeFileSync(join(fixture, "bunfig.toml"), 'preload = ["./preload.js"]\n');
+      const tmp = join(fixture, "tmp");
+      mkdirSync(tmp);
+      const { GOOP_RUNTIME_DIR: _ignored, ...inherited } = process.env;
+
+      const child = Bun.spawn([outfile, "daemon"], {
+        cwd: fixture,
+        env: { ...inherited, GOOP_HOME: join(fixture, "home"), XDG_RUNTIME_DIR: xdg, TMPDIR: tmp },
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      daemons.push(child);
+      const reader = child.stdout.getReader();
+      let stdout = "";
+      while (stdout.split("\n").length < 3) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        stdout += new TextDecoder().decode(chunk.value);
+      }
+      child.kill("SIGTERM");
+      expect(await child.exited).toBe(0);
+
+      expect(stdout).toBe(
+        "goop daemon is listening.\nThe vault is not set up yet. Set it up with: goop\n",
+      );
+      expect(readdirSync(fromEnvFile)).toEqual([]);
+    },
+    120_000,
+  );
+});
