@@ -1,29 +1,30 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 import { usesOsKeyStore, vaultLocation } from "@/interfaces/daemon/model/vault-location";
 
 describe("vaultLocation (goop S25)", () => {
   test("GOOP_HOME holds everything: the vault in its data/ folder", () => {
     expect(vaultLocation({ GOOP_HOME: "/repo/.local", HOME: "/home/u" })).toEqual({
       goopHome: "/repo/.local",
-      data: "/repo/.local/data",
+      data: join("/repo/.local", "data"),
     });
   });
 
   test("without GOOP_HOME: $XDG_DATA_HOME/goop, else ~/.local/share/goop", () => {
     expect(vaultLocation({ XDG_DATA_HOME: "/x/share", HOME: "/home/u" })).toEqual({
-      goopHome: "/x/share/goop",
-      data: "/x/share/goop/data",
+      goopHome: join("/x/share", "goop"),
+      data: join("/x/share", "goop", "data"),
     });
     expect(vaultLocation({ HOME: "/home/u" })).toEqual({
-      goopHome: "/home/u/.local/share/goop",
-      data: "/home/u/.local/share/goop/data",
+      goopHome: join("/home/u", ".local", "share", "goop"),
+      data: join("/home/u", ".local", "share", "goop", "data"),
     });
   });
 
   test("relative or empty paths are ignored, and with nothing left there is no location", () => {
     expect(vaultLocation({ GOOP_HOME: "", XDG_DATA_HOME: "share", HOME: "/home/u" })).toEqual({
-      goopHome: "/home/u/.local/share/goop",
-      data: "/home/u/.local/share/goop/data",
+      goopHome: join("/home/u", ".local", "share", "goop"),
+      data: join("/home/u", ".local", "share", "goop", "data"),
     });
     expect(vaultLocation({ GOOP_HOME: ".local", HOME: "home" })).toBeUndefined();
     expect(vaultLocation({})).toBeUndefined();
