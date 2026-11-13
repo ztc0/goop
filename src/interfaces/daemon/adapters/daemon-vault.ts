@@ -3,7 +3,7 @@
 // the insecure development key only from source in the repo's layout, and the store engine on the
 // native library checked against its pin before every open (built while developing, embedded in
 // the executable).
-import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { lstatSync, readFileSync, realpathSync } from "node:fs";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import {
   DEV_KEY_WARNING,
@@ -52,13 +52,24 @@ function isGoopRepo(repoRoot: string): boolean {
 
 /**
  * `path` with every link resolved, even when its last folders do not exist yet: the nearest
- * existing folder is resolved and the rest appended. A link inside `.temp/dev/` that points outside
- * the repository must not pass for the development layout.
+ * existing entry is resolved and the rest appended. A link inside `.temp/dev/` that points outside
+ * the repository must not pass for the development layout, so a link that cannot be resolved
+ * (broken or a loop) gives undefined instead of its name.
  */
-function realPath(path: string): string {
-  if (existsSync(path)) return realpathSync(path);
-  const parent = dirname(path);
-  return parent === path ? path : join(realPath(parent), basename(path));
+function realPath(path: string): string | undefined {
+  try {
+    lstatSync(path);
+  } catch {
+    const parent = dirname(path);
+    if (parent === path) return path;
+    const resolved = realPath(parent);
+    return resolved === undefined ? undefined : join(resolved, basename(path));
+  }
+  try {
+    return realpathSync(path);
+  } catch {
+    return undefined;
+  }
 }
 
 function osKeyEnvelope(choice: OsKeyStoreChoice, standalone: boolean): OsKeyEnvelope {
@@ -83,13 +94,14 @@ export function daemonVault(options: DaemonVaultOptions): DaemonVault | string {
   if (!location) return NO_LOCATION;
   const goopHome = options.env.GOOP_HOME;
   const choice = osKeyStoreChoice({
-    // Links resolved, so the `.temp/dev/` check compares where the folders really are.
+    // Links resolved, so the `.temp/dev/` check compares where the folders really are; a
+    // GOOP_HOME that cannot be resolved counts as unset, which never selects the development key.
     env:
       !standalone && goopHome && isAbsolute(goopHome)
         ? { ...options.env, GOOP_HOME: realPath(goopHome) }
         : options.env,
     standalone,
-    repoRoot: standalone ? options.repoRoot : realPath(options.repoRoot),
+    repoRoot: standalone ? options.repoRoot : (realPath(options.repoRoot) ?? options.repoRoot),
     // Read only from source: the compiled executable has no repository.
     isGoopRepo: !standalone && isGoopRepo(options.repoRoot),
   });
