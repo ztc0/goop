@@ -75,10 +75,20 @@ export function socketCheckArgs(): string[] {
   return execArgs(CONTAINER, ["test", "-S", SOCKET]);
 }
 
-/** goop from source, its arguments unchanged; `-it` only when attached to a terminal. */
+/**
+ * goop from source, its arguments unchanged. `-i` always keeps stdin attached, so piped input
+ * (`echo x | bun run dev`) reaches goop; `-t` gives it a terminal only when there is one.
+ */
 export function goopArgs(paths: DevPaths, args: readonly string[], terminal: boolean): string[] {
-  return execArgs(CONTAINER, ["bun", "--no-env-file", "src/main.ts", ...args], {
-    workdir: paths.root,
-    interactive: terminal,
-  });
+  return [
+    "exec",
+    terminal ? "-it" : "-i",
+    "--workdir",
+    paths.root,
+    CONTAINER,
+    "bun",
+    "--no-env-file",
+    "src/main.ts",
+    ...args,
+  ];
 }

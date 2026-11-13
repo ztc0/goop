@@ -45,6 +45,24 @@ describe("daemonVault: the OS key store it uses", () => {
     },
   );
 
+  test.skipIf(process.platform === "win32")(
+    "a broken link inside .temp/dev/ that points outside, or a link loop, never turns it on",
+    () => {
+      const dev = join(fake, ".temp", "dev");
+      mkdirSync(dev, { recursive: true });
+      symlinkSync(
+        join(fake, "..", `missing-${crypto.randomUUID().slice(0, 8)}`),
+        join(dev, "escape"),
+      );
+      symlinkSync(join(dev, "loop-b"), join(dev, "loop-a"));
+      symlinkSync(join(dev, "loop-a"), join(dev, "loop-b"));
+      for (const home of [join(dev, "escape"), join(dev, "escape", "home"), join(dev, "loop-a")]) {
+        const vault = wired({ GOOP_HOME: home });
+        expect(typeof vault === "string" ? vault : vault.warning).toBeUndefined();
+      }
+    },
+  );
+
   test("from source with GOOP_HOME in the repo's .temp/dev/: the development key, with its warning", async () => {
     const vault = daemonVault({ env: { GOOP_HOME: devHome() }, repoRoot: fake, standalone: false });
     if (typeof vault === "string") throw new Error(vault);

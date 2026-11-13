@@ -50,10 +50,8 @@ export async function runGoop(deps: DevDeps, args: readonly string[]): Promise<n
     }
   }
   if (!(await waitForDaemon(deps))) return 1;
-  const result = await engine.call(
-    goopArgs(paths, args, deps.terminal),
-    deps.terminal ? "interactive" : "stream",
-  );
+  // Always attached: stdin reaches goop with or without a terminal.
+  const result = await engine.call(goopArgs(paths, args, deps.terminal), "interactive");
   return result.exitCode;
 }
 

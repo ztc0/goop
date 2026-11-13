@@ -21,6 +21,7 @@ import {
 import {
   OsEnvelopeOpenError,
   OsEnvelopeSealError,
+  OsEnvelopeUnavailableError,
 } from "@/shared/vault/keystore/model/os-key-envelope";
 import type { OsKeyEnvelope } from "@/shared/vault/keystore/types/os-key-envelope";
 
@@ -112,8 +113,15 @@ export function insecureDevKeyEnvelope(
     },
 
     async open(sealed: Bytes): Promise<DataKey> {
+      // A key that cannot be read (EACCES, EIO) is not a lost one: the key store is unavailable.
+      const key = await readKey().catch(() => {
+        throw new OsEnvelopeUnavailableError({
+          available: false,
+          reason: "unreadable",
+          message: `goop cannot read ${INSECURE_DEV_KEY_FILE}, so the development key store is unavailable.`,
+        });
+      });
       // A missing key is a lost key: only the recovery key helps, never a new one.
-      const key = await readKey();
       if (key === undefined) throw new OsEnvelopeOpenError();
       try {
         return await openRecoveryEnvelope(sealed, key);

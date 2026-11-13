@@ -315,6 +315,7 @@ describe("failureLine: only goop's own fixed text (daemon-ipc S7)", () => {
     "missing-tool",
     "old-version",
     "no-tpm2",
+    "unreadable",
     "busy",
   ] as const)("the fixed line of an OS key store unavailable (%p) is the vault's own", (reason) => {
     const error = new KeyStoreUnavailableError(reason);

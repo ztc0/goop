@@ -15,28 +15,36 @@ Without `GOOP_HOME`, goop uses the normal user paths (XDG on Linux, `%APPDATA%` 
 
 ## `.local/`: persistent
 
-`config/`, `data/`, `state/`, `cache/{bun,uv,hf}/`, `models/`, `bin/`, `build/`, and `lib/native/` once a built `goop` runs with it (the native libraries it extracts, never a cache). Kept between sessions; only `bun run clean:local` deletes it, after typing `delete`.
+`config/`, `data/`, `state/`, `cache/{bun,uv,hf}/`, `models/`, `bin/`, `build/`, `containers/storage/` (Podman's images and containers), `dev/` (the dev container's `node_modules/` and the `bun.lock` hash it was installed from), and `lib/native/` once a built `goop` runs with it (the native libraries it extracts, never a cache). Kept between sessions; only `bun run clean:local` deletes it, after typing `delete`.
 
 ## `.temp/`: disposable
 
-`tmp/`, `tests/`, `downloads/` (partial files, moved to `.local/models/` after the hash check), `extract/` (a fresh folder per archive), `scratch/` (agent work), `run/` (the socket). `bun run clean` deletes it at any time.
+`tmp/`, `tests/`, `downloads/` (partial files, moved to `.local/models/` after the hash check), `extract/` (a fresh folder per archive), `scratch/` (agent work), `run/` (the socket), `dev/` (`bun run dev`: goop's data in `home/` and the insecure development key). `bun run clean` deletes it at any time.
 
 `run/` must be 0700, since the channel refuses a runtime folder other users can open: `scripts/dev-env/run.ts` creates it 0700 and tightens it to 0700 when it is a folder we own. A symbolic link or a folder owned by someone else is left unchanged, for the channel to refuse.
 
 ## Running goop from source
 
-`goop` never starts the daemon, so run each mode in its own terminal:
+`bun run dev` runs goop in a light container, `goop-dev` (image `localhost/goop-dev:1`, built once from `scripts/dev/Containerfile`: the pinned Debian 13 base and the pinned Bun). The container's main process is the daemon, restarted on every source change; `bun run dev` starts it when it is not running, waits for its socket, then runs goop in it:
 
 ```sh
-bun run dev daemon   # the daemon, restarted on file changes; Ctrl-C stops it and removes the socket
-bun run dev          # goop, which connects to it
+bun run dev          # goop (the TUI); the first run builds the image and installs the packages
+bun run dev --help   # every argument goes to goop
+bun run dev:logs     # follow the daemon's output; Ctrl-C stops following
+bun run dev:stop     # remove the container; .temp/dev/ and .local/dev/ are kept
 ```
+
+- The repo is mounted at the same path inside, so goop's repo checks hold; nothing is copied and a source change never rebuilds the image.
+- `node_modules/` inside is `.local/dev/node_modules/`, mounted over the repo's: `bun install --frozen-lockfile --ignore-scripts` fills it on the first start and again only when the hash of `bun.lock` changes.
+- The container sets every variable, with no `.env` (S11): `GOOP_HOME=.temp/dev/home`, `GOOP_RUNTIME_DIR=/tmp/goop-run` (a private folder in the container, not on the mount), `BUN_INSTALL_CACHE_DIR=.local/cache/bun`, `TMPDIR=.temp/tmp`, `HOME=/tmp`. goop runs with `--no-env-file`.
+- It runs with no capabilities and `no-new-privileges`. Podman (preferred) keeps images and containers in `.local/containers/storage/`; Docker keeps them in its own storage and runs the container as your user.
+- `bun run clean` resets goop's data and the development key together; run `bun run dev:stop` first so the daemon does not keep the old vault open.
 
 ## What stays out of development
 
 Things that must touch the system are not installed while developing: the systemd timer, the Windows scheduled task, TPM credentials, the keyring and DPAPI. The real TPM and DPAPI are exercised only in their spike, with the maintainer's permission, and undone afterwards.
 
-The vault lives in `<GOOP_HOME>/data/` (`.local/data/`). goop uses the OS key store only as the compiled executable without `GOOP_HOME`.
+The vault lives in `<GOOP_HOME>/data/` (`.temp/dev/home/data/` with `bun run dev`, `.local/data/` for a goop run straight through `scripts/dev-env/run.ts`). goop uses the OS key store only as the compiled executable without `GOOP_HOME`.
 
 ## The insecure development key
 

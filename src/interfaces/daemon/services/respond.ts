@@ -73,6 +73,7 @@ const KEY_STORE_LINES: Readonly<Record<OsEnvelopeUnavailableReason, string>> = {
   "missing-tool": unavailable("missing-tool"),
   "old-version": unavailable("old-version"),
   "no-tpm2": unavailable("no-tpm2"),
+  unreadable: unavailable("unreadable"),
   busy: unavailable("busy"),
 };
 

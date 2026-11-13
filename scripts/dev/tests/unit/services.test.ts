@@ -149,8 +149,9 @@ describe("bun run dev", () => {
     ]);
     const goop = runner.calls.at(-1) as ProcessRequest;
     expect(runner.args(goop).slice(-4)).toEqual(["bun", "--no-env-file", "src/main.ts", "--help"]);
-    expect(goop.stream).toBe(true);
-    expect(goop.interactive).toBeUndefined();
+    // Without a terminal, stdin is still attached, so `echo x | bun run dev` reaches goop.
+    expect(runner.args(goop).slice(0, 2)).toEqual(["exec", "-i"]);
+    expect(goop.interactive).toBe(true);
     // The host folders exist before the start, and Podman's storage before every call.
     for (const folder of [
       ".local/dev/node_modules",

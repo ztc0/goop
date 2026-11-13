@@ -19,11 +19,14 @@ import {
   insecureDevKeyEnvelope,
   OsEnvelopeOpenError,
   OsEnvelopeSealError,
+  OsEnvelopeUnavailableError,
 } from "@/shared/vault/keystore";
 
 const repo = resolve(import.meta.dir, "..", "..", "..", "..", "..", "..");
 const OPEN_FAILED =
   "The OS key envelope could not be opened: it was changed, or it belongs to another user, machine or name.";
+const UNREADABLE =
+  "goop cannot read INSECURE-DEV-KEY, so the development key store is unavailable.";
 const REFUSED = "The compiled goop never uses the insecure development key.";
 const posix = process.platform !== "win32";
 
@@ -131,6 +134,28 @@ describe("insecureDevKeyEnvelope (dev-sandbox S8)", () => {
       expect((error as Error).message).toBe(OPEN_FAILED);
     }
   });
+
+  // A key file without read permission (EACCES); root reads it anyway, and Windows has no mode.
+  test.skipIf(!posix || process.getuid?.() === 0)(
+    "a key file that cannot be read makes the key store unavailable, never a lost key",
+    async () => {
+      const envelope = insecureDevKeyEnvelope(folder);
+      const dek = newDataKey();
+      const sealed = await envelope.seal(dek);
+      const key = readFileSync(keyFile(), "utf8");
+
+      chmodSync(keyFile(), 0o000);
+      const error = await failure(envelope.open(sealed));
+      chmodSync(keyFile(), 0o600);
+
+      expect(error).toBeInstanceOf(OsEnvelopeUnavailableError);
+      expect((error as OsEnvelopeUnavailableError).reason).toBe("unreadable");
+      expect((error as Error).message).toBe(UNREADABLE);
+      // The key is kept as it was, and still opens the data key.
+      expect(readFileSync(keyFile(), "utf8")).toBe(key);
+      expect(await envelope.open(sealed)).toEqual(dek);
+    },
+  );
 
   test("a key file that is not a development key is never sealed with, nor replaced", async () => {
     mkdirSync(folder, { recursive: true });
