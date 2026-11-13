@@ -36,4 +36,17 @@ bun run dev          # goop, which connects to it
 
 Things that must touch the system are not installed while developing: the systemd timer, the Windows scheduled task, TPM credentials, the keyring and DPAPI. The real TPM and DPAPI are exercised only in their spike, with the maintainer's permission, and undone afterwards.
 
-The vault lives in `<GOOP_HOME>/data/` (`.local/data/`). goop uses the OS key store only as the compiled executable without `GOOP_HOME`; from source or with `GOOP_HOME` the passphrase seals the data key, so the first `goop` asks for one and every daemon start waits locked until `goop` unlocks it. There is no insecure development key yet.
+The vault lives in `<GOOP_HOME>/data/` (`.local/data/`). goop uses the OS key store only as the compiled executable without `GOOP_HOME`.
+
+## The insecure development key
+
+From source with `GOOP_HOME` in the repo's `.local/` (what `bun run dev` sets), a fake OS key store seals the data key instead: a random key kept in plain text in `.temp/dev/INSECURE-DEV-KEY` (0600, in a 0700 folder). The first `goop` still asks for a passphrase to set the vault up; after that every daemon start unlocks by itself and prints:
+
+```text
+goop daemon is using the insecure development key in .temp/dev/ (never use this for real data).
+```
+
+- Anyone who can read the file can open the vault: never put real data in a development vault.
+- It never exists outside development: the compiled executable never uses it, whatever its environment, and no environment variable turns it on. From source with `GOOP_HOME` anywhere else (the tests' folders under `.temp/tests/`), the passphrase seals the data key as before.
+- When `GOOP_HOME` is in `.local/` but the folder above `src/` is not the goop repository (its `package.json` is not named `goop`), the daemon refuses to start.
+- `bun run clean` deletes it with the rest of `.temp/`. A vault sealed with it then needs its recovery key, which seals the data key with a new development key; to start over, delete `.local/data/` too.

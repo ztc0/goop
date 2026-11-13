@@ -43,7 +43,8 @@ async function main(): Promise<number> {
       output.fail(vault);
       return 1;
     }
-    return serveDaemon(openChannel, output, stopSignal(), vault);
+    if (vault.warning) output.print(vault.warning);
+    return serveDaemon(openChannel, output, stopSignal(), vault.session);
   }
   // Asks for the passphrase on the terminal without echo, or reads it from a pipe.
   return openGoop(openChannel, output, terminalPrompt(process.stdin, process.stdout));
