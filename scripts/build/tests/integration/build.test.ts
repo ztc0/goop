@@ -11,7 +11,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { bunCompiler } from "@scripts/build/adapters/compiler";
 import { notBuilt, USAGE } from "@scripts/build/model/build";
 import { buildExecutable } from "@scripts/build/services/build";
@@ -41,9 +41,14 @@ beforeEach(() => {
   fixture = mkdtempSync(join(repo, ".temp", "tests", "build-"));
 });
 
-afterEach(() => {
-  const extracted = join(fixture, "home", "lib", "native");
-  if (existsSync(extracted)) {
+afterEach(async () => {
+  for (const daemon of daemons.splice(0)) {
+    daemon.kill("SIGKILL");
+    await daemon.exited;
+  }
+  for (const home of ["home", ".local"]) {
+    const extracted = join(fixture, home, "lib", "native");
+    if (!existsSync(extracted)) continue;
     for (const folder of readdirSync(extracted)) {
       for (const file of readdirSync(join(extracted, folder))) {
         chmodSync(join(extracted, folder, file), 0o600);
@@ -52,6 +57,8 @@ afterEach(() => {
   }
   rmSync(fixture, { recursive: true, force: true });
 });
+
+const daemons: Bun.Subprocess[] = [];
 
 function run(...args: string[]) {
   const child = Bun.spawnSync([process.execPath, cli, ...args], {
@@ -145,5 +152,104 @@ describe("bun run build", () => {
       expect(createHash("sha256").update(readFileSync(library)).digest("hex")).toBe(pinned.sha256);
     },
     60_000,
+  );
+});
+
+/** Every file name under `folder`, at any depth. */
+function allNames(folder: string): string[] {
+  return readdirSync(folder, { recursive: true }).map((name) => basename(String(name)));
+}
+
+/** Sends one request to a daemon's socket and returns the parsed reply. */
+async function request(socketPath: string, method: string, params?: unknown): Promise<unknown> {
+  const { promise, resolve: done } = Promise.withResolvers<string>();
+  let received = "";
+  const socket = await Bun.connect({
+    unix: socketPath,
+    socket: {
+      data(_socket, chunk) {
+        received += chunk.toString();
+        if (received.includes("\n")) done(received.slice(0, received.indexOf("\n")));
+      },
+    },
+  });
+  socket.write(`${JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })}\n`);
+  const reply = await promise;
+  socket.end();
+  return JSON.parse(reply);
+}
+
+describe("the compiled goop and the insecure development key (dev-sandbox S8)", () => {
+  test.skipIf(missing || !linux)(
+    "with GOOP_HOME in a goop repository's .local/ it never uses it: the passphrase seals the vault",
+    async () => {
+      const outfile = join(fixture, "goop");
+      const built = await buildExecutable(
+        { verify: builtNativeLibrary, compiler: bunCompiler, output: terminalOutput },
+        { root: repo, platform, entry: join(repo, "src", "main.ts"), outfile },
+      );
+      expect(built).toBe(0);
+      // The fixture looks like the goop repository, and asks for the key by every means it can.
+      writeFileSync(join(fixture, "package.json"), JSON.stringify({ name: "goop" }));
+      const runtime = join(fixture, "run");
+      mkdirSync(runtime, { mode: 0o700 });
+      const socketPath = join(runtime, "goop.sock");
+      const tmp = join(fixture, "tmp");
+      mkdirSync(tmp);
+      const env = {
+        ...process.env,
+        GOOP_HOME: join(fixture, ".local"),
+        GOOP_RUNTIME_DIR: runtime,
+        GOOP_DEV_KEY: "1",
+        TMPDIR: tmp,
+      };
+      const devKeyBefore = existsSync(join(repo, ".temp", "dev", "INSECURE-DEV-KEY"));
+
+      async function daemon() {
+        const child = Bun.spawn([outfile, "daemon"], {
+          cwd: fixture,
+          env,
+          stdout: "pipe",
+          stderr: "pipe",
+        });
+        daemons.push(child);
+        const reader = child.stdout.getReader();
+        let stdout = "";
+        while (stdout.split("\n").length < 3) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          stdout += new TextDecoder().decode(chunk.value);
+        }
+        return { stdout, child };
+      }
+
+      const first = await daemon();
+      expect(first.stdout).toBe(
+        "goop daemon is listening.\nThe vault is not set up yet. Set it up with: goop\n",
+      );
+      expect(
+        await request(socketPath, "vault.setup", { passphrase: "a SECRET passphrase" }),
+      ).toMatchObject({
+        result: { recoveryKey: expect.any(String) },
+      });
+      first.child.kill("SIGTERM");
+      expect(await first.child.exited).toBe(0);
+      expect(readdirSync(join(fixture, ".local", "data")).sort()).toEqual([
+        "data-key.passphrase",
+        "data-key.recovery",
+        "goop.db",
+      ]);
+
+      const second = await daemon();
+      expect(second.stdout).toBe(
+        "goop daemon is listening.\nThe vault is locked. Unlock it with: goop\n",
+      );
+      second.child.kill("SIGTERM");
+      expect(await second.child.exited).toBe(0);
+
+      expect(allNames(fixture)).not.toContain("INSECURE-DEV-KEY");
+      expect(existsSync(join(repo, ".temp", "dev", "INSECURE-DEV-KEY"))).toBe(devKeyBefore);
+    },
+    120_000,
   );
 });
