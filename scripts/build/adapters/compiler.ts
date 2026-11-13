@@ -6,12 +6,14 @@ const exact = (path: string) => new RegExp(`^${path.replace(/[.*+?^${}()|[\]\\]/
  * `bun build --compile` through `Bun.build`. Each embedded file keeps its plain name in
  * `Bun.embeddedFiles` (`[name].[ext]`), and a plugin gives only those files the `file` loader,
  * so the manifest is embedded as bytes while any JSON goop imports is still bundled as code.
+ * Bun's executable would also load the `.env` and `bunfig.toml` of the folder it starts in,
+ * letting any folder change goop's settings or run code: both are off (dev-sandbox S11).
  */
 export const bunCompiler: Compiler = {
   async compile({ entry, outfile, files }) {
     const result = await Bun.build({
       entrypoints: [entry, ...files],
-      compile: { outfile },
+      compile: { outfile, autoloadDotenv: false, autoloadBunfig: false },
       naming: { asset: "[name].[ext]" },
       throw: false,
       plugins: [

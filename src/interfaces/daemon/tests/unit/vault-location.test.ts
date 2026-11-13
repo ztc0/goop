@@ -39,6 +39,7 @@ describe("vaultLocation (goop S25)", () => {
 const REPO = join("/work", "goop");
 const LOCAL = join(REPO, ".local");
 const DEV_FOLDER = join(REPO, ".temp", "dev");
+const DEV_HOME = join(DEV_FOLDER, "home");
 
 /** From source in the goop repository, unless a test says otherwise. */
 const choice = (
@@ -62,9 +63,10 @@ describe("osKeyStoreChoice (goop S25, dev-sandbox S8)", () => {
 
   test("the compiled executable never uses the development key, whatever its environment", () => {
     for (const env of [
+      { GOOP_HOME: DEV_HOME },
+      { GOOP_HOME: DEV_FOLDER },
+      { GOOP_HOME: DEV_HOME, GOOP_DEV_KEY: "1", GOOP_INSECURE_DEV_KEY: "1" },
       { GOOP_HOME: LOCAL },
-      { GOOP_HOME: join(LOCAL, "sub") },
-      { GOOP_HOME: LOCAL, GOOP_DEV_KEY: "1", GOOP_INSECURE_DEV_KEY: "1" },
       { GOOP_HOME: "/elsewhere" },
       { GOOP_HOME: "" },
       { GOOP_HOME: ".local" },
@@ -73,8 +75,8 @@ describe("osKeyStoreChoice (goop S25, dev-sandbox S8)", () => {
     }
   });
 
-  test("from source with GOOP_HOME in the repo's .local/, the development key in .temp/dev/", () => {
-    for (const home of [LOCAL, `${LOCAL}/`, join(LOCAL, "sub", "home")]) {
+  test("from source with GOOP_HOME in the repo's .temp/dev/, the development key in .temp/dev/", () => {
+    for (const home of [DEV_FOLDER, `${DEV_HOME}/`, DEV_HOME, join(DEV_HOME, "sub")]) {
       expect(choice({ GOOP_HOME: home })).toEqual({ kind: "dev-insecure", folder: DEV_FOLDER });
     }
   });
@@ -84,6 +86,13 @@ describe("osKeyStoreChoice (goop S25, dev-sandbox S8)", () => {
       {},
       { HOME: "/home/u" },
       { GOOP_HOME: join(REPO, ".temp", "tests", "x", "home") },
+      { GOOP_HOME: join(REPO, ".temp") },
+      { GOOP_HOME: join(REPO, ".temp", "devx") },
+      { GOOP_HOME: `${DEV_FOLDER}/../tests` },
+      { GOOP_HOME: LOCAL },
+      { GOOP_HOME: join(LOCAL, "sub") },
+      { GOOP_HOME: join("/other", "goop", ".temp", "dev") },
+      { GOOP_HOME: ".temp/dev" },
       { GOOP_HOME: REPO },
       { GOOP_HOME: join(REPO, ".localx") },
       { GOOP_HOME: join(REPO, "..", ".local") },
@@ -108,12 +117,12 @@ describe("osKeyStoreChoice (goop S25, dev-sandbox S8)", () => {
   });
 
   test("the development key outside a confirmed goop repository is refused", () => {
-    expect(choice({ GOOP_HOME: LOCAL }, { isGoopRepo: false })).toEqual({
+    expect(choice({ GOOP_HOME: DEV_HOME }, { isGoopRepo: false })).toEqual({
       kind: "refused",
       problem: DEV_KEY_REFUSED,
     });
     expect(DEV_KEY_REFUSED).toBe(
-      "goop will not use the insecure development key: GOOP_HOME is in .local/, but the folder above src/ is not the goop repository.",
+      "goop will not use the insecure development key: GOOP_HOME is in .temp/dev/, but the folder above src/ is not the goop repository.",
     );
     // Only the development key needs the repository.
     expect(choice({}, { isGoopRepo: false })).toEqual({ kind: "none" });

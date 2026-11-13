@@ -46,7 +46,7 @@ afterEach(async () => {
     daemon.kill("SIGKILL");
     await daemon.exited;
   }
-  for (const home of ["home", ".local"]) {
+  for (const home of ["home", join(".temp", "dev", "home")]) {
     const extracted = join(fixture, home, "lib", "native");
     if (!existsSync(extracted)) continue;
     for (const folder of readdirSync(extracted)) {
@@ -181,7 +181,7 @@ async function request(socketPath: string, method: string, params?: unknown): Pr
 
 describe("the compiled goop and the insecure development key (dev-sandbox S8)", () => {
   test.skipIf(missing || !linux)(
-    "with GOOP_HOME in a goop repository's .local/ it never uses it: the passphrase seals the vault",
+    "with GOOP_HOME in a goop repository's .temp/dev/ it never uses it: the passphrase seals the vault",
     async () => {
       const outfile = join(fixture, "goop");
       const built = await buildExecutable(
@@ -198,7 +198,7 @@ describe("the compiled goop and the insecure development key (dev-sandbox S8)", 
       mkdirSync(tmp);
       const env = {
         ...process.env,
-        GOOP_HOME: join(fixture, ".local"),
+        GOOP_HOME: join(fixture, ".temp", "dev", "home"),
         GOOP_RUNTIME_DIR: runtime,
         GOOP_DEV_KEY: "1",
         TMPDIR: tmp,
@@ -234,7 +234,7 @@ describe("the compiled goop and the insecure development key (dev-sandbox S8)", 
       });
       first.child.kill("SIGTERM");
       expect(await first.child.exited).toBe(0);
-      expect(readdirSync(join(fixture, ".local", "data")).sort()).toEqual([
+      expect(readdirSync(join(fixture, ".temp", "dev", "home", "data")).sort()).toEqual([
         "data-key.passphrase",
         "data-key.recovery",
         "goop.db",
@@ -249,6 +249,55 @@ describe("the compiled goop and the insecure development key (dev-sandbox S8)", 
 
       expect(allNames(fixture)).not.toContain("INSECURE-DEV-KEY");
       expect(existsSync(join(repo, ".temp", "dev", "INSECURE-DEV-KEY"))).toBe(devKeyBefore);
+    },
+    120_000,
+  );
+});
+
+describe("the compiled goop and the files Bun loads by itself (dev-sandbox S11)", () => {
+  test.skipIf(missing || !linux)(
+    "it reads no .env and no bunfig.toml from the folder it starts in",
+    async () => {
+      const outfile = join(fixture, "goop");
+      const built = await buildExecutable(
+        { verify: builtNativeLibrary, compiler: bunCompiler, output: terminalOutput },
+        { root: repo, platform, entry: join(repo, "src", "main.ts"), outfile },
+      );
+      expect(built).toBe(0);
+      // Without GOOP_RUNTIME_DIR, goop puts its socket in XDG_RUNTIME_DIR/goop/; a .env that
+      // sets GOOP_RUNTIME_DIR would move it, and a bunfig.toml preload would print a line.
+      const xdg = join(fixture, "xdg");
+      const fromEnvFile = join(fixture, "from-env-file");
+      mkdirSync(xdg, { mode: 0o700 });
+      mkdirSync(fromEnvFile, { mode: 0o700 });
+      writeFileSync(join(fixture, ".env"), `GOOP_RUNTIME_DIR=${fromEnvFile}\n`);
+      writeFileSync(join(fixture, "preload.js"), 'console.log("bunfig.toml was loaded");\n');
+      writeFileSync(join(fixture, "bunfig.toml"), 'preload = ["./preload.js"]\n');
+      const tmp = join(fixture, "tmp");
+      mkdirSync(tmp);
+      const { GOOP_RUNTIME_DIR: _ignored, ...inherited } = process.env;
+
+      const child = Bun.spawn([outfile, "daemon"], {
+        cwd: fixture,
+        env: { ...inherited, GOOP_HOME: join(fixture, "home"), XDG_RUNTIME_DIR: xdg, TMPDIR: tmp },
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      daemons.push(child);
+      const reader = child.stdout.getReader();
+      let stdout = "";
+      while (stdout.split("\n").length < 3) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        stdout += new TextDecoder().decode(chunk.value);
+      }
+      child.kill("SIGTERM");
+      expect(await child.exited).toBe(0);
+
+      expect(stdout).toBe(
+        "goop daemon is listening.\nThe vault is not set up yet. Set it up with: goop\n",
+      );
+      expect(readdirSync(fromEnvFile)).toEqual([]);
     },
     120_000,
   );

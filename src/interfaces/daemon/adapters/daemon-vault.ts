@@ -52,7 +52,7 @@ function isGoopRepo(repoRoot: string): boolean {
 
 /**
  * `path` with every link resolved, even when its last folders do not exist yet: the nearest
- * existing folder is resolved and the rest appended. A link inside `.local/` that points outside
+ * existing folder is resolved and the rest appended. A link inside `.temp/dev/` that points outside
  * the repository must not pass for the development layout.
  */
 function realPath(path: string): string {
@@ -83,7 +83,7 @@ export function daemonVault(options: DaemonVaultOptions): DaemonVault | string {
   if (!location) return NO_LOCATION;
   const goopHome = options.env.GOOP_HOME;
   const choice = osKeyStoreChoice({
-    // Links resolved, so the `.local/` check compares where the folders really are.
+    // Links resolved, so the `.temp/dev/` check compares where the folders really are.
     env:
       !standalone && goopHome && isAbsolute(goopHome)
         ? { ...options.env, GOOP_HOME: realPath(goopHome) }
